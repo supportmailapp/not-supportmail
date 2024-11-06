@@ -1,80 +1,37 @@
-# discord.js App Template
+# Supportmail Helper
 
-A template for discord.js apps.
-
----
-
-## Used dependencies
-
-- [`discord.js`](https://discord.js.org/)
-- [`djsCommandHelper`](https://github.com/The-LukeZ/djsCommandHelper)
-
-## Use
-
-To use this template, fork or clone repository and since it's a template, you can just start building your application.
-
-## Structures
-
-### Components
-
-Components handle message component interactions, as well as modal interactions.
-
-In our example structure, we have a sub-folder in our `src` folder named `components`. All `*.js` files inside are treated as component files. I usually prefer to have a sub-folder for utility files in there as well.
-
-Component files **have** to `default export` an object with the properties `prefix` and `run`.
-
-#### Component prefix
-
-Component prefixes are strings. They are built like a URL with query parameters.
-The parameters don't have the usual `key=value` structure. They're also built like a path.
-
-**Fun fact:** Component prefixes match the following regex:
-
-```regex
-^[^/]+(?:\/[^/]+)*(?:\?(?:[^/]+(?:\/[^/]+)*))?
-```
-
-##### Examples
-
-- Simple component: `help`
-- Sub component (e.g. for a specific help-page): `help/commands`
-- Component with param (e.g. for a pagination system you have to pass the current page): `some/component/page?2`
-- Everything: `foo/bar?fizz/buzz/123`
-
-#### The `run` property
-
-This should be an async function that takes one parameter as the Interaction.
-
-#### Example
-
-```js
-default export {
-  prefix: "help",
-
-  async run(ctx) {
-    await ctx.reply("beep");
-  },
-}
-```
-
-### Commands
-
-See the article of the [`djsCommandHelper`](https://github.com/The-LukeZ/djsCommandHelper?tab=readme-ov-file#the-command-file) for more information on the command file itself.
-
-Basically, all `*.js` files inside are treated as command files. I usually prefer to have a sub-folder `utils` for utility files in there as well.
-
-> [!TIP]
-> If you have complex subcommands/subcommand groups, put them inside the utility folder and import them in the base command file.
-
-### Events
-
-Events are dynamically loaded. In this example we have an `events` sub-folder in our `src` directory.
-
-Since events can have multiple listeners and sometimes one event file is a bit too complicated, we make another folder for every event there is inside the `events` folder, which houses files that `export default` a function that acts as the event listener.
+The source code of the helper bot for the SupportMail support server.
 
 > [!NOTE]
-> An overview of supported events can be found here: [Click](https://discord.js.org/docs/packages/discord.js/14.16.3/ClientEvents:Interface)
+> This bot is not intended for public use.
+>
+> This code is specifically designed for the SupportMail support server.
 
-## Contribute
+If you want to use this code, you can do so by forking this repository and modifying the code to fit your needs.
 
-You are free to contribute to this template. Just fork the repository and create a pull request.
+## Current Features
+
+- Auto Publishing of messages (`autoPublish.py`)
+- Creating invites by the bot (`createInvites.py`)
+- dbManager for managing the database (`dbManager.py`)
+- Managing status updates for the main bot (`statusUpdates.py`)
+
+> [!NOTE]
+> Don't forget to add your bot token to the `.env` file as well as create your own `.env` file.
+> An example can be found in the `.env.example`.
+
+## License (Summary - not binding)
+
+### **GPL3 LICENSE**
+
+1. Anyone can copy, modify and distribute this code.
+2. You have to include the license and copyright notice with each and every distribution.
+3. You can use this software privately.
+4. You can use this software for commercial purposes.
+5. If you dare build your business solely from this code, you risk open-sourcing the whole code base.
+6. If you modify it, you have to indicate changes made to the code.
+7. Any modifications of this code base MUST be distributed with the same license, GPLv3.
+8. This software is provided without warranty.
+9. The software author or license can not be held liable for any damages inflicted by the software.
+
+More information on about the [LICENSE can be found here](http://choosealicense.com/licenses/gpl-3.0/)

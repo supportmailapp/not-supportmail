@@ -12,27 +12,18 @@ import {
 import { deployCommands } from "djs-command-helper";
 
 import { parseCustomId } from "./utils/main.js";
+import mongoose from "mongoose";
 
-// I use JSON here, but you can also use dotenv
 const config = (
   await import("../config.json", {
     with: { type: "json" },
   })
 ).default;
 
-// dotenv:
-/*
-import dotenv from "dotenv";
-dotenv.config({path: "./.env"});
-*/
-
-// ES Modules are a bit different than commonjs modules so we are constructing ou own Dirname variable here.
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
 
-// Create Client instance
 var client = new Client({
-  // Add more if you want it
   intents: [
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMembers,
@@ -45,26 +36,20 @@ var client = new Client({
     IntentsBitField.Flags.GuildModeration,
   ],
 
-  // Or leave this property blank if you want to cache everything without
   makeCache: Options.cacheWithLimits({
     MessageManager: 1024,
     GuildMessageManager: 1024,
   }),
 
-  // I personally don't mind if replies fail if not found, but if you want it, set it to `true`
   failIfNotExists: false,
 
-  // Enables events from uncached channels like closed posts or DMs
   partials: [Partials.Channel],
 
-  // If you only want to enable  certain mentions. This can be overridden when sending a message/reply.
   allowedMentions: { parse: ["users", "roles"], repliedUser: false },
 });
 
-// Commands mapped by their base name
-let commands = new Collection();
-// Components mapped by their "prefix"
-let components = new Collection();
+let commands = new Collection<string, App.CommandFile>();
+let components = new Collection<string, App.ComponentFile>();
 
 const commandsPath = pathJoin(_dirname, "commands");
 const commandFiles = readdirSync(commandsPath, { encoding: "utf-8" })
@@ -73,15 +58,8 @@ const commandFiles = readdirSync(commandsPath, { encoding: "utf-8" })
 
 for (const file of commandFiles) {
   const filePath = "file://" + file;
-  /**
-   * @type {App.CommandFile | unknown}
-   */
-  const command = (await import(filePath)).default;
-  if (
-    typeof command == "object" &&
-    command.hasOwnProperty("data") &&
-    command.hasOwnProperty("run")
-  ) {
+  const command: App.CommandFile = (await import(filePath)).default;
+  if (typeof command == "object" && "data" in command && "run" in command) {
     commands.set(command.data.name, command);
   } else {
     console.error(
@@ -97,10 +75,7 @@ const componentFiles = readdirSync(componentsPath, { encoding: "utf-8" })
 
 for (const file of componentFiles) {
   const filePath = "file://" + file;
-  /**
-   * @type {App.ComponentFile | unknown}
-   */
-  const comp = (await import(filePath)).default;
+  const comp: App.ComponentFile = (await import(filePath)).default;
   if (
     typeof comp === "object" &&
     comp.hasOwnProperty("prefix") &&
@@ -156,7 +131,7 @@ client.on("interactionCreate", async (interaction) => {
         `Error while executing command (${interaction.commandName})`,
         error
       );
-      if (interaction.isAutocomplete()) return; // You could send a response to an autocomplete request here.
+      if (interaction.isAutocomplete()) return;
 
       if (interaction.replied || interaction.deferred) {
         await interaction
@@ -229,20 +204,10 @@ client.on("ready", async (client) => {
 });
 
 (async function start() {
-  // Either connect directly
-  client.login(config.botToken);
-  console.info(`[${new Date().toLocaleString("en")}] Bot started`);
-  // Do additional stuff here
-
-  // Or connect with a mongoose connection
-  /*
   mongoose.connect(config.MongoDBUrl).then(async () => {
     console.info("Connected to DB");
 
     client.login(config.botToken);
     console.info("Bot started");
-
-    // Do additional stuff here
   });
-  */
 })();

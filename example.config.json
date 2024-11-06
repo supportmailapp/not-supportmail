@@ -1,0 +1,16 @@
+{
+  "botToken": "YOUR_BOT_TOKEN",
+  "MongoDBUrl": "mongodb://localhost:27017/databaseName",
+
+  "autoThreadedChannels": {
+    "channelId": "Title Format",
+    "1116023324271726753": "That title"
+  },
+  "autoPublishChannels": [
+    { "id": "1126573352887271525" },
+    {
+      "id": "1113896662914572368",
+      "pings": [{ "id": "1111912369371758676", "type": 2 }]
+    }
+  ]
+}
