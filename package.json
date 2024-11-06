@@ -1,0 +1,27 @@
+{
+  "name": "discordjs-app-template",
+  "version": "1.0.0",
+  "description": "A template for discord.js apps.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/index.js"
+  },
+  "keywords": [
+    "discord",
+    "discord.js",
+    "bot",
+    "template",
+    "djsCommandHelper",
+    "chatbot",
+    "discord-bot"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "types": "./src/types.d.ts",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "djs-command-helper": "^4.1.2"
+  }
+}
