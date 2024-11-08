@@ -35,3 +35,7 @@ If you want to use this code, you can do so by forking this repository and modif
 9. The software author or license can not be held liable for any damages inflicted by the software.
 
 More information on about the [LICENSE can be found here](http://choosealicense.com/licenses/gpl-3.0/)
+
+## TODO
+
+- [ ] Add option to edit submitted support questions
