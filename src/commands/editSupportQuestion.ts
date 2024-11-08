@@ -10,8 +10,10 @@ const { supportForumId } = (
 ).default;
 
 export default {
+  ignore: true,
+
   data: new ContextMenuCommandBuilder()
-    .setName("Edit Question Data")
+    .setName("Edit Question")
     .setType(3) // Message
     .setContexts(0),
 
