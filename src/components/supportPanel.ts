@@ -13,9 +13,17 @@ import {
 } from "discord.js";
 
 import { parseCustomId } from "../utils/main.js";
-import NodeCache from "node-cache";
 import dayjs from "dayjs";
-import { SupportQuestion } from "../models/supportQuestion.js";
+import {
+  SupportQuestion,
+  SupportQuestionField,
+  SupportQuestionLabelMap,
+  SupportQuestionType,
+  SupportQuestionTypeMap,
+} from "../models/supportQuestion.js";
+import { HydratedDocument } from "mongoose";
+import supportPostCooldown from "../caches/supportPostCooldown.js";
+import bugReportHandler from "./utils/bugReportHandler.js";
 
 const { featureRequestChannel, supportForumId, supportTags } = (
   await import("../../config.json", {
@@ -23,21 +31,7 @@ const { featureRequestChannel, supportForumId, supportTags } = (
   })
 ).default;
 
-const topicNames = {
-  generalQuestion: "General Question",
-  technicalQuestion: "Technical Question",
-  reportBug: "Bug Report",
-  error: "An Error Occured",
-};
-
 const PREFIX = "supportPanel";
-
-// { userid: string (unix timestamp) }
-let cooldownCache = new NodeCache({
-  stdTTL: 300,
-  checkperiod: 60,
-  errorOnMissing: false,
-});
 
 /*
 Available component parameters:
@@ -50,10 +44,22 @@ Available component parameters:
 - report
 */
 
+export type SupportPostData = {
+  title: SupportQuestionType;
+  fields: SupportQuestionField[];
+  user: User;
+  attachments?: Attachment[];
+  tag?: string;
+};
+
+type LocalSupportPostData = SupportPostData & {
+  title: Omit<SupportQuestionType, "bugReport">;
+};
+
 async function run(ctx: ButtonInteraction) {
   const { firstParam } = parseCustomId(ctx.customId);
 
-  const cooldownTS = cooldownCache.get(ctx.user.id);
+  const cooldownTS = supportPostCooldown.get(ctx.user.id);
 
   if (
     ["generalQuestion", "technicalQuestion", "reportBug"].includes(
@@ -154,6 +160,7 @@ async function run(ctx: ButtonInteraction) {
       });
       break;
   }
+  return;
 }
 
 async function processGeneralQuestion(ctx: ButtonInteraction) {
@@ -169,30 +176,19 @@ async function processGeneralQuestion(ctx: ButtonInteraction) {
             required: true,
             customId: "question",
             minLength: 10,
-            maxLength: 2048,
+            maxLength: 2800,
             style: 2,
-          })
-        ),
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder({
-            label: "Question topic",
-            placeholder: "What is the general topic of your question?",
-            required: false,
-            customId: "topic",
-            minLength: 2,
-            maxLength: 100,
-            style: 1,
           })
         ),
         new ActionRowBuilder<TextInputBuilder>().addComponents(
           new TextInputBuilder({
             label: "Documentation Links",
             placeholder:
-              "Link to articles of the documentation you read.\nAccessable at docs.supportmail.dev",
-            required: false,
+              "Link to articles of the documentation you read - Accessable at docs.supportmail.dev",
+            required: true,
             customId: "documentation",
-            minLength: 0,
-            maxLength: 2048,
+            minLength: 1,
+            maxLength: 1250,
             style: 2,
           })
         )
@@ -212,71 +208,53 @@ async function processGeneralQuestion(ctx: ButtonInteraction) {
   }
 
   const question = finalCtx.fields.getTextInputValue("question");
-  const topic = finalCtx.fields.getTextInputValue("topic");
   const documentation = finalCtx.fields.getTextInputValue("documentation");
 
   await ctx.deferReply({ ephemeral: true });
 
   await createSupportPost(finalCtx, {
-    title: topic || "General Question",
+    title: "generalQuestion",
     user: ctx.user,
-    tag: "generalQuestion",
     fields: [
-      {
-        title: "Question",
-        content: question,
-      },
-      {
-        title: "Provided Documentation Links",
-        content: documentation || "/",
-      },
+      { title: "question", content: question },
+      { title: "documentation-links", content: documentation },
     ],
   });
 
-  setCooldown(ctx.user.id);
+  supportPostCooldown.set(ctx.user.id);
 }
 
+// @ts-ignore
 async function processTechnicalQuestion(ctx: ButtonInteraction) {
-  // Do something
+  // Nearly the same as processGeneralQuestion
 }
 
-async function processReportBug(ctx: ButtonInteraction) {
-  // Do something
-}
+function processReportBug(ctx: ButtonInteraction) {
+  if (ctx.customId.endsWith("cancel")) {
+    return ctx.message.delete(); // This can only be in a DM, so we can delete the message
+  }
 
-function setCooldown(userid: string) {
-  cooldownCache.set(userid, dayjs().add(5, "minutes").unix().toFixed());
-}
-
-interface SupportPostData {
-  title: string;
-  fields: { title: string; content: string }[];
-  user: User;
-  tag: keyof typeof supportTags;
-  attachments?: Attachment[];
+  // REALLY complex, so this is handled by the bugReportHandler file in the utils dir
+  return bugReportHandler(ctx);
 }
 
 async function createSupportPost(
   ctx: ModalMessageModalSubmitInteraction,
-  data: SupportPostData
+  data: LocalSupportPostData
 ) {
+  data.tag = data.title; // For now, the tag is the same as the title - this might change in the future.
   const channel = (await ctx.guild.channels.fetch(
     supportForumId
   )) as ForumChannel;
 
-  const otherQuestions = await SupportQuestion.find({
-    userId: ctx.user.id,
-    updatedAt: { $gte: dayjs().subtract(7, "days").toDate() },
-  });
-
-  const postContent = getPostContent(ctx, data, otherQuestions);
+  const postContent = getPostContent(data);
   const embeds = getEmbeds(data);
 
   const post = await channel.threads.create({
     name: data.title,
     autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
     appliedTags: [data.tag, supportTags.unsolved],
-    rateLimitPerUser: 5,
+    rateLimitPerUser: 2,
     message: {
       content: postContent,
       embeds: embeds,
@@ -285,12 +263,27 @@ async function createSupportPost(
     },
   });
 
+  const otherQuestions = await SupportQuestion.find({
+    userId: ctx.user.id,
+    updatedAt: { $gte: dayjs().subtract(7, "days").toDate() },
+  });
+
   await SupportQuestion.create({
     topic: data.tag,
     userId: data.user.id,
     fields: data.fields,
     postId: post.id,
   });
+
+  if (!["bugReport", "error"].includes(data.title))
+    await post.send({
+      content:
+        data.title == "error"
+          ? ""
+          : getInstructionsMessage(ctx.guildId, otherQuestions),
+      allowedMentions: { repliedUser: false, parse: [] },
+      reply: { messageReference: post.id }, // The starter message has the same ID as the post...
+    });
 
   await ctx.editReply({
     content: `Your question has been posted in <#${supportForumId}>.`,
@@ -301,7 +294,7 @@ async function createSupportPost(
           {
             type: 2,
             style: 5,
-            label: "View Post",
+            label: "View your Post",
             url: getThreadUrl(ctx.guildId, post.id),
           },
         ],
@@ -310,45 +303,44 @@ async function createSupportPost(
   });
 }
 
-function getPostContent(
-  ctx: ModalMessageModalSubmitInteraction,
-  data: SupportPostData,
-  otherQuestions: SupportQuestion[]
-): string {
-  const baseContent = [
-    `# ${topicNames[data.tag]} | <@${data.user.id}>`,
-    "-# Right click this message > `Apps` > `Edit Question` to edit it.",
-  ];
-
-  if (otherQuestions.length > 0) {
-    baseContent.push(
-      "",
-      "### Other questions in the last 7 days:",
-      ...otherQuestions.map(
-        (q) =>
-          `[${q.topic}](${getThreadUrl(ctx.guildId, q.postId)}) <t:${dayjs(
-            q.createdAt
-          )
-            .unix()
-            .toFixed()}:R>`
-      )
-    );
-  }
-
-  return baseContent.join("\n").trim();
+function getPostContent(data: LocalSupportPostData): string {
+  return `## ${SupportQuestionTypeMap[data.title]} | <@${data.user.id}>`;
 }
 
-function getEmbeds(data: SupportPostData): EmbedBuilder[] {
+function getEmbeds(data: LocalSupportPostData): EmbedBuilder[] {
   return data.fields.map((field) =>
     new EmbedBuilder()
-      .setTitle(field.title)
+      .setTitle(SupportQuestionLabelMap[field.title])
       .setDescription(field.content)
       .setColor(Colors.Navy)
       .setImage("https://i.ibb.co/sgGD4TC/invBar.png")
   );
 }
 
-function getThreadUrl(guildid: string, postid: string): string {
+function getInstructionsMessage(
+  guildid: string, // This needs to be because there is not guildId if the button is clicked in a DM (which is the case for bug reports)
+  olderQuestions: HydratedDocument<SupportQuestion>[],
+  allowEdit = true
+) {
+  let content = [
+    "### Other question by you in the last 7 days:",
+    ...olderQuestions.map(
+      (q) =>
+        `[${SupportQuestionTypeMap[q._type]}](${getThreadUrl(
+          guildid,
+          q.postId
+        )}) <t:${dayjs(q.createdAt).unix().toFixed()}:R>`
+    ),
+  ];
+  if (allowEdit) {
+    content.unshift(
+      "-# Right click this message > `Apps` > `Edit Question` to edit it."
+    );
+  }
+  return content.join("\n");
+}
+
+export function getThreadUrl(guildid: string, postid: string): string {
   return `https://discord.com/channels/${guildid}/${supportForumId}/${postid}`;
 }
 
