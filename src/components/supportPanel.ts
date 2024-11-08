@@ -12,17 +12,18 @@ import {
   User,
 } from "discord.js";
 
-import { parseCustomId } from "../utils/main.js";
 import dayjs from "dayjs";
+import { HydratedDocument } from "mongoose";
+import supportPostCooldown from "../caches/supportPostCooldown.js";
 import {
+  ISupportQuestion,
   SupportQuestion,
   SupportQuestionField,
   SupportQuestionLabelMap,
   SupportQuestionType,
   SupportQuestionTypeMap,
 } from "../models/supportQuestion.js";
-import { HydratedDocument } from "mongoose";
-import supportPostCooldown from "../caches/supportPostCooldown.js";
+import { parseCustomId } from "../utils/main.js";
 import bugReportHandler from "./utils/bugReportHandler.js";
 
 const { featureRequestChannel, supportForumId, supportTags } = (
@@ -81,6 +82,9 @@ async function run(ctx: ButtonInteraction) {
     case "technicalQuestion":
       await processTechnicalQuestion(ctx);
       break;
+    case "error":
+      await processErrorQuestion(ctx);
+      break;
     case "reportBug":
       await processReportBug(ctx);
       break;
@@ -116,7 +120,7 @@ async function run(ctx: ButtonInteraction) {
             title:
               "Whoupsi! This isn't the right place to ask billing-related questions!",
             description: [
-              "If you would like to request a refund or if your request contains personal information, please send an email to [contact@supportmail.dev](<mailto:contact@supportmail.dev>).",
+              "If you would like to request a refund or if your request contains personal information, please send an email to `contact@supportmail.dev`.",
               "-# We can't help you with billing-related questions here because of privacy reasons.",
               "",
               "If your billing-related inquiry does not contain any of this personal information, please create a ticket by sending a message to <@1082707872565182614>.",
@@ -133,7 +137,10 @@ async function run(ctx: ButtonInteraction) {
           {
             title: "You are wrong here!",
             description:
-              "This is not the place to report users. Please use the context commands or slash-commands to report a user.",
+              "This is not the place to report users. Please use the context commands or slash-commands to report a user.\n" +
+              "## Want to report abuse of the system?\n" +
+              "We take abuse of the system very seriously.\n" +
+              "However, since the information is not intended for the public, please create a ticket by sending a direct message to <@1082707872565182614> as the information may be sensitive and not intended for the public.",
             color: Colors.Red,
           },
         ],
@@ -210,7 +217,7 @@ async function processGeneralQuestion(ctx: ButtonInteraction) {
   const question = finalCtx.fields.getTextInputValue("question");
   const documentation = finalCtx.fields.getTextInputValue("documentation");
 
-  await ctx.deferReply({ ephemeral: true });
+  await finalCtx.deferReply({ ephemeral: true });
 
   await createSupportPost(finalCtx, {
     title: "generalQuestion",
@@ -221,12 +228,155 @@ async function processGeneralQuestion(ctx: ButtonInteraction) {
     ],
   });
 
-  supportPostCooldown.set(ctx.user.id);
+  supportPostCooldown.set(finalCtx.user.id);
 }
 
 // @ts-ignore
 async function processTechnicalQuestion(ctx: ButtonInteraction) {
-  // Nearly the same as processGeneralQuestion
+  await ctx.showModal(
+    new ModalBuilder()
+      .setTitle("Technical Question")
+      .setCustomId("~/technicalQuestion")
+      .setComponents(
+        new ActionRowBuilder<TextInputBuilder>().setComponents(
+          new TextInputBuilder({
+            label: "Question",
+            placeholder: "What is your question?",
+            required: true,
+            customId: "question",
+            minLength: 10,
+            maxLength: 2048,
+            style: 2,
+          })
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder({
+            label: "Why are you asking this question?",
+            placeholder: "This will help us understand your question better.",
+            required: true,
+            customId: "whyask",
+            minLength: 10,
+            maxLength: 2048,
+            style: 2,
+          })
+        )
+      )
+  );
+
+  let finalCtx: ModalMessageModalSubmitInteraction;
+  try {
+    finalCtx = (await ctx.awaitModalSubmit({
+      time: 900_000,
+      filter: (interaction) =>
+        interaction.customId === "~/technicalQuestion" &&
+        interaction.user.id === ctx.user.id,
+    })) as ModalMessageModalSubmitInteraction;
+  } catch {
+    return;
+  }
+
+  const question = finalCtx.fields.getTextInputValue("question");
+  const whythisquestion = finalCtx.fields.getTextInputValue("whyask");
+
+  await ctx.deferReply({ ephemeral: true });
+
+  await createSupportPost(finalCtx, {
+    title: "generalQuestion",
+    user: ctx.user,
+    fields: [
+      { title: "question", content: question },
+      { title: "whyask", content: whythisquestion },
+    ],
+  });
+
+  supportPostCooldown.set(ctx.user.id);
+}
+
+async function processErrorQuestion(ctx: ButtonInteraction) {
+  // Nearly the same as the general question, but with more fields
+  await ctx.showModal(
+    new ModalBuilder()
+      .setTitle("Error")
+      .setCustomId("~/error")
+      .setComponents(
+        new ActionRowBuilder<TextInputBuilder>().setComponents(
+          new TextInputBuilder({
+            label: "Related Feature",
+            placeholder: "What feature is this error related to?",
+            required: true,
+            customId: "feature",
+            minLength: 10,
+            maxLength: 2800,
+            style: 2,
+          })
+        ),
+        new ActionRowBuilder<TextInputBuilder>().setComponents(
+          new TextInputBuilder({
+            label: "Error Message",
+            placeholder: "What is the error message?",
+            required: true,
+            customId: "error",
+            minLength: 10,
+            maxLength: 2800,
+            style: 2,
+          })
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder({
+            label: "Steps to Reproduce",
+            placeholder: "How can we reproduce the error?",
+            required: true,
+            customId: "steps",
+            minLength: 10,
+            maxLength: 2800,
+            style: 2,
+          })
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder({
+            label: "Expected Result",
+            placeholder: "What did you expect to happen?",
+            required: true,
+            customId: "expected",
+            minLength: 10,
+            maxLength: 2800,
+            style: 2,
+          })
+        )
+      )
+  );
+
+  let finalCtx: ModalMessageModalSubmitInteraction;
+  try {
+    finalCtx = (await ctx.awaitModalSubmit({
+      time: 900_000,
+      filter: (interaction) =>
+        interaction.customId === "~/error" &&
+        interaction.user.id === ctx.user.id,
+    })) as ModalMessageModalSubmitInteraction;
+  } catch {
+    return;
+  }
+
+  const relatedFeature = finalCtx.fields.getTextInputValue("feature");
+  const errorMessage = finalCtx.fields.getTextInputValue("error");
+  const steps = finalCtx.fields.getTextInputValue("steps");
+  const expected = finalCtx.fields.getTextInputValue("expected");
+
+  await ctx.deferReply({ ephemeral: true });
+
+  await createSupportPost(finalCtx, {
+    title: "generalQuestion",
+    user: ctx.user,
+    fields: [
+      { title: "feature", content: relatedFeature },
+      { title: "error", content: errorMessage },
+      { title: "steps", content: steps },
+      { title: "expected", content: expected },
+    ],
+  });
+
+  supportPostCooldown.set(ctx.user.id);
 }
 
 function processReportBug(ctx: ButtonInteraction) {
@@ -251,9 +401,9 @@ async function createSupportPost(
   const embeds = getEmbeds(data);
 
   const post = await channel.threads.create({
-    name: data.title,
+    name: SupportQuestionTypeMap[data.title],
     autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
-    appliedTags: [data.tag, supportTags.unsolved],
+    appliedTags: [supportTags[data.tag], supportTags.unsolved],
     rateLimitPerUser: 2,
     message: {
       content: postContent,
@@ -269,7 +419,7 @@ async function createSupportPost(
   });
 
   await SupportQuestion.create({
-    topic: data.tag,
+    _type: data.tag,
     userId: data.user.id,
     fields: data.fields,
     postId: post.id,
@@ -307,11 +457,21 @@ function getPostContent(data: LocalSupportPostData): string {
   return `## ${SupportQuestionTypeMap[data.title]} | <@${data.user.id}>`;
 }
 
+/**
+ * Formats the content (escapes links + hyperlinks) and returns an array of embeds for the support post.
+ */
 function getEmbeds(data: LocalSupportPostData): EmbedBuilder[] {
   return data.fields.map((field) =>
     new EmbedBuilder()
       .setTitle(SupportQuestionLabelMap[field.title])
-      .setDescription(field.content)
+      .setDescription(
+        field.content
+          .replace(
+            /\[(?<text>[^]]+)\]\((?<link>https?:\/\/[^)]+)\)\s*/gi,
+            (_, text, link) => `${text} (${link})`
+          )
+          .replace(/(https?:\/\/\S+)\)/gi, (_, link) => `<${link}>`)
+      )
       .setColor(Colors.Navy)
       .setImage("https://i.ibb.co/sgGD4TC/invBar.png")
   );
@@ -319,29 +479,32 @@ function getEmbeds(data: LocalSupportPostData): EmbedBuilder[] {
 
 function getInstructionsMessage(
   guildid: string, // This needs to be because there is not guildId if the button is clicked in a DM (which is the case for bug reports)
-  olderQuestions: HydratedDocument<SupportQuestion>[],
+  olderQuestions: HydratedDocument<ISupportQuestion>[],
+  // @ts-ignore
   allowEdit = true
 ) {
-  let content = [
-    "### Other question by you in the last 7 days:",
-    ...olderQuestions.map(
-      (q) =>
-        `[${SupportQuestionTypeMap[q._type]}](${getThreadUrl(
-          guildid,
-          q.postId
-        )}) <t:${dayjs(q.createdAt).unix().toFixed()}:R>`
-    ),
-  ];
-  if (allowEdit) {
-    content.unshift(
-      "-# Right click this message > `Apps` > `Edit Question` to edit it."
+  let content = [];
+  if (olderQuestions.length > 0)
+    content.push(
+      "### Other question by you in the last 7 days:",
+      ...olderQuestions.map(
+        (q) =>
+          `[${SupportQuestionTypeMap[q._type]}](${getThreadUrl(
+            guildid,
+            q.postId
+          )}) <t:${dayjs(q.createdAt).unix().toFixed()}:R>`
+      )
     );
-  }
+  // if (allowEdit) {
+  //   content.unshift(
+  //     "-# Right click this message > `Apps` > `Edit Question` to edit it."
+  //   );
+  // }
   return content.join("\n");
 }
 
 export function getThreadUrl(guildid: string, postid: string): string {
-  return `https://discord.com/channels/${guildid}/${supportForumId}/${postid}`;
+  return `https://discord.com/channels/${guildid}/${postid}`;
 }
 
 export default {

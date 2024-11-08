@@ -42,6 +42,7 @@ export default {
 
   async run(ctx: ChatInputCommandInteraction) {
     const option = ctx.options.getString("option");
+    await ctx.deferReply({ ephemeral: true });
 
     switch (option) {
       case "featureRequestSticky": {
@@ -59,7 +60,7 @@ export default {
         const sticky = await sendRequestSticky(channel);
 
         await currentMessage.updateOne({ messageId: sticky.id });
-        return;
+        break;
       }
       case "supportPanel": {
         const channel = (await ctx.guild.channels.fetch(
@@ -83,11 +84,11 @@ export default {
             "- :timer: **Inactive threads** will be closed **after 3 days** of no communication. So make sure to keep the conversation going if your issue is not solved.",
             "",
             "- :alarm_clock: **Note:**",
-            "  Due to the geographic location of the supporters and the developer, they are more likely to respond between <t:1697601600:t> and <t:1697659200:t> than at other times. Please be patient; **Don't ping anyone to get faster help.**",
+            "  Due to the geographic location of the supporters and the developer, they are more likely to respond between <t:1697601600:t> and <t:1697659200:t> than at other times.",
             "",
-            "- :rotating_light: **Don't ping anyone for attention**. Someone will assist you as soon as they can.",
+            "- :rotating_light: **Please be patient** and **don't ping anyone for attention**. Someone will assist you as soon as they can.",
             "",
-            "- :star: Please read the [Documentation](https://docs.supportmail.dev/) before asking!",
+            "- :star: Please read the [Documentation](<https://docs.supportmail.dev/>) before asking!",
             "  You can also use the AI search function there to find the information you need. If that doesn't help, feel free to ask here.",
             "_ _",
             "_ _",
@@ -108,7 +109,7 @@ export default {
                 emoji: { name: "🔧" },
               }),
               new ButtonBuilder({
-                label: "An Error occured",
+                label: "What does this Error mean?",
                 customId: "supportPanel?error",
                 style: 1,
                 emoji: { name: "❌" },
@@ -143,10 +144,13 @@ export default {
             ),
           ],
         });
-        return;
+        break;
       }
       default:
-        break;
+        await ctx.editReply("## ❌ Invalid option provided.");
+        return;
     }
+
+    await ctx.editReply("## ✅ Done!");
   },
 };

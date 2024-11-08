@@ -1,9 +1,4 @@
 import { model, Schema } from "mongoose";
-const { supportTags } = (
-  await import("../../config.json", {
-    with: { type: "json" },
-  })
-).default;
 
 /**
  * - `question`: The user's question.
@@ -12,17 +7,16 @@ const { supportTags } = (
 export type GeneralQuestionTitle = "question" | "documentation-links";
 /**
  * - `question`: The user's question.
- * - `feature`: The feature this question is related to.
+ * - `whyask`: The reason they're asking the question.
  */
-export type TechnicalQuestionTitle = "question" | "feature";
+export type TechnicalQuestionTitle = "question" | "whyask";
 /**
  * - `feature`: The feature this error is related to.
  * - `error`: The error message (if any).
  * - `steps`: The steps to reproduce the error.
  * - `expected`: The expected result.
- * - `actual`: The actual result.
  */
-export type ErrorTitle = "feature" | "error" | "steps" | "expected" | "actual";
+export type ErrorTitle = "feature" | "error" | "steps" | "expected";
 /**
  * - `description`: The bug the user is reporting.
  * - `steps`: The steps to reproduce the bug.
@@ -48,6 +42,7 @@ export type AnySupportQuestionTitle =
 export const SupportQuestionLabelMap = {
   question: "Question",
   "documentation-links": "Documentation Links",
+  whyask: "Why are you asking this question?",
   feature: "Related Feature",
   error: "Error Message",
   steps: "Steps to Reproduce",
@@ -82,15 +77,35 @@ export interface SupportQuestionField {
   content: string;
 }
 
-export interface SupportQuestion {
+export type QuestionState =
+  | "unsolved"
+  | "resolved"
+  | "reviewNeeded"
+  | "pending";
+
+export type ISupportQuestionFlags = {
+  noAutoClose?: boolean;
+  toArchive?: boolean;
+};
+
+export interface ISupportQuestion {
   _type: SupportQuestionType;
   userId: string;
   fields: SupportQuestionField[];
-  attachments: string[]; // Array of Attachment URLs
+  /**
+   * Array of Attachment URLs.
+   */
+  attachments: string[];
   postId: string;
-  state: keyof typeof supportTags;
-  closed: boolean;
-  closeTime: Date;
+  state: QuestionState;
+  lastActivity: Date;
+
+  resolved: boolean;
+  /**
+   * The time the post was closed.
+   */
+  closedAt: Date;
+  flags: ISupportQuestionFlags;
   updatedAt: NativeDate;
   createdAt: NativeDate;
 }
@@ -103,22 +118,38 @@ const SupportQuestionFieldSchema = new Schema<SupportQuestionField>(
   { _id: false }
 );
 
-const SupportQuestionSchema = new Schema<SupportQuestion>(
+const SupportQuestionFlagsSchema = new Schema<ISupportQuestionFlags>(
   {
-    _type: { type: String, required: true },
-    userId: { type: String, required: true },
-    fields: { type: [SupportQuestionFieldSchema], required: true },
-    attachments: { type: [String], required: false },
-    postId: { type: String, required: true },
-    state: { type: String, default: "unsolved" },
-    closed: { type: Boolean, required: false },
-    closeTime: { type: Date, required: false },
+    noAutoClose: { type: Boolean, required: false },
+    toArchive: { type: Boolean, required: false },
   },
-  { timestamps: true }
+  { _id: false }
 );
 
-export const SupportQuestion = model<SupportQuestion>(
+export const SupportQuestion = model<ISupportQuestion>(
   "SupportQuestion",
-  SupportQuestionSchema,
+  new Schema<ISupportQuestion>(
+    {
+      _type: {
+        type: String,
+        enum: ["generalQuestion", "techincalQuestion", "error", "bugReport"],
+        required: true,
+      },
+      userId: { type: String, required: true },
+      fields: { type: [SupportQuestionFieldSchema], required: true },
+      attachments: { type: [String], required: false },
+      postId: { type: String, required: true },
+      state: {
+        type: String,
+        enum: ["unsolved", "resolved", "reviewNeeded", "pending"],
+        default: "unsolved",
+      },
+      lastActivity: { type: Date, required: false },
+      resolved: { type: Boolean, required: false },
+      closedAt: { type: Date, required: false },
+      flags: { type: SupportQuestionFlagsSchema, default: {} },
+    },
+    { timestamps: true }
+  ),
   "supportQuestions"
 );

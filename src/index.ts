@@ -8,11 +8,13 @@ import {
   IntentsBitField,
   Options,
   Partials,
+  SlashCommandBuilder,
 } from "discord.js";
 import { deployCommands } from "djs-command-helper";
 
-import { parseCustomId } from "./utils/main.js";
 import mongoose from "mongoose";
+import ClosePostsScheduler from "./schedulers/closePosts.js";
+import { parseCustomId } from "./utils/main.js";
 
 const config = (
   await import("../config.json", {
@@ -48,8 +50,42 @@ var client = new Client({
   allowedMentions: { parse: ["users", "roles"], repliedUser: false },
 });
 
-let commands = new Collection<string, App.CommandFile>();
-let components = new Collection<string, App.ComponentFile>();
+type CommandFile = {
+  /**
+   * The data for the slash command
+   *
+   * @see {@link https://discord.js.org/docs/packages/builders/1.9.0/SlashCommandBuilder:Class}
+   */
+  data?: SlashCommandBuilder;
+  /**
+   * The function that should be run when the command is executed
+   */
+  run?: Function;
+  /**
+   * The optional function that should be run when the command is autocompleted
+   */
+  autocomplete?: Function;
+  [key: string]: any;
+};
+
+type ComponentFile = {
+  /**
+   * The prefix of this component
+   *
+   * @see {@link https://github.com/The-LukeZ/discordjs-app-template?tab=readme-ov-file#component-prefix}
+   */
+  prefix?: string;
+  /**
+   * The function that should be run when the component is triggered
+   */
+  run?: Function;
+  [key: string]: any;
+};
+
+type EventFile = Function;
+
+let commands = new Collection<string, CommandFile>();
+let components = new Collection<string, ComponentFile>();
 
 const commandsPath = pathJoin(_dirname, "commands");
 const commandFiles = readdirSync(commandsPath, { encoding: "utf-8" })
@@ -58,7 +94,7 @@ const commandFiles = readdirSync(commandsPath, { encoding: "utf-8" })
 
 for (const file of commandFiles) {
   const filePath = "file://" + file;
-  const command: App.CommandFile = (await import(filePath)).default;
+  const command: CommandFile = (await import(filePath)).default;
   if (typeof command == "object" && "data" in command && "run" in command) {
     commands.set(command.data.name, command);
   } else {
@@ -75,7 +111,7 @@ const componentFiles = readdirSync(componentsPath, { encoding: "utf-8" })
 
 for (const file of componentFiles) {
   const filePath = "file://" + file;
-  const comp: App.ComponentFile = (await import(filePath)).default;
+  const comp: ComponentFile = (await import(filePath)).default;
   if (
     typeof comp === "object" &&
     comp.hasOwnProperty("prefix") &&
@@ -102,7 +138,7 @@ for (const event of eventsFolders) {
 
   for (let file of eventFiles) {
     const filePath = "file://" + file;
-    const func = (await import(filePath)).default;
+    const func: EventFile = (await import(filePath)).default;
     if (typeof func !== "function") continue;
 
     client.on(event, (...args) => func(...args));
@@ -171,10 +207,20 @@ client.on("interactionCreate", async (interaction) => {
         `Error while executing component (${interaction.customId})`,
         error
       );
-      if (interaction.replied || interaction.deferred) {
+      if (
+        interaction.replied ||
+        (interaction.deferred && interaction.isMessageComponent())
+      ) {
         await interaction
           .editReply({
             content: "There was an error while executing this component!",
+          })
+          .catch((e) => console.error(e));
+      } else if (interaction.isModalSubmit()) {
+        await interaction
+          .reply({
+            content: "There was an error while executing this component!",
+            ephemeral: true,
           })
           .catch((e) => console.error(e));
       } else {
@@ -209,5 +255,8 @@ client.on("ready", async (client) => {
 
     client.login(config.botToken);
     console.info("Bot started");
+
+    // Start the schedulers
+    await ClosePostsScheduler.start();
   });
 })();

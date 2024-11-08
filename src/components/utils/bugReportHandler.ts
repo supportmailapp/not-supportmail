@@ -10,6 +10,7 @@ Includes mechanisms for handling timeouts, maximum message limits, and unknown e
 Once all necessary information is collected, it prepares and submits the final bug report to the appropriate channel in the support forum.
 */
 
+import dayjs from "dayjs";
 import {
   ActionRowBuilder,
   Attachment,
@@ -27,13 +28,12 @@ import {
   User,
 } from "discord.js";
 import bugReportsCache from "../../caches/bugReportsCache.js";
-import dayjs from "dayjs";
 import supportPostCooldown from "../../caches/supportPostCooldown.js";
 import {
   BugReportTitle,
   SupportQuestion,
   SupportQuestionLabelMap,
-  SupportQuestionTypeMap,
+  SupportQuestionTypeMap
 } from "../../models/supportQuestion.js";
 import { getThreadUrl, SupportPostData } from "../supportPanel.js";
 
@@ -519,24 +519,25 @@ export async function handleSubmit(
   }
 
   const post = await supportForum.threads.create({
-    name: data.title,
+    name: SupportQuestionTypeMap[data.title],
     autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
-    appliedTags: [data.tag, supportTags.unsolved],
+    appliedTags: [supportTags.bugReport, supportTags.unsolved],
     rateLimitPerUser: 2,
     message: messages.shift(),
   });
 
-  if (messages.length > 1)
+  if (messages.length > 0)
     for (const message of messages) {
       await new Promise((r) => setTimeout(r, 750));
       await post.send(message);
     }
 
   await SupportQuestion.create({
-    topic: data.tag,
+    _type: "bugReport",
     userId: data.user.id,
     fields: data.fields,
     postId: post.id,
+    attachments: bugData.attachments.map((a) => a.url),
   });
 
   supportPostCooldown.set(ctx.user.id);
