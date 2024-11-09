@@ -11,6 +11,7 @@ import {
 import {
   FeatureRequestCategory,
   FeatureRequestColors,
+  FeatureRequestStatusEmojis,
   FeatureRequestTitles,
 } from "../utils/enums.js";
 import { FeatureRequest, IFeatureRequest } from "../models/featureRequest.js";
@@ -158,7 +159,7 @@ export default {
     await new Promise((r) => setTimeout(r, 1000));
 
     const thread = await message.startThread({
-      name: `${ctx.user.username} | ${requestTitle}`,
+      name: `${FeatureRequestStatusEmojis[0]} | ${ctx.user.username} | ${requestTitle}`,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
       rateLimitPerUser: 2,
     });

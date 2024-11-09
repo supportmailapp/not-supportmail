@@ -48,3 +48,11 @@ export enum FeatureRequestStatus {
   Implemented = 4,
 }
 // The titles are the enum names.
+
+export const FeatureRequestStatusEmojis = {
+  0: "🕒",
+  1: "✅",
+  2: "❌",
+  3: "🔁",
+  4: "🏆",
+};
