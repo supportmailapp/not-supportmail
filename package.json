@@ -20,6 +20,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@sapphire/snowflake": "^3.5.5",
     "dayjs": "^1.11.13",
     "discord.js": "^14.16.3",
     "djs-command-helper": "^4.1.2",
