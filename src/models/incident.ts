@@ -1,27 +1,54 @@
-import { model, Schema, Document } from "mongoose";
+import { model, Schema } from "mongoose";
 import { IncidentStatus } from "../utils/enums.js";
 
-export interface Incident extends Document {
-  title: string;
-  description: string;
+export interface IStatusUpdate {
+  id: number;
   status: IncidentStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  content: string;
+  incidentId: Schema.Types.ObjectId;
+  updatedAt: NativeDate;
+  createdAt: NativeDate;
 }
 
-const IncidentSchema: Schema = new Schema<Incident>(
+const StatusUpdateSchema: Schema = new Schema<IStatusUpdate>(
   {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    status: {
-      type: Number,
-      default: IncidentStatus.Identified,
+    id: { type: Number, default: Date.now() },
+    content: { type: String, required: true },
+    status: { type: Number, required: true },
+    incidentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Incident",
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-export const Incident = model<Incident>(
+export const StatusUpdate = model<IStatusUpdate>(
+  "StatusUpdate",
+  StatusUpdateSchema,
+  "statusUpdates"
+);
+
+export interface IIncident {
+  title: string;
+  messageId?: string;
+  status: IncidentStatus;
+  createdAt: NativeDate;
+  updatedAt: NativeDate;
+  resolvedAt?: Date;
+}
+
+const IncidentSchema: Schema = new Schema<IIncident>(
+  {
+    title: { type: String, required: true },
+    messageId: { type: String, default: null },
+    resolvedAt: { type: Date, default: null },
+  },
+  { timestamps: true }
+);
+
+export const Incident = model<IIncident>(
   "Incident",
   IncidentSchema,
   "incidents"
