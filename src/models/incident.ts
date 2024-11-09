@@ -1,8 +1,14 @@
 import { model, Schema } from "mongoose";
 import { IncidentStatus } from "../utils/enums.js";
+import { DiscordSnowflake } from "@sapphire/snowflake";
 
 export interface IStatusUpdate {
-  id: number;
+  /**
+   * The unique identifier of the status update.
+   *
+   * This automatically set and corresponds to the current snowflake timestamp.
+   */
+  id: BigInt;
   status: IncidentStatus;
   content: string;
   incidentId: Schema.Types.ObjectId;
@@ -10,9 +16,13 @@ export interface IStatusUpdate {
   createdAt: NativeDate;
 }
 
+function genSnowflake() {
+  return DiscordSnowflake.generate();
+}
+
 const StatusUpdateSchema: Schema = new Schema<IStatusUpdate>(
   {
-    id: { type: Number, default: Date.now() },
+    id: { type: Schema.Types.BigInt, default: genSnowflake, unique: true },
     content: { type: String, required: true },
     status: { type: Number, required: true },
     incidentId: {

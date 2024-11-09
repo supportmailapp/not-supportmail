@@ -243,10 +243,10 @@ client.on("ready", async (client) => {
     }`
   );
 
-  // await deployCommands(commandsPath, {
-  //   appId: client.application.id,
-  //   appToken: client.token,
-  // });
+  await deployCommands(commandsPath, {
+    appId: client.application.id,
+    appToken: client.token,
+  });
 });
 
 (async function start() {

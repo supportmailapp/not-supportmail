@@ -551,6 +551,7 @@ export async function handleSubmit(
     })),
     postId: post.id,
     attachments: bugData.attachments.map((a) => a.url),
+    flags: { noAutoClose: true },
   });
 
   supportPostCooldown.set(btnCtx.user.id);

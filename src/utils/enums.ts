@@ -7,6 +7,13 @@ export enum IncidentStatus {
   Monitoring = 3,
 }
 
+export const IncidentStatusColors = {
+  [IncidentStatus.Resolved]: Colors.Green,
+  [IncidentStatus.Investigating]: Colors.Yellow,
+  [IncidentStatus.Identified]: Colors.Aqua,
+  [IncidentStatus.Monitoring]: Colors.Blurple,
+};
+
 export enum FeatureRequestCategory {
   Other = 0,
   Subscriptions = 1,
