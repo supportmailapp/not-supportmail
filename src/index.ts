@@ -10,6 +10,7 @@ import {
   Partials,
   SlashCommandBuilder,
 } from "discord.js";
+// @ts-ignore | Ignore because if we don't need it TS goes crazy
 import { deployCommands } from "djs-command-helper";
 
 import mongoose from "mongoose";
@@ -242,10 +243,10 @@ client.on("ready", async (client) => {
     }`
   );
 
-  await deployCommands(commandsPath, {
-    appId: client.application.id,
-    appToken: client.token,
-  });
+  // await deployCommands(commandsPath, {
+  //   appId: client.application.id,
+  //   appToken: client.token,
+  // });
 });
 
 (async function start() {

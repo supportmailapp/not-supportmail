@@ -115,7 +115,7 @@ export default {
 
     if (!fr) {
       return await ctx.reply({
-        content: "### :x: Rrequest not found.",
+        content: "### :x: Request not found.",
         ephemeral: true,
       });
     }
@@ -172,19 +172,19 @@ export default {
 
     let thread: PublicThreadChannel;
     if (ctx.channel.isThread()) {
-      thread = (await ctx.channel.setLocked(true)) as PublicThreadChannel;
+      thread = ctx.channel as PublicThreadChannel;
     } else {
       thread = (await ctx.guild.channels.fetch(
         fr.threadId
       )) as PublicThreadChannel;
     }
 
-    let threadNameSplits = thread.name.split(" | ").slice(0, 2);
-    threadNameSplits.unshift(FeatureRequestStatusEmojis[statusInt]);
+    let threadNameSplits = thread.name.split(" | ");
+    threadNameSplits[0] = FeatureRequestStatusEmojis[statusInt];
 
     let threadEditFields = {
       name: threadNameSplits.join(" | "),
-      locked: statusInt == FeatureRequestStatus.Implemented,
+      locked: FeatureRequestStatus.Accepted != statusInt,
     } as ThreadEditOptions;
     await thread.edit(threadEditFields);
   },

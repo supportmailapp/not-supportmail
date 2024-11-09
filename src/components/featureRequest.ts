@@ -137,6 +137,10 @@ export default {
           .setDescription(
             "### Short Description\n" + requestData.shortDescription
           )
+          .setFields({
+            name: "Why would this be beneficial?",
+            value: requestData.whyBenefit,
+          })
           .setImage("https://i.ibb.co/sgGD4TC/invBar.png"),
         new EmbedBuilder()
           .setAuthor({ name: "Long Description" })
@@ -146,7 +150,7 @@ export default {
           .setFooter({
             text: "Request ID: " + fRequest._id.toHexString(),
           }),
-      ].map((e) => e.setColor(requestColor)),
+      ].map((e) => e.setColor(requestColor)), // This is simpler than setting the color for each embed
     });
 
     requestData.threadId = message.id; // The id of the created thread is the same as the id of the source message
@@ -165,6 +169,8 @@ export default {
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
       rateLimitPerUser: 2,
     });
+
+    await fRequest.updateOne({ threadId: thread.id });
 
     await thread.send(`-# <@${ctx.user.id}>`);
     await thread.members.add("@me");
