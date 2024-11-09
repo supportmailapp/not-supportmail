@@ -134,9 +134,7 @@ export default {
             url: `https://discord.com/users/${ctx.user.id}`,
           })
           .setTitle(requestTitle)
-          .setDescription(
-            "### Short Description\n" + requestData.shortDescription
-          )
+          .setDescription(requestData.shortDescription)
           .setFields({
             name: "Why would this be beneficial?",
             value: requestData.whyBenefit,
