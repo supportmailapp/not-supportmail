@@ -26,12 +26,17 @@ export default async function (ctx: ChatInputCommandInteraction) {
       });
 
       if (currentMessage) {
-        await channel.messages.delete(currentMessage.messageId);
+        await channel.messages
+          .delete(currentMessage.messageId)
+          .catch(() => null);
       }
 
       const sticky = await sendRequestSticky(channel);
 
-      await currentMessage.updateOne({ messageId: sticky.id });
+      await DBStickyMessage.create({
+        channelId: channel.id,
+        messageId: sticky.id,
+      });
       break;
     }
     case "supportPanel": {

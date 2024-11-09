@@ -44,5 +44,7 @@ export enum FeatureRequestStatus {
   Pending = 0,
   Accepted = 1,
   Denied = 2,
+  Duplicate = 3,
+  Implemented = 4,
 }
 // The titles are the enum names.

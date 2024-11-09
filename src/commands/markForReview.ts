@@ -1,12 +1,12 @@
+import dayjs from "dayjs";
 import {
-  ChannelType,
-  ChatInputCommandInteraction,
-  Colors,
-  SlashCommandBuilder,
+    ChannelType,
+    ChatInputCommandInteraction,
+    Colors,
+    SlashCommandBuilder,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
-import dayjs from "dayjs";
-const { supportForumId, supportPostManagerRole, supportTags } = (
+const { supportForumId, threadManagerRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
 
@@ -35,7 +35,7 @@ export default {
       postId: ctx.channel.id,
     });
 
-    const hasManagerRole = ctx.member.roles.cache.has(supportPostManagerRole);
+    const hasManagerRole = ctx.member.roles.cache.has(threadManagerRole);
 
     if (!supportIssue) {
       return await ctx.reply({

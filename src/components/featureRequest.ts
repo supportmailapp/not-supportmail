@@ -157,11 +157,14 @@ export default {
 
     await new Promise((r) => setTimeout(r, 1000));
 
-    await message.startThread({
+    const thread = await message.startThread({
       name: `${ctx.user.username} | ${requestTitle}`,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
       rateLimitPerUser: 2,
     });
+
+    await thread.send(`-# <@${ctx.user.id}>`);
+    await thread.members.add("@me");
 
     await ctx.reply({
       content: "### ✅ Your feature request has been submitted!",
