@@ -12,19 +12,26 @@ export default async function featureRequestSticky(message: Message) {
   )
     return;
 
-  const currentMessage = await DBStickyMessage.findOneAndDelete({
+  const currentMessage = await DBStickyMessage.findOne({
     channelId: message.channel.id,
   });
 
   if (currentMessage) {
-    await message.channel.messages.delete(currentMessage.messageId);
+    await message.channel.messages
+      .delete(currentMessage.messageId)
+      .catch(() => null);
   }
 
   const sticky = await sendRequestSticky(message.channel);
 
-  await DBStickyMessage.create({
-    channelId: message.channel.id,
-    messageId: sticky.id,
-  });
+  if (currentMessage)
+    await currentMessage.updateOne({
+      messageId: sticky.id,
+    });
+  else
+    await DBStickyMessage.create({
+      channelId: message.channel.id,
+      messageId: sticky.id,
+    });
   return;
 }

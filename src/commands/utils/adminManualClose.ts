@@ -3,10 +3,14 @@ import {
   ChatInputCommandInteraction,
   REST,
   Routes,
-  ThreadEditOptions,
 } from "discord.js";
 import { SupportQuestion } from "../../models/supportQuestion.js";
 import dayjs from "dayjs";
+const { supportTags } = (
+  await import("../../../config.json", {
+    with: { type: "json" },
+  })
+).default;
 
 const { botToken } = (
   await import("../../../config.json", {
@@ -16,11 +20,11 @@ const { botToken } = (
 
 const reminders = [
   (u: string) =>
-    `### Hi <@${u}>!\n> Your last message is about 24 hours old.\n> Let us know if there's anything else we can do. If we don't hear back from you, this post will automatically be archived and locked. Reach out if you still need help.`,
+    `### Hi <@${u}>!\n> Your last message is about 24 hours old.\n> Let us know if there's anything else we can do. If we don't hear back from you, this post will automatically be archived. Reach out if you still need help.`,
   (u: string) =>
     `### Hey <@${u}>!\n> It's been a day since your last message.\n> We'll close this post in 24 hours if we don't hear back from you. Let us know if you need more help.`,
   (u: string) =>
-    `### Gday <@${u}>!\n> It's been a day since your last message.\n> This post will be automatically archived and locked in 24 hours if we don't hear from you. Let us know if you need further assistance.`,
+    `### Gday <@${u}>!\n> It's been a day since your last message.\n> This post will be automatically archived in 24 hours if we don't hear from you. Let us know if you need further assistance.`,
   (u: string) =>
     `### Hi again <@${u}>!\n> Just checking in on your support request.\n> We're here to help if you have any more questions if your issue isn't resolved.`,
 ];
@@ -59,8 +63,10 @@ export default async function (ctx: ChatInputCommandInteraction) {
   const toRemind = inactivePosts.filter((p) => p.flags.reminded != true);
   const toArchive = inactivePosts.filter(
     (p) =>
-      p.flags.reminded == true &&
-      p.lastActivity <= nowTs.subtract(4, "minutes").toDate()
+      (p.flags.reminded == true &&
+        p.lastActivity <= nowTs.subtract(4, "minutes").toDate()) ||
+      (p.resolved == true &&
+        p.lastActivity <= nowTs.subtract(2, "minutes").toDate())
   );
   const appCommands = (await rest.get(
     Routes.applicationCommands("1097562026575933604")
@@ -85,8 +91,8 @@ export default async function (ctx: ChatInputCommandInteraction) {
     await rest.patch(Routes.channel(post.postId), {
       body: {
         archived: true,
-        locked: true,
-      } as ThreadEditOptions,
+        applied_tags: [supportTags.resolved, supportTags[post._type]],
+      },
       reason: "Inactive",
     });
   }
