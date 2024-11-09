@@ -4,6 +4,7 @@
 
 import { ChannelType, Message } from "discord.js";
 import { SupportQuestion } from "../../models/supportQuestion.js";
+import dayjs from "dayjs";
 
 const { supportForumId, supportTags } = (
   await import("../../../config.json", { with: { type: "json" } })
@@ -24,13 +25,20 @@ export default async function adjustPostTags(message: Message) {
 
   const tags = message.channel.appliedTags;
 
-  if (!tags.includes(supportTags.unsolved)) return;
-
   const supportIssue = await SupportQuestion.findOne({
     postId: message.channel.id,
   });
 
-  if (!supportIssue || supportIssue.userId != message.author.id) return;
+  if (tags.includes(supportTags.unsolved)) {
+    if (!supportIssue || supportIssue.userId != message.author.id) return;
 
-  await message.channel.setAppliedTags([supportTags[supportIssue._type]]);
+    if (supportIssue.state == "unsolved")
+      await message.channel.setAppliedTags([supportTags[supportIssue._type]]);
+  }
+
+  let updateFields = { lastActivity: dayjs().toDate() };
+
+  if (supportIssue.flags.reminded) updateFields["flags.reminded"] = false;
+
+  await supportIssue.updateOne(updateFields);
 }

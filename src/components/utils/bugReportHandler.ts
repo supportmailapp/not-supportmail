@@ -22,6 +22,7 @@ import {
   EmbedBuilder,
   ForumChannel,
   Message,
+  MessageCreateOptions,
   PrivateThreadChannel,
   TextChannel,
   ThreadAutoArchiveDuration,
@@ -33,7 +34,7 @@ import {
   BugReportTitle,
   SupportQuestion,
   SupportQuestionLabelMap,
-  SupportQuestionTypeMap
+  SupportQuestionTypeMap,
 } from "../../models/supportQuestion.js";
 import { getThreadUrl, SupportPostData } from "../supportPanel.js";
 
@@ -88,15 +89,12 @@ function getBaseMessage() {
     author: {
       name: "Bug Report",
     },
-    footer: {
-      text: "You have 15 minutes to answer each question. If you don't answer in time, the process will be cancelled.",
-    },
     color: Colors.Blurple,
   };
 }
 
 type PartialBugData = Partial<Record<BugReportTitle, string>> & {
-  attachments?: Attachment[];
+  attachments: Attachment[];
 };
 
 export default async function bugReportHandler(ctx: ButtonInteraction) {
@@ -143,7 +141,10 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
         description:
           "Describe the bug.\n" +
           "- :warning: No attachments please. You will have the option later.\n" +
-          "- :warning: (**not** the steps to reproduce)",
+          "- :warning: **Not** the steps to reproduce - just the bug itself.",
+        footer: {
+          text: "You have 15 minutes to answer each question. If you don't answer in time, the process will be cancelled.",
+        },
         ...getBaseMessage(),
       },
     ],
@@ -152,7 +153,7 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
   await thread.members.add(user.id);
 
   await ctx.editReply({
-    content: "# You received a DM to report the bug.\nPlease continue there.",
+    content: "# Head over to the thread to and follow my instructions there.",
     components: [
       {
         type: 1,
@@ -222,6 +223,7 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
                 inline: false,
               },
             ]);
+            await ctx.deleteReply();
             break;
           }
           case 2: {
@@ -232,10 +234,8 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
           }
           case 3: {
             bugData.expected = msg.content;
-            replyEmbed = new EmbedBuilder({
-              title: "Actual Result",
-              description: "What actually happened?",
-            });
+            replyEmbed.setTitle("Actual Result");
+            replyEmbed.setDescription("What actually happened?");
             break;
           }
           case 4: {
@@ -254,7 +254,7 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             replyEmbed.setTitle("Server IDs related to this bug");
             replyEmbed.setDescription(
               "If the bug is related to a specific server, please provide the server ID.\n" +
-                "If the error happens in a DM, write `-dm`." +
+                "If the error happens in a DM, write `-dm`.\n" +
                 "-# If the bug is not server-specific, please type `-skip`.\n\n" +
                 "Visit this page if you don't know how to get a server or channel ID: [How to get an ID](https://docs.supportmail.dev/e/get-ids#channel-id)"
             );
@@ -276,25 +276,27 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             break;
           }
           case 7: {
-            if (["-skip", "-done"].includes(msg.content)) {
-              if (msg.content === "-skip") bugData.attachments = [];
-              collector.stop("done");
-              return;
-            }
-
             const parsedAttachments = msg.attachments
               .filter(
                 (a) =>
                   a.contentType.startsWith("image") ||
                   a.contentType.startsWith("video")
               )
-              .map((a) => a);
+              ?.map((a) => a);
 
-            if (parsedAttachments.length > 0) {
+            if (parsedAttachments?.length > 0) {
               bugData.attachments.push(...parsedAttachments);
             } else {
               isValid = false;
             }
+
+            if (["-skip", "-done"].includes(msg.content)) {
+              if (msg.content === "-skip") bugData.attachments = [];
+              await msg.react("✅");
+              collector.stop("done");
+              return;
+            }
+
             break;
           }
         }
@@ -409,20 +411,25 @@ export async function handleFinish(
   bugReportsCache.deleteProcess(user.id);
 
   // Markdown file with the information because of Discord-Limits
+  const MDHeader = `# Bug Report | ${dayjs().format("YYYY-MM-DD HH:mm:ss")}`;
+  const MDFields = Object.entries(bugData)
+    .filter(([key]) => key !== "attachments")
+    .map(
+      ([k, v]: [string, string]) =>
+        `## ${SupportQuestionLabelMap[k]}\n${v || "/"}\n`
+    )
+    .join("\n\n");
+  const attachmentsMd =
+    bugData.attachments?.length > 0
+      ? "## Attachments\n" +
+        bugData.attachments.map((a) => `- ${a.url}`).join("\n")
+      : null;
+
   const informationFile = new AttachmentBuilder(
     Buffer.from(
-      [
-        `# Bug Report | ${dayjs().format("YYYY-MM-DD HH:mm:ss")}\n`,
-        ...Object.entries(bugData)
-          .filter(([key]) => key !== "attachments")
-          .map(
-            ([k, v]: [string, string]) =>
-              `## ${SupportQuestionLabelMap[k]}\n${v}\n`
-          ),
-        `## Attachments\n${bugData.attachments
-          .map((a) => `- ${a.url}`)
-          .join("\n")}`,
-      ].join("\n\n")
+      [MDHeader, MDFields, attachmentsMd]
+        .filter((x) => x.length > 0 || Boolean(x))
+        .join("\n\n")
     ),
     {
       name: `bug-report-${dayjs().unix()}.md`,
@@ -432,10 +439,10 @@ export async function handleFinish(
   return thread.send({
     content:
       "# Thank your for reporting this issue!\n" +
-      "Here is the information you provided. Please review it and click the button to submit the report.\n\n" +
+      "Here is the information you provided. Please review it and click the button to submit the report.\n**Please note that:**" +
       "- Because of Discord-Limits I had to send this to you as a file.\n" +
       "- If you want to make changes, you need to cancel and start again.\n" +
-      "Please note, that you can't edit the report after submitting it.\n\n" +
+      "- You can't edit the report after submitting it.\n\n" +
       "### If you don't do anything, the bug report will created automatically in 5 minutes.",
     files: [informationFile],
     components: [
@@ -460,40 +467,43 @@ function generateEmbeds(data: Partial<SupportPostData>) {
     embeds: data.fields.map((field) =>
       new EmbedBuilder()
         .setTitle(SupportQuestionLabelMap[field.title])
-        .setDescription(field.content)
+        .setDescription(field.content || "/")
         .setColor(Colors.Navy)
         .setImage("https://i.ibb.co/sgGD4TC/invBar.png")
     ),
     charCounts: data.fields.map(
-      (f) => f.content.length + SupportQuestionLabelMap[f.title].length
+      (f) => (f.content || "/").length + SupportQuestionLabelMap[f.title].length
     ),
   };
 }
 
 export async function handleSubmit(
-  ctx: ButtonInteraction,
+  btnCtx: ButtonInteraction,
   thread: PrivateThreadChannel,
   bugData: PartialBugData
 ) {
   let data: Partial<SupportPostData> = {
     tag: "bugReport",
     title: "bugReport",
-    user: ctx.user,
+    user: btnCtx.user,
     fields: Object.entries(bugData)
       .filter(([key]) => key != "attachments")
-      .map(([k, v]: [BugReportTitle, string]) => ({ title: k, content: v })),
+      .map(([k, v]: [BugReportTitle, string]) => ({
+        title: k,
+        content: v || null,
+      })),
   };
-  const supportForum = (await ctx.guild.channels.fetch(
+  const supportForum = (await btnCtx.guild.channels.fetch(
     supportForumId
   )) as ForumChannel;
 
   const postContent = `## ${SupportQuestionTypeMap[data.title]} | <@${
-    ctx.user.id
+    btnCtx.user.id
   }>`;
   const { embeds, charCounts } = generateEmbeds(data);
 
   // Since the max char count on a embed.description is 4096, we need to split the messages
-  let messages = [];
+  let messages: MessageCreateOptions[] = [];
 
   const getDefaultPreviousData = () => ({ count: 0, embeds: [] });
   let previousData = getDefaultPreviousData();
@@ -503,13 +513,13 @@ export async function handleSubmit(
     if (previousData.count + charCounts[i] <= maxCharCount) {
       previousData.count += charCounts[i];
       previousData.embeds.push(embeds[i]);
-      if (i !== embeds.length - 1) continue; // To prevent the last message to be skipped
+      if (i < embeds.length - 1) continue; // To prevent the last message to be skipped
     }
 
     messages.push({
       content: i === 0 ? postContent : "",
-      embeds: previousData.embeds.slice(i - 1, i),
-      files: i === 0 ? bugData.attachments : [],
+      embeds: previousData.embeds,
+      files: i === 0 ? bugData.attachments : undefined,
       allowedMentions: { users: [data.user.id] },
     });
     previousData = {
@@ -519,15 +529,15 @@ export async function handleSubmit(
   }
 
   const post = await supportForum.threads.create({
-    name: SupportQuestionTypeMap[data.title],
+    name: SupportQuestionTypeMap[data.title] + ` | ${btnCtx.user.username}`,
     autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
     appliedTags: [supportTags.bugReport, supportTags.unsolved],
     rateLimitPerUser: 2,
-    message: messages.shift(),
+    message: messages[0],
   });
 
-  if (messages.length > 0)
-    for (const message of messages) {
+  if (messages.length > 1)
+    for (const message of messages.slice(1)) {
       await new Promise((r) => setTimeout(r, 750));
       await post.send(message);
     }
@@ -535,29 +545,24 @@ export async function handleSubmit(
   await SupportQuestion.create({
     _type: "bugReport",
     userId: data.user.id,
-    fields: data.fields,
+    fields: data.fields.map((f) => ({
+      title: f.title,
+      content: f.content,
+    })),
     postId: post.id,
     attachments: bugData.attachments.map((a) => a.url),
   });
 
-  supportPostCooldown.set(ctx.user.id);
+  supportPostCooldown.set(btnCtx.user.id);
 
-  await ctx.editReply({
-    content: `Your Bug Report has been posted in <#${supportForumId}>.`,
-    components: [
-      {
-        type: 1,
-        components: [
-          {
-            type: 2,
-            style: 5,
-            label: "View your Post",
-            url: getThreadUrl(ctx.guildId, post.id),
-          },
-        ],
-      },
-    ],
+  await btnCtx.update({ components: [] });
+
+  await btnCtx.followUp({
+    content:
+      `### Your Bug Report has been posted in <#${supportForumId}>.\n` +
+      `> [View your Post](${getThreadUrl(btnCtx.guildId, post.id)})`,
   });
+  // No components because you can't even click URL buttons in a locked post >:(
 
   await thread.setLocked(true);
 }

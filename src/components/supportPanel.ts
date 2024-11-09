@@ -278,10 +278,10 @@ async function processTechnicalQuestion(ctx: ButtonInteraction) {
   const question = finalCtx.fields.getTextInputValue("question");
   const whythisquestion = finalCtx.fields.getTextInputValue("whyask");
 
-  await ctx.deferReply({ ephemeral: true });
+  await finalCtx.deferReply({ ephemeral: true });
 
   await createSupportPost(finalCtx, {
-    title: "generalQuestion",
+    title: "technicalQuestion",
     user: ctx.user,
     fields: [
       { title: "question", content: question },
@@ -363,10 +363,10 @@ async function processErrorQuestion(ctx: ButtonInteraction) {
   const steps = finalCtx.fields.getTextInputValue("steps");
   const expected = finalCtx.fields.getTextInputValue("expected");
 
-  await ctx.deferReply({ ephemeral: true });
+  await finalCtx.deferReply({ ephemeral: true });
 
   await createSupportPost(finalCtx, {
-    title: "generalQuestion",
+    title: "error",
     user: ctx.user,
     fields: [
       { title: "feature", content: relatedFeature },
@@ -401,7 +401,7 @@ async function createSupportPost(
   const embeds = getEmbeds(data);
 
   const post = await channel.threads.create({
-    name: SupportQuestionTypeMap[data.title],
+    name: SupportQuestionTypeMap[data.title] + ` | ${ctx.user.username}`,
     autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
     appliedTags: [supportTags[data.tag], supportTags.unsolved],
     rateLimitPerUser: 2,
@@ -425,15 +425,15 @@ async function createSupportPost(
     postId: post.id,
   });
 
-  if (!["bugReport", "error"].includes(data.title))
-    await post.send({
-      content:
-        data.title == "error"
-          ? ""
-          : getInstructionsMessage(ctx.guildId, otherQuestions),
-      allowedMentions: { repliedUser: false, parse: [] },
-      reply: { messageReference: post.id }, // The starter message has the same ID as the post...
-    });
+  if (!["bugReport", "error"].includes(data.title)) {
+    const instructions = getInstructionsMessage(ctx.guildId, otherQuestions);
+    if (instructions.length > 0)
+      await post.send({
+        content: getInstructionsMessage(ctx.guildId, otherQuestions),
+        allowedMentions: { repliedUser: false, parse: [] },
+        reply: { messageReference: post.id }, // The starter message has the same ID as the post...
+      });
+  }
 
   await ctx.editReply({
     content: `Your question has been posted in <#${supportForumId}>.`,
@@ -483,10 +483,10 @@ function getInstructionsMessage(
   // @ts-ignore
   allowEdit = true
 ) {
-  let content = [];
+  let content = [""];
   if (olderQuestions.length > 0)
     content.push(
-      "### Other question by you in the last 7 days:",
+      "### Other questions by you in the last 7 days:",
       ...olderQuestions.map(
         (q) =>
           `[${SupportQuestionTypeMap[q._type]}](${getThreadUrl(
@@ -500,7 +500,7 @@ function getInstructionsMessage(
   //     "-# Right click this message > `Apps` > `Edit Question` to edit it."
   //   );
   // }
-  return content.join("\n");
+  return content.join("\n").trim();
 }
 
 export function getThreadUrl(guildid: string, postid: string): string {

@@ -4,6 +4,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
+// import dayjs from "dayjs";
 const { supportForumId, supportPostManagerRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
@@ -41,9 +42,7 @@ export default {
       postId: ctx.channel.id,
     });
 
-    const memberRoles = Array.isArray(ctx.member.roles)
-      ? ctx.member.roles
-      : ctx.member.roles.cache.map((r) => r.id);
+    const hasManagerRole = ctx.member.roles.cache.has(supportPostManagerRole);
 
     if (!supportIssue) {
       return await ctx.reply({
@@ -53,14 +52,18 @@ export default {
     } else if (
       supportIssue.userId != ctx.user.id ||
       !(
-        memberRoles.includes(supportPostManagerRole) ||
+        hasManagerRole ||
         ctx.member.permissions.has("ManageGuild") ||
         ctx.member.permissions.has("Administrator")
       )
     ) {
       return await ctx.reply({
-        content: `### :x: You are not authorized.\nIt can only be resolved by the author or a staff member.`,
-        allowedMentions: { parse: [] },
+        content: `### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.`,
+        ephemeral: true,
+      });
+    } else if (supportIssue.resolved) {
+      return await ctx.reply({
+        content: "This post has already been resolved.",
         ephemeral: true,
       });
     }
@@ -75,13 +78,13 @@ export default {
     await supportIssue.updateOne({
       resolved: true,
       state: "resolved",
+      // lastActivity: dayjs().toDate(),
     });
 
     await ctx.reply({
       content:
         `### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.` +
         (reason ? `\n\n**Reason:** ${reason}` : ""),
-      allowedMentions: { parse: [] },
     });
   },
 };

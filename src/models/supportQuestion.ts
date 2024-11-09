@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { model, Schema } from "mongoose";
 
 /**
@@ -55,13 +56,13 @@ export const SupportQuestionLabelMap = {
 
 export type SupportQuestionType =
   | "generalQuestion"
-  | "techincalQuestion"
+  | "technicalQuestion"
   | "error"
   | "bugReport";
 
 export const SupportQuestionTypeMap = {
   generalQuestion: "General Question",
-  techincalQuestion: "Technical Question",
+  technicalQuestion: "Technical Question",
   error: "Error",
   bugReport: "Bug Report",
 };
@@ -74,7 +75,7 @@ export interface SupportQuestionField {
   /**
    * The user's response to the question.
    */
-  content: string;
+  content?: string | null;
 }
 
 export type QuestionState =
@@ -85,7 +86,12 @@ export type QuestionState =
 
 export type ISupportQuestionFlags = {
   noAutoClose?: boolean;
-  toArchive?: boolean;
+  /**
+   * If the user has been reminded.
+   *
+   * When this is `true`, the post will be archived after 48 hours of total inactivity.
+   */
+  reminded: boolean;
 };
 
 export interface ISupportQuestion {
@@ -104,7 +110,7 @@ export interface ISupportQuestion {
   /**
    * The time the post was closed.
    */
-  closedAt: Date;
+  closedAt?: Date;
   flags: ISupportQuestionFlags;
   updatedAt: NativeDate;
   createdAt: NativeDate;
@@ -113,7 +119,7 @@ export interface ISupportQuestion {
 const SupportQuestionFieldSchema = new Schema<SupportQuestionField>(
   {
     title: { type: String, required: true },
-    content: { type: String, required: true },
+    content: { type: String, required: false },
   },
   { _id: false }
 );
@@ -121,35 +127,48 @@ const SupportQuestionFieldSchema = new Schema<SupportQuestionField>(
 const SupportQuestionFlagsSchema = new Schema<ISupportQuestionFlags>(
   {
     noAutoClose: { type: Boolean, required: false },
-    toArchive: { type: Boolean, required: false },
+    reminded: { type: Boolean, default: false },
   },
   { _id: false }
 );
 
-export const SupportQuestion = model<ISupportQuestion>(
-  "SupportQuestion",
-  new Schema<ISupportQuestion>(
-    {
-      _type: {
-        type: String,
-        enum: ["generalQuestion", "techincalQuestion", "error", "bugReport"],
-        required: true,
-      },
-      userId: { type: String, required: true },
-      fields: { type: [SupportQuestionFieldSchema], required: true },
-      attachments: { type: [String], required: false },
-      postId: { type: String, required: true },
-      state: {
-        type: String,
-        enum: ["unsolved", "resolved", "reviewNeeded", "pending"],
-        default: "unsolved",
-      },
-      lastActivity: { type: Date, required: false },
-      resolved: { type: Boolean, required: false },
-      closedAt: { type: Date, required: false },
-      flags: { type: SupportQuestionFlagsSchema, default: {} },
+const SupportQuestionSchema = new Schema<ISupportQuestion>(
+  {
+    _type: {
+      type: String,
+      enum: ["generalQuestion", "technicalQuestion", "error", "bugReport"],
+      required: true,
     },
-    { timestamps: true }
-  ),
+    userId: { type: String, required: true },
+    fields: { type: [SupportQuestionFieldSchema], required: true },
+    attachments: { type: [String], required: false },
+    postId: { type: String, required: true, unique: true },
+    state: {
+      type: String,
+      enum: ["unsolved", "resolved", "reviewNeeded", "pending"],
+      default: "unsolved",
+    },
+    lastActivity: { type: Date, default: dayjs().toDate() },
+    resolved: { type: Boolean, required: false },
+    closedAt: { type: Date, required: false },
+    flags: { type: SupportQuestionFlagsSchema, default: new Object() },
+  },
+  { timestamps: true }
+);
+
+SupportQuestionSchema.pre("save", function (next) {
+  this.lastActivity = dayjs().toDate();
+  next();
+});
+
+const supportQuestion = model<ISupportQuestion>(
+  "SupportQuestion",
+  SupportQuestionSchema,
   "supportQuestions"
 );
+
+supportQuestion.prependListener("save", function () {
+  this.lastActivity = dayjs().toDate();
+});
+
+export const SupportQuestion = supportQuestion;
