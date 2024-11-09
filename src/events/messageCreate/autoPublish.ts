@@ -1,10 +1,15 @@
-import { Message } from "discord.js";
+import { Message, MessageType } from "discord.js";
 const { autoPublishChannels } = (
   await import("../../../config.json", { with: { type: "json" } })
 ).default;
 
 export default async function autoPublish(message: Message) {
-  if (message.guildId !== "1064594649668395128" || message.author.bot) return;
+  if (
+    message.guildId !== "1064594649668395128" ||
+    message.author.bot ||
+    message.type != MessageType.Default // Only default messages can be crossposted
+  )
+    return;
 
   const validChannel = autoPublishChannels.find(
     (channel) => channel.id === message.channelId

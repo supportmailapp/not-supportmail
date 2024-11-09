@@ -1,27 +1,49 @@
 import {
   ActionRowBuilder,
-  ButtonBuilder,
   EmbedBuilder,
+  StringSelectMenuBuilder,
   TextChannel,
 } from "discord.js";
+import { FeatureRequestCategory } from "./enums.js";
 
 export function sendRequestSticky(channel: TextChannel) {
+  // Label, value, emoji
+  const requestCategoriesData: [string, number, string][] = [
+    ["Subscriptions", FeatureRequestCategory.Subscriptions, "💳"],
+    ["Settings", FeatureRequestCategory.Settings, "⚙️"],
+    ["Translations", FeatureRequestCategory.Translations, "🌐"],
+    ["Security", FeatureRequestCategory.Security, "🔒"],
+    ["Customizability", FeatureRequestCategory.Customizability, "🎨"],
+    ["Accessibility", FeatureRequestCategory.Accessibility, "♿"],
+    ["Support Server", FeatureRequestCategory.SupportServer, "🧭"],
+    ["Other", FeatureRequestCategory.Other, "❔"],
+  ];
+
   return channel.send({
     embeds: [
       new EmbedBuilder()
-        .setTitle("Feature Requests")
         .setDescription(
-          "Click the button below and fill out the form to submit a feature request."
+          [
+            "# :bulb: Feature Requests",
+            "Select a category below and fill out the form to submit a feature request.",
+            "-# Due to Discords limitations, you can only send attachments in the thread afterwards.",
+            "-# Please keep in mind that feature requests are not guaranteed to be implemented.",
+          ].join("\n")
         )
         .setColor("Random"),
     ],
     components: [
-      new ActionRowBuilder<ButtonBuilder>().setComponents(
-        new ButtonBuilder({
-          label: "Create Request",
-          style: 1,
+      new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
+        new StringSelectMenuBuilder({
+          placeholder: "Select a category",
           customId: "featureRequest",
-          emoji: { name: "📝" },
+          options: requestCategoriesData.map(([label, value, emoji]) => ({
+            label,
+            value: String(value),
+            emoji: {
+              name: emoji,
+            },
+          })),
         })
       ),
     ],
