@@ -242,7 +242,6 @@ client.on("ready", async (client) => {
     }`
   );
 
-  // ! Note: You only need to deploy commands when you've made changes to them. So comment this out when you are not working on commands.
   await deployCommands(commandsPath, {
     appId: client.application.id,
     appToken: client.token,

@@ -25,7 +25,7 @@ export function sendRequestSticky(channel: TextChannel) {
         .setDescription(
           [
             "# :bulb: Feature Requests",
-            "### Select a category below and fill out the form to submit a feature request.",
+            "**Select a category below and fill out the form to submit a feature request.**",
             "Due to Discords limitations, you can only send attachments in the thread afterwards.",
           ].join("\n")
         )

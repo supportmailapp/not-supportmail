@@ -68,7 +68,7 @@ export default {
           required: true,
         }),
         new TextInputBuilder({
-          customId: "whyBenfit",
+          customId: "whyBenefit",
           label: "Why would this be beneficial?",
           minLength: 10,
           maxLength: 1024,
@@ -103,6 +103,8 @@ export default {
       return;
     }
 
+    await ctx.update({ components: ctx.message.components });
+
     let requestData: Partial<IFeatureRequest> = {};
     const fields = ctx.fields;
     const categoryValueStr = ctx.customId.split("?")[1];
@@ -135,13 +137,15 @@ export default {
           .setDescription(
             "### Short Description\n" + requestData.shortDescription
           )
+          .setImage("https://i.ibb.co/sgGD4TC/invBar.png"),
+        new EmbedBuilder()
+          .setAuthor({ name: "Long Description" })
+          .setDescription(`${requestData.longDescription}`)
+          .setImage("https://i.ibb.co/sgGD4TC/invBar.png")
           .setTimestamp(dayjs().toDate())
           .setFooter({
             text: "Request ID: " + fRequest._id.toHexString(),
           }),
-        new EmbedBuilder()
-          .setAuthor({ name: "Long Description" })
-          .setDescription(`${requestData.longDescription}`),
       ].map((e) => e.setColor(requestColor)),
     });
 
@@ -154,8 +158,6 @@ export default {
       await sticky.updateOne({ messageId: newSticky.id });
     }
 
-    await ctx.deferReply({ ephemeral: true });
-
     await new Promise((r) => setTimeout(r, 1000));
 
     const thread = await message.startThread({
@@ -167,10 +169,22 @@ export default {
     await thread.send(`-# <@${ctx.user.id}>`);
     await thread.members.add("@me");
 
-    await ctx.reply({
-      content: "### ✅ Your feature request has been submitted!",
-      ephemeral: true,
-    });
+    try {
+      await ctx.user.send({
+        embeds: [
+          {
+            title: "Your feature request has been submitted!",
+            description: `View it [here](https://discord.com/channels/${ctx.guild.id}/${thread.id})`,
+            color: requestColor,
+            footer: {
+              text: `Request ID: ${fRequest._id.toHexString()}`,
+            },
+          },
+        ],
+      });
+    } catch (e) {
+      // User has DMs disabled
+    }
 
     cache.set(ctx.user.id, dayjs().add(1, "hour").unix().toString());
   },
