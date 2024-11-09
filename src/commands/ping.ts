@@ -19,6 +19,7 @@ export default {
     const guildPing = sent.createdTimestamp - ctx.createdTimestamp;
 
     await ctx.editReply({
+      content: "",
       embeds: [
         new EmbedBuilder()
           .setTitle("Pong")
