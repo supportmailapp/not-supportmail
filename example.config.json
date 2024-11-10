@@ -2,15 +2,37 @@
   "botToken": "YOUR_BOT_TOKEN",
   "MongoDBUrl": "mongodb://localhost:27017/databaseName",
 
-  "autoThreadedChannels": {
-    "channelId": "Title Format",
-    "1116023324271726753": "That title"
-  },
+  "statusChannelId": "1113896662914572368",
+  "statusPing": "1111912369371758676", // Role ID
+
+  "featureRequestChannel": "1116023324271726753",
+
+  "supportForumId": "1303817714615455774",
+  "supportPanelChannel": "1178626377935753297",
+
+  "threadManagerRole": "1304552684753256499", // Can manage support posts and mark FRs as duplicates
+  "devRoles": ["1251861042091524126", "1109802053938712686"],
+
+  "autoThreadedChannels": {},
   "autoPublishChannels": [
-    { "id": "1126573352887271525" },
+    { "id": "1126573352887271525", "note": "Bug Tracker" },
+    { "id": "1280964963959177342", "note": "Github Logs" },
     {
-      "id": "1113896662914572368",
-      "pings": [{ "id": "1111912369371758676", "type": 2 }]
+      "id": "1113896662914572368", // ID of user/role
+      // For validation: 1=user, 2=role
+      // The message will then only crossposted, if at least one of the pings is in the message.content
+      "pings": [{ "id": "1111912369371758676", "type": 2 }],
+      "note": "Status Updates" // Just a note that doesn't do anything
     }
-  ]
+  ],
+  "supportTags": {
+    "unsolved": "1303820377608425522",
+    "generalQuestion": "1303818146985017446",
+    "techincalQuestion": "1303818249032695858",
+    "error": "1303818694492950621",
+    "bugReport": "1303818331509227631",
+    "reviewNeeded": "1303818539643179028",
+    "pending": "1303818568533676144",
+    "resolved": "1303819263194304572"
+  }
 }

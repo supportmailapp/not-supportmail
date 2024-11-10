@@ -11,10 +11,12 @@ If you want to use this code, you can do so by forking this repository and modif
 
 ## Current Features
 
-- Auto Publishing of messages (`autoPublish.py`)
-- Creating invites by the bot (`createInvites.py`)
-- dbManager for managing the database (`dbManager.py`)
-- Managing status updates for the main bot (`statusUpdates.py`)
+- Auto Publishing of messages (with optional validation)
+- Auto Threading of channels (with optional validation)
+- Managing status updates for the main bot
+- Managing support questions (via a panel)
+- Handling bug reports
+- Managing feature requests (with the ability to have a sticky message in the channel)
 
 > [!NOTE]
 > Don't forget to add your bot token to the `.env` file as well as create your own `.env` file.
