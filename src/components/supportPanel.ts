@@ -57,7 +57,9 @@ type LocalSupportPostData = SupportPostData & {
   title: Omit<SupportQuestionType, "bugReport">;
 };
 
-async function run(ctx: ButtonInteraction) {
+async function run(
+  ctx: ButtonInteraction | ModalMessageModalSubmitInteraction
+) {
   const { firstParam } = parseCustomId(ctx.customId);
 
   const cooldownTS = supportPostCooldown.get(ctx.user.id);
@@ -86,7 +88,7 @@ async function run(ctx: ButtonInteraction) {
       await processErrorQuestion(ctx);
       break;
     case "reportBug":
-      await processReportBug(ctx);
+      await processReportBug(ctx as ButtonInteraction);
       break;
     case "featureRequest":
       await ctx.reply({
@@ -177,7 +179,7 @@ async function processGeneralQuestion(
     await ctx.showModal(
       new ModalBuilder()
         .setTitle("General Question")
-        .setCustomId(PREFIX + "/generalQuestion")
+        .setCustomId(PREFIX + "?generalQuestion")
         .setComponents(
           new ActionRowBuilder<TextInputBuilder>().setComponents(
             new TextInputBuilder({
@@ -231,7 +233,7 @@ async function processTechnicalQuestion(
     await ctx.showModal(
       new ModalBuilder()
         .setTitle("Technical Question")
-        .setCustomId(PREFIX + "/technicalQuestion")
+        .setCustomId(PREFIX + "?technicalQuestion")
         .setComponents(
           new ActionRowBuilder<TextInputBuilder>().setComponents(
             new TextInputBuilder({
@@ -285,7 +287,7 @@ async function processErrorQuestion(
     await ctx.showModal(
       new ModalBuilder()
         .setTitle("Error")
-        .setCustomId(PREFIX + "/error")
+        .setCustomId(PREFIX + "?error")
         .setComponents(
           new ActionRowBuilder<TextInputBuilder>().setComponents(
             new TextInputBuilder({
