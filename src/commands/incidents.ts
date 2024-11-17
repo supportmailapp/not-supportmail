@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import {
   APIApplicationCommandOptionChoice,
   APIEmbed,
@@ -7,15 +8,14 @@ import {
   SlashCommandBuilder,
   TextChannel,
 } from "discord.js";
-import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
+import { HydratedDocument } from "mongoose";
 import {
   IIncident,
   Incident,
   IStatusUpdate,
   StatusUpdate,
 } from "../models/incident.js";
-import { HydratedDocument } from "mongoose";
-import dayjs from "dayjs";
+import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
 const { statusChannelId, statusPing } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
@@ -137,7 +137,7 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
   else if (incident.resolvedAt)
     return await ctx.editReply("This incident is already resolved.");
 
-  const statusU = await StatusUpdate.create({
+  await StatusUpdate.create({
     incidentId: id,
     status: status,
     content: content,
@@ -164,7 +164,7 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
   });
 
   const incidentMessage = {
-    embeds: [formatIncident(incident, allStatuses.concat(statusU))],
+    embeds: [formatIncident(incident, allStatuses)],
   };
 
   await new Promise((r) => setTimeout(r, 1000));
