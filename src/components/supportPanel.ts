@@ -170,56 +170,49 @@ async function run(ctx: ButtonInteraction) {
   return;
 }
 
-async function processGeneralQuestion(ctx: ButtonInteraction) {
-  await ctx.showModal(
-    new ModalBuilder()
-      .setTitle("General Question")
-      .setCustomId("~/generalQuestion")
-      .setComponents(
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder({
-            label: "Question",
-            placeholder: "What is your question?",
-            required: true,
-            customId: "question",
-            minLength: 10,
-            maxLength: 2800,
-            style: 2,
-          })
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder({
-            label: "Documentation Links",
-            placeholder:
-              "Link to articles of the documentation you read - Accessable at docs.supportmail.dev",
-            required: true,
-            customId: "documentation",
-            minLength: 1,
-            maxLength: 1250,
-            style: 2,
-          })
+async function processGeneralQuestion(
+  ctx: ButtonInteraction | ModalMessageModalSubmitInteraction
+) {
+  if (ctx.isButton()) {
+    await ctx.showModal(
+      new ModalBuilder()
+        .setTitle("General Question")
+        .setCustomId(PREFIX + "/generalQuestion")
+        .setComponents(
+          new ActionRowBuilder<TextInputBuilder>().setComponents(
+            new TextInputBuilder({
+              label: "Question",
+              placeholder: "What is your question?",
+              required: true,
+              customId: "question",
+              minLength: 10,
+              maxLength: 2800,
+              style: 2,
+            })
+          ),
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder({
+              label: "Documentation Links",
+              placeholder:
+                "Link to articles of the documentation you read - Accessable at docs.supportmail.dev",
+              required: true,
+              customId: "documentation",
+              minLength: 1,
+              maxLength: 1250,
+              style: 2,
+            })
+          )
         )
-      )
-  );
-
-  let finalCtx: ModalMessageModalSubmitInteraction;
-  try {
-    finalCtx = (await ctx.awaitModalSubmit({
-      time: 900_000,
-      filter: (interaction) =>
-        interaction.customId === "~/generalQuestion" &&
-        interaction.user.id === ctx.user.id,
-    })) as ModalMessageModalSubmitInteraction;
-  } catch {
+    );
     return;
   }
 
-  const question = finalCtx.fields.getTextInputValue("question");
-  const documentation = finalCtx.fields.getTextInputValue("documentation");
+  const question = ctx.fields.getTextInputValue("question");
+  const documentation = ctx.fields.getTextInputValue("documentation");
 
-  await finalCtx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ ephemeral: true });
 
-  await createSupportPost(finalCtx, {
+  await createSupportPost(ctx, {
     title: "generalQuestion",
     user: ctx.user,
     fields: [
@@ -228,59 +221,51 @@ async function processGeneralQuestion(ctx: ButtonInteraction) {
     ],
   });
 
-  supportPostCooldown.set(finalCtx.user.id);
+  supportPostCooldown.set(ctx.user.id);
 }
 
-// @ts-ignore
-async function processTechnicalQuestion(ctx: ButtonInteraction) {
-  await ctx.showModal(
-    new ModalBuilder()
-      .setTitle("Technical Question")
-      .setCustomId("~/technicalQuestion")
-      .setComponents(
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder({
-            label: "Question",
-            placeholder: "What is your question?",
-            required: true,
-            customId: "question",
-            minLength: 10,
-            maxLength: 2048,
-            style: 2,
-          })
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder({
-            label: "Why are you asking this question?",
-            placeholder: "This will help us understand your question better.",
-            required: true,
-            customId: "whyask",
-            minLength: 10,
-            maxLength: 2048,
-            style: 2,
-          })
+async function processTechnicalQuestion(
+  ctx: ButtonInteraction | ModalMessageModalSubmitInteraction
+) {
+  if (ctx.isButton()) {
+    await ctx.showModal(
+      new ModalBuilder()
+        .setTitle("Technical Question")
+        .setCustomId(PREFIX + "/technicalQuestion")
+        .setComponents(
+          new ActionRowBuilder<TextInputBuilder>().setComponents(
+            new TextInputBuilder({
+              label: "Question",
+              placeholder: "What is your question?",
+              required: true,
+              customId: "question",
+              minLength: 10,
+              maxLength: 2048,
+              style: 2,
+            })
+          ),
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder({
+              label: "Why are you asking this question?",
+              placeholder: "This will help us understand your question better.",
+              required: true,
+              customId: "whyask",
+              minLength: 10,
+              maxLength: 2048,
+              style: 2,
+            })
+          )
         )
-      )
-  );
-
-  let finalCtx: ModalMessageModalSubmitInteraction;
-  try {
-    finalCtx = (await ctx.awaitModalSubmit({
-      time: 900_000,
-      filter: (interaction) =>
-        interaction.customId === "~/technicalQuestion" &&
-        interaction.user.id === ctx.user.id,
-    })) as ModalMessageModalSubmitInteraction;
-  } catch {
+    );
     return;
   }
 
-  const question = finalCtx.fields.getTextInputValue("question");
-  const whythisquestion = finalCtx.fields.getTextInputValue("whyask");
+  const question = ctx.fields.getTextInputValue("question");
+  const whythisquestion = ctx.fields.getTextInputValue("whyask");
 
-  await finalCtx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ ephemeral: true });
 
-  await createSupportPost(finalCtx, {
+  await createSupportPost(ctx, {
     title: "technicalQuestion",
     user: ctx.user,
     fields: [
@@ -292,80 +277,73 @@ async function processTechnicalQuestion(ctx: ButtonInteraction) {
   supportPostCooldown.set(ctx.user.id);
 }
 
-async function processErrorQuestion(ctx: ButtonInteraction) {
-  // Nearly the same as the general question, but with more fields
-  await ctx.showModal(
-    new ModalBuilder()
-      .setTitle("Error")
-      .setCustomId("~/error")
-      .setComponents(
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder({
-            label: "Related Feature",
-            placeholder: "What feature is this error related to?",
-            required: true,
-            customId: "feature",
-            minLength: 10,
-            maxLength: 2800,
-            style: 2,
-          })
-        ),
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder({
-            label: "Error Message",
-            placeholder: "What is the error message?",
-            required: true,
-            customId: "error",
-            minLength: 10,
-            maxLength: 2800,
-            style: 2,
-          })
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder({
-            label: "Steps to Reproduce",
-            placeholder: "How can we reproduce the error?",
-            required: true,
-            customId: "steps",
-            minLength: 10,
-            maxLength: 2800,
-            style: 2,
-          })
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder({
-            label: "Expected Result",
-            placeholder: "What did you expect to happen?",
-            required: true,
-            customId: "expected",
-            minLength: 10,
-            maxLength: 2800,
-            style: 2,
-          })
+async function processErrorQuestion(
+  ctx: ButtonInteraction | ModalMessageModalSubmitInteraction
+) {
+  if (ctx.isButton()) {
+    // Nearly the same as the general question, but with more fields
+    await ctx.showModal(
+      new ModalBuilder()
+        .setTitle("Error")
+        .setCustomId(PREFIX + "/error")
+        .setComponents(
+          new ActionRowBuilder<TextInputBuilder>().setComponents(
+            new TextInputBuilder({
+              label: "Related Feature",
+              placeholder: "What feature is this error related to?",
+              required: true,
+              customId: "feature",
+              minLength: 10,
+              maxLength: 2800,
+              style: 2,
+            })
+          ),
+          new ActionRowBuilder<TextInputBuilder>().setComponents(
+            new TextInputBuilder({
+              label: "Error Message",
+              placeholder: "What is the error message?",
+              required: true,
+              customId: "error",
+              minLength: 10,
+              maxLength: 2800,
+              style: 2,
+            })
+          ),
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder({
+              label: "Steps to Reproduce",
+              placeholder: "How can we reproduce the error?",
+              required: true,
+              customId: "steps",
+              minLength: 10,
+              maxLength: 2800,
+              style: 2,
+            })
+          ),
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder({
+              label: "Expected Result",
+              placeholder: "What did you expect to happen?",
+              required: true,
+              customId: "expected",
+              minLength: 10,
+              maxLength: 2800,
+              style: 2,
+            })
+          )
         )
-      )
-  );
-
-  let finalCtx: ModalMessageModalSubmitInteraction;
-  try {
-    finalCtx = (await ctx.awaitModalSubmit({
-      time: 900_000,
-      filter: (interaction) =>
-        interaction.customId === "~/error" &&
-        interaction.user.id === ctx.user.id,
-    })) as ModalMessageModalSubmitInteraction;
-  } catch {
+    );
     return;
   }
 
-  const relatedFeature = finalCtx.fields.getTextInputValue("feature");
-  const errorMessage = finalCtx.fields.getTextInputValue("error");
-  const steps = finalCtx.fields.getTextInputValue("steps");
-  const expected = finalCtx.fields.getTextInputValue("expected");
+  const relatedFeature = ctx.fields.getTextInputValue("feature");
+  const errorMessage = ctx.fields.getTextInputValue("error");
+  const steps = ctx.fields.getTextInputValue("steps");
+  const expected = ctx.fields.getTextInputValue("expected");
 
-  await finalCtx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ ephemeral: true });
 
-  await createSupportPost(finalCtx, {
+  await createSupportPost(ctx, {
     title: "error",
     user: ctx.user,
     fields: [
@@ -389,11 +367,11 @@ function processReportBug(ctx: ButtonInteraction) {
 }
 
 async function createSupportPost(
-  ctx: ModalMessageModalSubmitInteraction,
+  modalCtx: ModalMessageModalSubmitInteraction,
   data: LocalSupportPostData
 ) {
   data.tag = data.title; // For now, the tag is the same as the title - this might change in the future.
-  const channel = (await ctx.guild.channels.fetch(
+  const channel = (await modalCtx.guild.channels.fetch(
     supportForumId
   )) as ForumChannel;
 
@@ -401,7 +379,7 @@ async function createSupportPost(
   const embeds = getEmbeds(data);
 
   const post = await channel.threads.create({
-    name: SupportQuestionTypeMap[data.title] + ` | ${ctx.user.username}`,
+    name: SupportQuestionTypeMap[data.title] + ` | ${modalCtx.user.username}`,
     autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
     appliedTags: [supportTags[data.tag], supportTags.unsolved],
     rateLimitPerUser: 2,
@@ -414,7 +392,7 @@ async function createSupportPost(
   });
 
   const otherQuestions = await SupportQuestion.find({
-    userId: ctx.user.id,
+    userId: modalCtx.user.id,
     updatedAt: { $gte: dayjs().subtract(7, "days").toDate() },
   });
 
@@ -426,16 +404,19 @@ async function createSupportPost(
   });
 
   if (!["bugReport", "error"].includes(data.title)) {
-    const instructions = getInstructionsMessage(ctx.guildId, otherQuestions);
+    const instructions = getInstructionsMessage(
+      modalCtx.guildId,
+      otherQuestions
+    );
     if (instructions.length > 0)
       await post.send({
-        content: getInstructionsMessage(ctx.guildId, otherQuestions),
+        content: getInstructionsMessage(modalCtx.guildId, otherQuestions),
         allowedMentions: { repliedUser: false, parse: [] },
         reply: { messageReference: post.id }, // The starter message has the same ID as the post...
       });
   }
 
-  await ctx.editReply({
+  await modalCtx.editReply({
     content: `Your question has been posted in <#${supportForumId}>.`,
     components: [
       {
@@ -445,7 +426,7 @@ async function createSupportPost(
             type: 2,
             style: 5,
             label: "View your Post",
-            url: getThreadUrl(ctx.guildId, post.id),
+            url: getThreadUrl(modalCtx.guildId, post.id),
           },
         ],
       },
