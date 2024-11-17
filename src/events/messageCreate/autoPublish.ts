@@ -6,8 +6,7 @@ const { autoPublishChannels } = (
 export default async function autoPublish(message: Message) {
   if (
     message.guildId !== "1064594649668395128" ||
-    message.author.bot ||
-    message.type != MessageType.Default // Only default messages can be crossposted
+    message.type == MessageType.Reply
   )
     return;
 
