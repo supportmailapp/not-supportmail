@@ -59,7 +59,7 @@ class ClosePostsScheduler {
     const toArchive = inactivePosts.filter(
       (p) =>
         p.flags.reminded == true &&
-        p.lastActivity <= nowTs.subtract(2, "days").toDate()
+        p.updatedAt <= nowTs.subtract(2, "days").toDate()
     );
     const appCommands = (await rest.get(
       Routes.applicationCommands("1097562026575933604")

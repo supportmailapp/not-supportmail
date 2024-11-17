@@ -1,7 +1,7 @@
 import {
-    ChannelType,
-    ChatInputCommandInteraction,
-    SlashCommandBuilder,
+  ChannelType,
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
 // import dayjs from "dayjs";
@@ -78,7 +78,6 @@ export default {
     await supportIssue.updateOne({
       resolved: true,
       state: "resolved",
-      // lastActivity: dayjs().toDate(),
     });
 
     await ctx.reply({
