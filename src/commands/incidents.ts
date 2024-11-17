@@ -108,7 +108,9 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
     embeds: [formatIncident(incident, [statusU])],
   });
 
-  await statusU.updateOne({ messageId: message.id });
+  await new Promise((r) => setTimeout(r, 1000)); // Might fix an issue with status update not existing yet
+
+  await StatusUpdate.findByIdAndUpdate(statusU.id, { messageId: message.id });
 
   await ctx.editReply({
     embeds: [
@@ -167,7 +169,8 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
 
   await new Promise((r) => setTimeout(r, 1000));
 
-  await incident.updateOne({ resolvedAt: dayjs().toDate() });
+  if (status === IncidentStatus.Resolved)
+    await incident.updateOne({ resolvedAt: dayjs().toDate() });
 
   const channel = (await ctx.guild.channels.fetch(
     statusChannelId
