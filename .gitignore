@@ -69,6 +69,10 @@ web_modules/
 # Output of 'npm pack'
 *.tgz
 
+# Zipped versions of bot
+*.zip
+*.tar.gz
+
 # Yarn Integrity file
 .yarn-integrity
 
