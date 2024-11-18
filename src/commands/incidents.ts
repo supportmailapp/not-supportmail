@@ -110,8 +110,6 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
 
   await new Promise((r) => setTimeout(r, 1000)); // Might fix an issue with status update not existing yet
 
-  await StatusUpdate.findByIdAndUpdate(statusU.id, { messageId: message.id });
-
   await ctx.editReply({
     embeds: [
       {
@@ -121,6 +119,8 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
       },
     ],
   });
+
+  await StatusUpdate.findByIdAndUpdate(statusU._id, { messageId: message.id });
 }
 
 async function updateIncident(ctx: ChatInputCommandInteraction) {
