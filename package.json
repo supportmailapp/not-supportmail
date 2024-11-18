@@ -1,11 +1,12 @@
 {
-  "name": "discordjs-app-template",
-  "version": "1.0.0",
+  "name": "supportmail-helper",
+  "version": "1.0.1",
   "description": "A template for discord.js apps.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "build": "npx tsc"
   },
   "keywords": [
     "discord",

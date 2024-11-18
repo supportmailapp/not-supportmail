@@ -276,13 +276,14 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             break;
           }
           case 7: {
-            const parsedAttachments = msg.attachments
-              .filter(
-                (a) =>
-                  a.contentType.startsWith("image") ||
-                  a.contentType.startsWith("video")
-              )
-              ?.map((a) => a);
+            const parsedAttachments =
+              msg.attachments
+                .filter(
+                  (a) =>
+                    a.contentType.startsWith("image") ||
+                    a.contentType.startsWith("video")
+                )
+                ?.map((a) => a) || [];
 
             if (parsedAttachments?.length > 0) {
               bugData.attachments.push(...parsedAttachments);
@@ -519,7 +520,7 @@ export async function handleSubmit(
     messages.push({
       content: i === 0 ? postContent : "",
       embeds: previousData.embeds,
-      files: i === 0 ? bugData.attachments : undefined,
+      files: i === 0 && bugData.attachments && bugData.attachments.length > 0 ? bugData.attachments : undefined,
       allowedMentions: { users: [data.user.id] },
     });
     previousData = {
