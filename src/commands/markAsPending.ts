@@ -6,7 +6,7 @@ import {
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
 import dayjs from "dayjs";
-const { supportForumId, devRoles, supportTags } = (
+const { supportForumId, devRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
 
@@ -40,7 +40,7 @@ export default {
         content: "This post is not a support question.",
         ephemeral: true,
       });
-    } else if (!devRoles.some((role) => ctx.member.roles.cache.has(role))) {
+    } else if (!ctx.member.roles.cache.has(devRole)) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nOnly a dev can mark this post as pending.`,
         ephemeral: true,

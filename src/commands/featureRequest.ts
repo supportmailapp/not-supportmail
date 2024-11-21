@@ -12,7 +12,7 @@ import {
 } from "../utils/enums.js";
 import { FeatureRequest, IFeatureRequest } from "../models/featureRequest.js";
 import { HydratedDocument } from "mongoose";
-const { devRoles, threadManagerRole } = (
+const { devRole, threadManagerRole } = (
   await import("../../config.json", {
     with: { type: "json" },
   })
@@ -92,7 +92,7 @@ export default {
     // Other staff members can mark it as a duplicate
 
     const newStatusDuplicate = statusInt == FeatureRequestStatus.Duplicate;
-    const isDev = devRoles.some((rid) => ctx.member.roles.cache.has(rid));
+    const isDev = ctx.member.roles.cache.has(devRole);
     const isThreadManager = ctx.member.roles.cache.has(threadManagerRole);
 
     if (
