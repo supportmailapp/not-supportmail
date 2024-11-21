@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import {
-    ChannelType,
-    ChatInputCommandInteraction,
-    Colors,
-    SlashCommandBuilder,
+  ChannelType,
+  ChatInputCommandInteraction,
+  Colors,
+  SlashCommandBuilder,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
-const { supportForumId, threadManagerRole, supportTags } = (
+const { devRole, supportForumId, threadManagerRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
 
@@ -35,7 +35,9 @@ export default {
       postId: ctx.channel.id,
     });
 
-    const hasManagerRole = ctx.member.roles.cache.has(threadManagerRole);
+    const canMark = ctx.member.roles.cache.some(
+      (r) => r.id === devRole || r.id === threadManagerRole
+    );
 
     if (!supportIssue) {
       return await ctx.reply({
@@ -43,9 +45,8 @@ export default {
         ephemeral: true,
       });
     } else if (
-      supportIssue.userId != ctx.user.id ||
       !(
-        hasManagerRole ||
+        canMark ||
         ctx.member.permissions.has("ManageGuild") ||
         ctx.member.permissions.has("Administrator")
       )
