@@ -120,7 +120,7 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
     ],
   });
 
-  await Incident.findByIdAndUpdate(statusU._id, { messageId: message.id });
+  await Incident.findByIdAndUpdate(statusU.incidentId, { messageId: message.id });
 }
 
 async function updateIncident(ctx: ChatInputCommandInteraction) {
