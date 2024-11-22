@@ -29,9 +29,9 @@ const closeWithCommandText = (commands: APIApplicationCommand[]) =>
     commands.find((cmd) => cmd.name == "resolve").id
   }>.`;
 
-class ClosePostsScheduler {
+class Scheduler {
   public static async start() {
-    schedule.scheduleJob("* *1 * * *", this.execute);
+    schedule.scheduleJob("0 * * * *", this.execute);
   }
 
   // random because of ratelimits
@@ -96,7 +96,9 @@ class ClosePostsScheduler {
       { _id: { $in: toArchive.map((p) => p._id) } },
       { closedAt: dayjs().toDate(), resolved: true }
     );
+
+    
   }
 }
 
-export default ClosePostsScheduler;
+export default Scheduler;
