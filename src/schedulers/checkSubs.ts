@@ -40,7 +40,7 @@ export default class CheckSubs {
 
     const members = await getGuildMembersPage(rest, config.guildId);
 
-    let membersToCheck = [];
+    let membersToCheck: APIGuildMember[] = [];
     for (const member of members) {
       if (member.roles.includes(config.subRoleId)) membersToCheck.push(member);
     }
@@ -52,7 +52,8 @@ export default class CheckSubs {
     if (subs.length == membersToCheck.length) return;
 
     for (const member of membersToCheck) {
-      if (subs.some((s) => s.userId == member.user.id)) continue;
+      const sub = subs.find((s) => s.userId == member.user.id);
+      if (sub.cancelledAt == null) continue;
 
       await rest.patch(`/guilds/${config.guildId}/members/${member.user.id}`, {
         body: {
