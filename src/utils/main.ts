@@ -47,3 +47,7 @@ export function parseCustomId(
     lastParam: params?.split("/").pop() || null,
   };
 }
+
+export function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

@@ -16,6 +16,7 @@ import {
   StatusUpdate,
 } from "../models/incident.js";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
+import { delay } from "../utils/main.js";
 const { statusChannelId, statusPing } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
@@ -108,7 +109,7 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
     embeds: [formatIncident(incident, [statusU])],
   });
 
-  await new Promise((r) => setTimeout(r, 1000)); // Might fix an issue with status update not existing yet
+  await delay(1000); // Might fix an issue with status update not existing yet
 
   await ctx.editReply({
     embeds: [
@@ -167,7 +168,7 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
     embeds: [formatIncident(incident, allStatuses)],
   };
 
-  await new Promise((r) => setTimeout(r, 1000));
+  await delay(1000);
 
   if (status === IncidentStatus.Resolved)
     await incident.updateOne({ resolvedAt: dayjs().toDate() });

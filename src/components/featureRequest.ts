@@ -19,6 +19,7 @@ import { DBStickyMessage } from "../models/stickyMessage.js";
 import { sendRequestSticky } from "../utils/requestsUtils.js";
 import dayjs from "dayjs";
 import NodeCache from "node-cache";
+import { delay } from "../utils/main.js";
 
 const { featureRequestChannel } = (
   await import("../../config.json", {
@@ -160,7 +161,7 @@ export default {
       await sticky.updateOne({ messageId: newSticky.id });
     }
 
-    await new Promise((r) => setTimeout(r, 1000));
+    await delay(1000);
 
     const thread = await message.startThread({
       name: `${FeatureRequestStatusEmojis[0]} | ${ctx.user.username} | ${requestTitle}`,

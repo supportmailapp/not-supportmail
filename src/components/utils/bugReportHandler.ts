@@ -37,6 +37,7 @@ import {
   SupportQuestionTypeMap,
 } from "../../models/supportQuestion.js";
 import { getThreadUrl, SupportPostData } from "../supportPanel.js";
+import { delay } from "../../utils/main.js";
 
 const { supportForumId, supportTags } = (
   await import("../../../config.json", {
@@ -385,7 +386,7 @@ export async function handleTimeout(
   await thread.send(
     ":x: **Process cancelled due to inactivity.**\n-# This thread will be deleted in 10 seconds."
   );
-  await new Promise((r) => setTimeout(r, 10_000));
+  await delay(10_000);
   await thread.delete(`User (${user}) didn't respond in time.`);
   return;
 }
@@ -399,7 +400,7 @@ export async function handleMaxMessages(
     ":x: **You tried to hard to report a bug.** Please create a new bug report if you really want to report a bug." +
       "\n-# This thread will be deleted in 10 seconds."
   );
-  await new Promise((r) => setTimeout(r, 10_000));
+  await delay(10_000);
   await thread.delete(`User (${user.username} | ${user.id}) tried too hard.`);
   return;
 }
@@ -520,7 +521,10 @@ export async function handleSubmit(
     messages.push({
       content: i === 0 ? postContent : "",
       embeds: previousData.embeds,
-      files: i === 0 && bugData.attachments && bugData.attachments.length > 0 ? bugData.attachments : undefined,
+      files:
+        i === 0 && bugData.attachments && bugData.attachments.length > 0
+          ? bugData.attachments
+          : undefined,
       allowedMentions: { users: [data.user.id] },
     });
     previousData = {
@@ -539,7 +543,7 @@ export async function handleSubmit(
 
   if (messages.length > 1)
     for (const message of messages.slice(1)) {
-      await new Promise((r) => setTimeout(r, 750));
+      await delay(750);
       await post.send(message);
     }
 

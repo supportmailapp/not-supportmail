@@ -7,11 +7,7 @@ import {
 } from "discord.js";
 import schedule from "node-schedule";
 import { SupportQuestion } from "../models/supportQuestion.js";
-const { botToken } = (
-  await import("../../config.json", {
-    with: { type: "json" },
-  })
-).default;
+import config from "../config.js";
 
 const reminders = [
   (u: string) =>
@@ -62,7 +58,7 @@ class ClosePostsScheduler {
       ],
     });
 
-    const rest = new REST({ version: "10" }).setToken(botToken);
+    const rest = new REST({ version: "10" }).setToken(config.botToken);
     const appCommands = (await rest.get(
       Routes.applicationCommands("1097562026575933604")
     )) as APIApplicationCommand[];
