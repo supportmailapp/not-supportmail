@@ -1,14 +1,14 @@
 import dayjs from "dayjs";
-import schedule from "node-schedule";
-import { SupportQuestion } from "../models/supportQuestion.js";
 import {
   APIApplicationCommand,
   REST,
   Routes,
   ThreadEditOptions,
 } from "discord.js";
+import schedule from "node-schedule";
+import { SupportQuestion } from "./models/supportQuestion.js";
 const { botToken } = (
-  await import("../../config.json", {
+  await import("../config.json", {
     with: { type: "json" },
   })
 ).default;
@@ -42,25 +42,27 @@ class ClosePostsScheduler {
   public static async execute() {
     const nowTs = dayjs();
 
-    const inactivePosts = await SupportQuestion.find({
+    const toRemind = await SupportQuestion.find({
       $and: [{ closedAt: { $ne: null } }, { resolved: false }],
-      lastActivity: { $gte: nowTs.subtract(2, "days").toDate() },
+      lastActivity: { $gte: nowTs.subtract(1, "days").toDate() },
+      "flags.reminded": { $ne: true },
       $or: [
         { "flags.noAutoClose": { $exists: false } },
         { "flags.noAutoClose": false },
       ],
     });
 
-    if (inactivePosts.length == 0) return;
+    const toArchive = await SupportQuestion.find({
+      $and: [{ closedAt: { $ne: null } }, { resolved: false }],
+      lastActivity: { $gte: nowTs.subtract(2, "days").toDate() },
+      "flags.reminded": true,
+      $or: [
+        { "flags.noAutoClose": { $exists: false } },
+        { "flags.noAutoClose": false },
+      ],
+    });
 
     const rest = new REST({ version: "10" }).setToken(botToken);
-
-    const toRemind = inactivePosts.filter((p) => p.flags.reminded != true);
-    const toArchive = inactivePosts.filter(
-      (p) =>
-        p.flags.reminded == true &&
-        p.updatedAt <= nowTs.subtract(2, "days").toDate()
-    );
     const appCommands = (await rest.get(
       Routes.applicationCommands("1097562026575933604")
     )) as APIApplicationCommand[];
@@ -78,7 +80,7 @@ class ClosePostsScheduler {
 
     await SupportQuestion.updateMany(
       { _id: { $in: toRemind.map((p) => p._id) } },
-      { "flags.toArchive": true }
+      { "flags.reminded": true }
     );
 
     for (const post of toArchive) {
@@ -92,7 +94,7 @@ class ClosePostsScheduler {
 
     await SupportQuestion.updateMany(
       { _id: { $in: toArchive.map((p) => p._id) } },
-      { closedAt: dayjs().toDate() }
+      { closedAt: dayjs().toDate(), resolved: true }
     );
   }
 }

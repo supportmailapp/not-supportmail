@@ -14,7 +14,7 @@ import {
 import { deployCommands } from "djs-command-helper";
 
 import mongoose from "mongoose";
-import ClosePostsScheduler from "./schedulers/closePosts.js";
+import ClosePostsScheduler from "./closePosts.js";
 import { parseCustomId } from "./utils/main.js";
 
 const config = (
