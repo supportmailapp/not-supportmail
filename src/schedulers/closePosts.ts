@@ -6,9 +6,9 @@ import {
   ThreadEditOptions,
 } from "discord.js";
 import schedule from "node-schedule";
-import { SupportQuestion } from "./models/supportQuestion.js";
+import { SupportQuestion } from "../models/supportQuestion.js";
 const { botToken } = (
-  await import("../config.json", {
+  await import("../../config.json", {
     with: { type: "json" },
   })
 ).default;
@@ -29,7 +29,7 @@ const closeWithCommandText = (commands: APIApplicationCommand[]) =>
     commands.find((cmd) => cmd.name == "resolve").id
   }>.`;
 
-class Scheduler {
+class ClosePostsScheduler {
   public static async start() {
     schedule.scheduleJob("0 * * * *", this.execute);
   }
@@ -96,9 +96,7 @@ class Scheduler {
       { _id: { $in: toArchive.map((p) => p._id) } },
       { closedAt: dayjs().toDate(), resolved: true }
     );
-
-    
   }
 }
 
-export default Scheduler;
+export default ClosePostsScheduler;

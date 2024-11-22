@@ -14,7 +14,7 @@ import {
 import { deployCommands } from "djs-command-helper";
 
 import mongoose from "mongoose";
-import Scheduler from "./closePosts.js";
+import ClosePostsScheduler from "./schedulers/closePosts.js";
 import { parseCustomId } from "./utils/main.js";
 
 const config = (
@@ -257,6 +257,6 @@ client.on("ready", async (client) => {
     console.info("Bot started");
 
     // Start the schedulers
-    await Scheduler.start();
+    await ClosePostsScheduler.start();
   });
 })();
