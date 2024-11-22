@@ -2,6 +2,7 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
+  ThreadAutoArchiveDuration,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
 // import dayjs from "dayjs";
@@ -50,12 +51,10 @@ export default {
         ephemeral: true,
       });
     } else if (
-      supportIssue.userId != ctx.user.id ||
-      !(
-        hasManagerRole ||
-        ctx.member.permissions.has("ManageGuild") ||
-        ctx.member.permissions.has("Administrator")
-      )
+      supportIssue.userId != ctx.user.id &&
+      !hasManagerRole &&
+      !ctx.member.permissions.has("ManageGuild") &&
+      !ctx.member.permissions.has("Administrator")
     ) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.`,
@@ -70,10 +69,10 @@ export default {
 
     const reason = ctx.options.getString("reason") || null;
 
-    await ctx.channel.setAppliedTags([
-      supportTags.resolved,
-      supportTags[supportIssue._type],
-    ]);
+    await ctx.channel.edit({
+      appliedTags: [supportTags.resolved, supportTags[supportIssue._type]],
+      autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+    });
 
     await supportIssue.updateOne({
       resolved: true,
