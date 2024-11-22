@@ -55,11 +55,13 @@ export default class CheckSubs {
       const sub = subs.find((s) => s.userId == member.user.id);
       if (sub.cancelledAt == null) continue;
 
-      await rest.patch(`/guilds/${config.guildId}/members/${member.user.id}`, {
-        body: {
-          roles: member.roles.filter((r) => r != config.subRoleId),
-        },
-      });
+      await rest
+        .patch(`/guilds/${config.guildId}/members/${member.user.id}`, {
+          body: {
+            roles: member.roles.filter((r) => r != config.subRoleId),
+          },
+        })
+        .catch((e) => console.error(e));
       await delay(1000);
     }
   }
