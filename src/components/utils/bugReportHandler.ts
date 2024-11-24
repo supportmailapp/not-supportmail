@@ -277,6 +277,18 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             break;
           }
           case 7: {
+            if (["-skip", "-done"].includes(msg.content)) {
+              if (msg.content === "-skip") bugData.attachments = [];
+              await msg.react("✅");
+              collector.stop("done");
+              return;
+            }
+
+            if (msg.attachments.size === 0) {
+              isValid = false;
+              break;
+            }
+
             const parsedAttachments =
               msg.attachments
                 .filter(
@@ -290,13 +302,6 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
               bugData.attachments.push(...parsedAttachments);
             } else {
               isValid = false;
-            }
-
-            if (["-skip", "-done"].includes(msg.content)) {
-              if (msg.content === "-skip") bugData.attachments = [];
-              await msg.react("✅");
-              collector.stop("done");
-              return;
             }
 
             break;
