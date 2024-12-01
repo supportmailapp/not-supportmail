@@ -1,17 +1,20 @@
 {
-  "botToken": "YOUR_BOT_TOKEN",
+  "clientId": "1097562026575933604",
+  "guildId": "1064594649668395128",
+
+  "botToken": "...",
   "MongoDBUrl": "mongodb://localhost:27017/databaseName",
 
   "statusChannelId": "1113896662914572368",
-  "statusPing": "1111912369371758676", // Role ID
-
   "featureRequestChannel": "1116023324271726753",
-
   "supportForumId": "1303817714615455774",
   "supportPanelChannel": "1178626377935753297",
 
-  "threadManagerRole": "1304552684753256499", // Can manage support posts and mark FRs as duplicates
-  "devRoles": ["1251861042091524126", "1109802053938712686"],
+  "statusPing": "1111912369371758676",
+  "threadManagerRole": "1304552684753256499",
+  "devRoleId": "1109802053938712686",
+  "subRoleId": "1166407253725818981",
+  "voteRoleId": "1114933959365763132",
 
   "autoThreadedChannels": {},
   "autoPublishChannels": [
