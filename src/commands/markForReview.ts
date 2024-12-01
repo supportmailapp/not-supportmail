@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import {
-  ChannelType,
-  ChatInputCommandInteraction,
-  Colors,
-  SlashCommandBuilder,
+    ChannelType,
+    ChatInputCommandInteraction,
+    Colors,
+    SlashCommandBuilder,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
-const { devRole, supportForumId, threadManagerRole, supportTags } = (
+const { devRoleId, supportForumId, threadManagerRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
 
@@ -36,7 +36,7 @@ export default {
     });
 
     const canMark = ctx.member.roles.cache.some(
-      (r) => r.id === devRole || r.id === threadManagerRole
+      (r) => r.id === devRoleId || r.id === threadManagerRole
     );
 
     if (!supportIssue) {

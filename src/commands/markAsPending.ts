@@ -1,12 +1,12 @@
+import dayjs from "dayjs";
 import {
-  ChannelType,
-  ChatInputCommandInteraction,
-  Colors,
-  SlashCommandBuilder,
+    ChannelType,
+    ChatInputCommandInteraction,
+    Colors,
+    SlashCommandBuilder,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
-import dayjs from "dayjs";
-const { supportForumId, devRole, supportTags } = (
+const { supportForumId, devRoleId, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
 
@@ -40,7 +40,7 @@ export default {
         content: "This post is not a support question.",
         ephemeral: true,
       });
-    } else if (!ctx.member.roles.cache.has(devRole)) {
+    } else if (!ctx.member.roles.cache.has(devRoleId)) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nOnly a dev can mark this post as pending.`,
         ephemeral: true,
