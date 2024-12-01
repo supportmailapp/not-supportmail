@@ -6,7 +6,7 @@ const { autoPublishChannels } = (
 export default async function autoPublish(message: Message) {
   if (
     message.guildId !== "1064594649668395128" ||
-    message.type == MessageType.Reply
+    message.type != MessageType.Default
   )
     return;
 
