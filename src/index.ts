@@ -16,8 +16,6 @@ import { deployCommands } from "djs-command-helper";
 import mongoose from "mongoose";
 import ClosePostsScheduler from "./schedulers/closePosts.js";
 import { parseCustomId } from "./utils/main.js";
-import { BotVote } from "./models/botVote.js";
-import botVoteSync from "./utils/botVoteSync.js";
 
 const config = (
   await import("../config.json", {
@@ -260,7 +258,5 @@ client.on("ready", async (client) => {
 
     // Start the schedulers
     await ClosePostsScheduler.start();
-
-    BotVote.schema.post("save", async (doc) => botVoteSync(client, doc));
   });
 })();
