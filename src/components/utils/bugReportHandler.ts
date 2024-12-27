@@ -281,6 +281,7 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             break;
           }
           case 7: {
+            isValid = true;
             if (msg.content === "-skip") {
               await msg.react("✅");
               collector.stop("done");
@@ -553,6 +554,7 @@ export async function handleSubmit(
     for (const message of messages.slice(1)) {
       await delay(750);
       await post.send(message);
+      await post.members.add("506893652266844162").catch(() => {});
     }
 
   await SupportQuestion.create({
