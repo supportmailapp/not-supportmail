@@ -30,14 +30,16 @@ export default async function adjustPostTags(message: Message) {
   });
 
   if (tags.includes(supportTags.unsolved)) {
-    if (!supportIssue || supportIssue.userId != message.author.id) return;
-
-    if (supportIssue.state == "unsolved")
+    if (!supportIssue) return;
+    if (supportIssue.userId != message.author.id)
       await message.channel.setAppliedTags([supportTags[supportIssue._type]]);
+
+    if (supportIssue.state == "unsolved") return;
   }
 
   let updateFields = { lastActivity: dayjs().toDate() };
 
+  // ? Why is this here?
   if (supportIssue.flags.reminded) updateFields["flags.reminded"] = false;
 
   await supportIssue.updateOne(updateFields);
