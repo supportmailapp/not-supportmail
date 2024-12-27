@@ -520,26 +520,33 @@ export async function handleSubmit(
   let previousData = getDefaultPreviousData();
   const maxCharCount = 6000;
 
+  // Since there is the chance that we skip the first message, we need to add the files to the first message so we initialize it here to unset it later after it has been added
+  let files: Attachment[] | undefined;
+  let filesAdded = false;
+  if (bugData.attachments?.length > 0) files = bugData.attachments;
+
   for (let i = 0; i < embeds.length; i++) {
     if (previousData.count + charCounts[i] <= maxCharCount) {
+      console.debug("Adding to previous message");
       previousData.count += charCounts[i];
       previousData.embeds.push(embeds[i]);
-      if (i < embeds.length - 1) continue; // To prevent the last message to be skipped
+      if (i < embeds.length - 1) {
+        console.debug("Skipping message because of char count");
+        continue; // To prevent the last message to be skipped
+      }
     }
 
     messages.push({
       content: i === 0 ? postContent : "",
       embeds: previousData.embeds,
-      files:
-        i === 0 && bugData.attachments && bugData.attachments.length > 0
-          ? bugData.attachments
-          : undefined,
+      files: !filesAdded ? files : undefined,
       allowedMentions: { users: [data.user.id] },
     });
     previousData = {
       count: charCounts[i],
       embeds: [embeds[i]],
     };
+    if (!filesAdded) filesAdded = true;
   }
 
   const post = await supportForum.threads.create({
