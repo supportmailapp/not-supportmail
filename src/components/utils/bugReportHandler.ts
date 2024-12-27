@@ -550,12 +550,14 @@ export async function handleSubmit(
     message: messages[0],
   });
 
-  if (messages.length > 1)
+  if (messages.length > 1) {
     for (const message of messages.slice(1)) {
       await delay(750);
       await post.send(message);
-      await post.members.add("506893652266844162").catch(() => {});
     }
+  }
+
+  await post.members.add("506893652266844162").catch(() => {});
 
   await SupportQuestion.create({
     _type: "bugReport",
