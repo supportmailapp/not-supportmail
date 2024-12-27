@@ -270,15 +270,14 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             replyEmbed.setTitle("Attachments");
             replyEmbed.setDescription(
               "**If you have any attachments, please send them here.**\n\n" +
-                "Please type `-done` when you are finished.\n" +
-                "-# If you don't have any attachments, please type `-skip`.\n" +
-                "> :x: **Anything else than Images and Videos will not be processed.**"
+                "You can send one message with attachments here. If you want to send more, please do this in the then created post.\n" +
+                ":x: **Anything else than Images and Videos will not be processed.**\n" +
+                "-# If you don't have any attachments, please type `-skip`."
             );
             break;
           }
           case 7: {
-            if (["-skip", "-done"].includes(msg.content)) {
-              if (msg.content === "-skip") bugData.attachments = [];
+            if (msg.content === "-skip") {
               await msg.react("✅");
               collector.stop("done");
               return;
