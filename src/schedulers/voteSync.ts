@@ -15,6 +15,8 @@ export class VoteSyncScheduler {
         id: { $lte: snowflake },
       });
 
+      if (votesToRemove.length === 0) return;
+
       // Remove duplicate users and only keep the latest vote
       // ID is a BigInt
       votesToRemove.sort((a, b) => a.id - b.id);
@@ -24,6 +26,8 @@ export class VoteSyncScheduler {
         }
         return acc;
       }, []);
+
+      if (votesToRemove.length === 0) return;
 
       const rest = new REST().setToken(config.botToken);
 
