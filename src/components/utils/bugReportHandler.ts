@@ -251,7 +251,11 @@ export default async function bugReportHandler(ctx: ButtonInteraction) {
             break;
           }
           case 5: {
-            bugData.tried = msg.content;
+            if (msg.content === "-skip") {
+              bugData.tried = "Nothing tried yet.";
+            } else {
+              bugData.tried = msg.content;
+            }
             replyEmbed.setTitle("Server IDs related to this bug");
             replyEmbed.setDescription(
               "If the bug is related to a specific server, please provide the server ID.\n" +
