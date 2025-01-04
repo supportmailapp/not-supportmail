@@ -1,38 +1,36 @@
 import { scheduleJob } from "node-schedule";
 import { BotVote } from "../models/botVote.js";
-import { DiscordSnowflake } from "@sapphire/snowflake";
 import dayjs from "dayjs";
 import { REST, Routes } from "discord.js";
 import config from "../config.js";
 
 export class VoteSyncScheduler {
+  public static rest = new REST().setToken(config.botToken);
+
   public static async start() {
     scheduleJob("0 * * * *", async () => {
-      let snowflake = DiscordSnowflake.generate({
-        timestamp: dayjs().subtract(2, "days").toDate(),
-      });
       let votesToRemove = await BotVote.find({
-        id: { $lte: snowflake },
+        hasRole: true,
+        $and: [
+          { removeRoleBy: { $exists: true } },
+          { removeRoleBy: { $lte: dayjs().toDate() } },
+        ],
       });
 
       if (votesToRemove.length === 0) return;
 
-      // Remove duplicate users and only keep the latest vote
-      // ID is a BigInt
-      votesToRemove.sort((a, b) => a.id - b.id);
-      votesToRemove = votesToRemove.reduce((acc, vote) => {
+      votesToRemove.sort((a, b) => (a.removeRoleBy > b.removeRoleBy ? -1 : 1));
+      const uniqueVotes = votesToRemove.reduce((acc, vote) => {
         if (!acc.find((v) => v.userId === vote.userId)) {
           acc.push(vote);
         }
         return acc;
       }, []);
 
-      if (votesToRemove.length === 0) return;
+      if (uniqueVotes.length === 0) return;
 
-      const rest = new REST().setToken(config.botToken);
-
-      for (const vote of votesToRemove) {
-        await rest
+      for (const vote of uniqueVotes) {
+        await this.rest
           .delete(
             Routes.guildMemberRole(
               config.guildId,
@@ -42,7 +40,12 @@ export class VoteSyncScheduler {
           )
           .catch((e) => console.error(e));
       }
+
+      await BotVote.deleteMany({
+        userId: { $in: uniqueVotes.map((v) => v.userId) },
+      });
     });
+
     console.debug("VoteSyncScheduler started");
   }
 }
