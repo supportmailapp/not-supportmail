@@ -3,12 +3,14 @@ import { BotVote } from "../models/botVote.js";
 import dayjs from "dayjs";
 import { REST, Routes } from "discord.js";
 import config from "../config.js";
+import mongoose from "mongoose";
 
 export class VoteSyncScheduler {
   public static rest = new REST().setToken(config.botToken);
 
   public static async start() {
     scheduleJob("0 * * * *", async () => {
+      mongoose.connection.useDb("supportmail", { useCache: false });
       let votesToRemove = await BotVote.find({
         hasRole: true,
         $and: [
@@ -44,6 +46,7 @@ export class VoteSyncScheduler {
       await BotVote.deleteMany({
         userId: { $in: uniqueVotes.map((v) => v.userId) },
       });
+      mongoose.connection.useDb("sm-helper", { useCache: true });
     });
 
     console.debug("VoteSyncScheduler started");

@@ -12,7 +12,7 @@ export interface IBotVote {
   hasRole: boolean;
   /**
    * Whether the user has the vote role | Only given, when role was successfully applied
-   * 
+   *
    * @default false
    */
   removeRoleBy?: Date | undefined;
@@ -27,4 +27,8 @@ const botVoteSchema = new Schema<IBotVote>({
   removeRoleBy: { type: Date, required: false },
 });
 
-export const BotVote = model<IBotVote>("BotVote", botVoteSchema, "botVotes");
+export const BotVote = model<IBotVote>(
+  "BotVote",
+  botVoteSchema,
+  "botVotes"
+);
