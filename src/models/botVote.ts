@@ -1,24 +1,30 @@
-import { DiscordSnowflake } from "@sapphire/snowflake";
 import { HydratedDocument, model, Schema } from "mongoose";
 import config from "../config.js";
 
 export interface IBotVote {
-  /**
-   * Snowflake ID of the vote
-   */
-  id: BigInt;
   userId: string;
   botId: string;
-  synced?: boolean;
+  /**
+   * Whether the user has the vote role
+   *
+   *
+   */
+  hasRole: boolean;
+  /**
+   * Whether the user has the vote role | Only given, when role was successfully applied
+   * 
+   * @default false
+   */
+  removeRoleBy?: Date | undefined;
 }
 
 export type BotVoteDocument = HydratedDocument<IBotVote>;
 
 const botVoteSchema = new Schema<IBotVote>({
-  id: { type: Schema.Types.BigInt, default: DiscordSnowflake.generate },
   userId: { type: String, required: true },
   botId: { type: String, default: config.clientId },
-  synced: { type: Boolean, default: false },
+  hasRole: { type: Boolean, default: false },
+  removeRoleBy: { type: Date, required: false },
 });
 
 export const BotVote = model<IBotVote>("BotVote", botVoteSchema, "botVotes");
