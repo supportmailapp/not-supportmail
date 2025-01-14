@@ -13,16 +13,12 @@ export default {
         .setName("test")
         .setDescription("Test")
         .addStringOption((op) =>
-          op.setName("action").setDescription("Send or Edit?").setChoices(
-            {
-              name: "Send",
-              value: "send",
-            },
-            {
-              name: "Edit",
-              value: "edit",
-            }
-          )
+          op
+            .setName("message-id")
+            .setDescription(
+              "Message ID to edit | if not provided, will send a test message"
+            )
+            .setRequired(false)
         )
     )
     .addSubcommand((sub) =>
