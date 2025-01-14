@@ -12,32 +12,32 @@ Once all necessary information is collected, it prepares and submits the final b
 
 import dayjs from "dayjs";
 import {
-  ActionRowBuilder,
-  Attachment,
-  AttachmentBuilder,
-  ButtonBuilder,
-  ButtonInteraction,
-  ChannelType,
-  Colors,
-  EmbedBuilder,
-  ForumChannel,
-  Message,
-  MessageCreateOptions,
-  PrivateThreadChannel,
-  TextChannel,
-  ThreadAutoArchiveDuration,
-  User,
+    ActionRowBuilder,
+    Attachment,
+    AttachmentBuilder,
+    ButtonBuilder,
+    ButtonInteraction,
+    ChannelType,
+    Colors,
+    EmbedBuilder,
+    ForumChannel,
+    Message,
+    MessageCreateOptions,
+    PrivateThreadChannel,
+    TextChannel,
+    ThreadAutoArchiveDuration,
+    User,
 } from "discord.js";
 import bugReportsCache from "../../caches/bugReportsCache.js";
 import supportPostCooldown from "../../caches/supportPostCooldown.js";
 import {
-  BugReportTitle,
-  SupportQuestion,
-  SupportQuestionLabelMap,
-  SupportQuestionTypeMap,
+    BugReportTitle,
+    SupportQuestion,
+    SupportQuestionLabelMap,
+    SupportQuestionTypeMap,
 } from "../../models/supportQuestion.js";
-import { getThreadUrl, SupportPostData } from "../supportPanel.js";
 import { delay } from "../../utils/main.js";
+import { getThreadUrl, SupportPostData } from "../supportPanel.js";
 
 const { supportForumId, supportTags } = (
   await import("../../../config.json", {
@@ -99,7 +99,7 @@ type PartialBugData = Partial<Record<BugReportTitle, string>> & {
 };
 
 export default async function bugReportHandler(ctx: ButtonInteraction) {
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
   const user = ctx.user;
 
   const currentThreadUrl = bugReportsCache.getCurrentProcess(user.id);

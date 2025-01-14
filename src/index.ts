@@ -3,20 +3,20 @@ import { dirname as getDirname, join as pathJoin } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  Client,
-  Collection,
-  IntentsBitField,
-  Options,
-  Partials,
-  SlashCommandBuilder,
+    Client,
+    Collection,
+    IntentsBitField,
+    Options,
+    Partials,
+    SlashCommandBuilder,
 } from "discord.js";
 // @ts-ignore | Ignore because if we don't need it TS goes crazy
 import { deployCommands } from "djs-command-helper";
 
 import mongoose from "mongoose";
 import ClosePostsScheduler from "./schedulers/closePosts.js";
-import { parseCustomId } from "./utils/main.js";
 import { VoteSyncScheduler } from "./schedulers/voteSync.js";
+import { parseCustomId } from "./utils/main.js";
 
 const config = (
   await import("../config.json", {
@@ -181,7 +181,7 @@ client.on("interactionCreate", async (interaction) => {
         await interaction
           .reply({
             content: "There was an error while executing this command!",
-            ephemeral: true,
+            flags: "Ephemeral",
           })
           .catch((e) => console.error(e));
       }
@@ -222,14 +222,14 @@ client.on("interactionCreate", async (interaction) => {
         await interaction
           .reply({
             content: "There was an error while executing this component!",
-            ephemeral: true,
+            flags: "Ephemeral",
           })
           .catch((e) => console.error(e));
       } else {
         await interaction
           .reply({
             content: "There was an error while executing this component!",
-            ephemeral: true,
+            flags: "Ephemeral",
           })
           .catch((e) => console.error(e));
       }

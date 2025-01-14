@@ -1,25 +1,25 @@
+import dayjs from "dayjs";
 import {
-  ActionRowBuilder,
-  EmbedBuilder,
-  ModalBuilder,
-  ModalMessageModalSubmitInteraction,
-  StringSelectMenuInteraction,
-  TextChannel,
-  TextInputBuilder,
-  ThreadAutoArchiveDuration,
+    ActionRowBuilder,
+    EmbedBuilder,
+    ModalBuilder,
+    ModalMessageModalSubmitInteraction,
+    StringSelectMenuInteraction,
+    TextChannel,
+    TextInputBuilder,
+    ThreadAutoArchiveDuration,
 } from "discord.js";
-import {
-  FeatureRequestCategory,
-  FeatureRequestColors,
-  FeatureRequestStatusEmojis,
-  FeatureRequestTitles,
-} from "../utils/enums.js";
+import NodeCache from "node-cache";
 import { FeatureRequest, IFeatureRequest } from "../models/featureRequest.js";
 import { DBStickyMessage } from "../models/stickyMessage.js";
-import { sendRequestSticky } from "../utils/requestsUtils.js";
-import dayjs from "dayjs";
-import NodeCache from "node-cache";
+import {
+    FeatureRequestCategory,
+    FeatureRequestColors,
+    FeatureRequestStatusEmojis,
+    FeatureRequestTitles,
+} from "../utils/enums.js";
 import { delay } from "../utils/main.js";
+import { sendRequestSticky } from "../utils/requestsUtils.js";
 
 const { featureRequestChannel } = (
   await import("../../config.json", {
@@ -46,7 +46,7 @@ export default {
         content:
           "### ⏳ You can only submit one request per hour.\n" +
           `You can submit a new request <t:${waitUntil}:R>`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 

@@ -1,8 +1,8 @@
 import {
-  ChannelType,
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  ThreadAutoArchiveDuration,
+    ChannelType,
+    ChatInputCommandInteraction,
+    SlashCommandBuilder,
+    ThreadAutoArchiveDuration,
 } from "discord.js";
 import { SupportQuestion } from "../models/supportQuestion.js";
 // import dayjs from "dayjs";
@@ -36,7 +36,7 @@ export default {
     )
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
 
     const supportIssue = await SupportQuestion.findOne({
@@ -48,7 +48,7 @@ export default {
     if (!supportIssue) {
       return await ctx.reply({
         content: "This post is not a support question.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     } else if (
       supportIssue.userId != ctx.user.id &&
@@ -58,12 +58,12 @@ export default {
     ) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     } else if (supportIssue.resolved) {
       return await ctx.reply({
         content: "This post has already been resolved.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 

@@ -1,8 +1,8 @@
 import {
-  SlashCommandBuilder,
-  ChatInputCommandInteraction,
-  EmbedBuilder,
-  Colors,
+    ChatInputCommandInteraction,
+    Colors,
+    EmbedBuilder,
+    SlashCommandBuilder,
 } from "discord.js";
 
 export default {
@@ -11,7 +11,7 @@ export default {
   async run(ctx: ChatInputCommandInteraction) {
     const sent = await ctx.reply({
       content: "Pinging...",
-      ephemeral: true,
+      flags: "Ephemeral",
       fetchReply: true,
     });
 

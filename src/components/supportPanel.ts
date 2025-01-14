@@ -1,27 +1,27 @@
 import {
-  ActionRowBuilder,
-  Attachment,
-  ButtonInteraction,
-  Colors,
-  EmbedBuilder,
-  ForumChannel,
-  ModalBuilder,
-  ModalMessageModalSubmitInteraction,
-  TextInputBuilder,
-  ThreadAutoArchiveDuration,
-  User,
+    ActionRowBuilder,
+    Attachment,
+    ButtonInteraction,
+    Colors,
+    EmbedBuilder,
+    ForumChannel,
+    ModalBuilder,
+    ModalMessageModalSubmitInteraction,
+    TextInputBuilder,
+    ThreadAutoArchiveDuration,
+    User,
 } from "discord.js";
 
 import dayjs from "dayjs";
 import { HydratedDocument } from "mongoose";
 import supportPostCooldown from "../caches/supportPostCooldown.js";
 import {
-  ISupportQuestion,
-  SupportQuestion,
-  SupportQuestionField,
-  SupportQuestionLabelMap,
-  SupportQuestionType,
-  SupportQuestionTypeMap,
+    ISupportQuestion,
+    SupportQuestion,
+    SupportQuestionField,
+    SupportQuestionLabelMap,
+    SupportQuestionType,
+    SupportQuestionTypeMap,
 } from "../models/supportQuestion.js";
 import { parseCustomId } from "../utils/main.js";
 import bugReportHandler from "./utils/bugReportHandler.js";
@@ -72,7 +72,7 @@ async function run(
   ) {
     await ctx.reply({
       content: `### You have to wait a bit before you can create a new post!\n> Try again <t:${cooldownTS}:R>.`,
-      ephemeral: true,
+      flags: "Ephemeral",
     });
     return;
   }
@@ -112,7 +112,7 @@ async function run(
             ],
           },
         ],
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       break;
     case "billing":
@@ -130,7 +130,7 @@ async function run(
             color: Colors.Red,
           },
         ],
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       break;
     case "report":
@@ -159,13 +159,13 @@ async function run(
             ],
           },
         ],
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       break;
     default:
       await ctx.reply({
         content: "This component is not yet implemented.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       break;
   }
@@ -212,7 +212,7 @@ async function processGeneralQuestion(
   const question = ctx.fields.getTextInputValue("question");
   const documentation = ctx.fields.getTextInputValue("documentation");
 
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
 
   await createSupportPost(ctx, {
     title: "generalQuestion",
@@ -265,7 +265,7 @@ async function processTechnicalQuestion(
   const question = ctx.fields.getTextInputValue("question");
   const whythisquestion = ctx.fields.getTextInputValue("whyask");
 
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
 
   await createSupportPost(ctx, {
     title: "technicalQuestion",
@@ -343,7 +343,7 @@ async function processErrorQuestion(
   const steps = ctx.fields.getTextInputValue("steps");
   const expected = ctx.fields.getTextInputValue("expected");
 
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
 
   await createSupportPost(ctx, {
     title: "error",

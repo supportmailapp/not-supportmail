@@ -1,19 +1,19 @@
 import dayjs from "dayjs";
 import {
-  APIApplicationCommandOptionChoice,
-  APIEmbed,
-  AutocompleteInteraction,
-  ChatInputCommandInteraction,
-  Colors,
-  SlashCommandBuilder,
-  TextChannel,
+    APIApplicationCommandOptionChoice,
+    APIEmbed,
+    AutocompleteInteraction,
+    ChatInputCommandInteraction,
+    Colors,
+    SlashCommandBuilder,
+    TextChannel,
 } from "discord.js";
 import { HydratedDocument } from "mongoose";
 import {
-  IIncident,
-  Incident,
-  IStatusUpdate,
-  StatusUpdate,
+    IIncident,
+    Incident,
+    IStatusUpdate,
+    StatusUpdate,
 } from "../models/incident.js";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
 import { delay } from "../utils/main.js";
@@ -96,7 +96,7 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
         color: Colors.DarkAqua,
       },
     ],
-    ephemeral: true,
+    flags: "Ephemeral",
   });
 
   const channel = (await ctx.guild.channels.fetch(
@@ -125,7 +125,7 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
 }
 
 async function updateIncident(ctx: ChatInputCommandInteraction) {
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
 
   const id = ctx.options.getString("id", true);
   const status = parseInt(ctx.options.getString("status", true));

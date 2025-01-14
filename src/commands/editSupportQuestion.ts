@@ -1,7 +1,7 @@
 import {
-  ChannelType,
-  ChatInputCommandInteraction,
-  ContextMenuCommandBuilder,
+    ChannelType,
+    ChatInputCommandInteraction,
+    ContextMenuCommandBuilder,
 } from "discord.js";
 const { supportForumId } = (
   await import("../../config.json", {
@@ -25,7 +25,7 @@ export default {
     ) {
       await ctx.reply({
         content: `This command can only be used in <#${supportForumId}>.`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       return;
     }

@@ -84,7 +84,7 @@ export default {
       await ctx.reply({
         content:
           "### :x: Please run this command in the thread or provide a valid request ID.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       return;
     }
@@ -101,7 +101,7 @@ export default {
     ) {
       return await ctx.reply({
         content: "### :x: You do not have permission to do this.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 
@@ -116,7 +116,7 @@ export default {
     if (!fr) {
       return await ctx.reply({
         content: "### :x: Request not found.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 
@@ -131,12 +131,12 @@ export default {
     ) {
       return await ctx.reply({
         content: "### :x: This request has already been resolved.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     } else if (fr.status == statusInt) {
       return await ctx.reply({
         content: `### :x: This request already is marked as \`${FeatureRequestStatus[statusInt]}\`.`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 
@@ -144,7 +144,7 @@ export default {
     if (reason.length == 0 && statusInt == FeatureRequestStatus.Denied) {
       return await ctx.reply({
         content: "### :x: You must provide a reason for denying a request.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 

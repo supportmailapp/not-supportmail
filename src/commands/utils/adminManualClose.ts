@@ -1,11 +1,11 @@
+import dayjs from "dayjs";
 import {
-  APIApplicationCommand,
-  ChatInputCommandInteraction,
-  REST,
-  Routes,
+    APIApplicationCommand,
+    ChatInputCommandInteraction,
+    REST,
+    Routes,
 } from "discord.js";
 import { SupportQuestion } from "../../models/supportQuestion.js";
-import dayjs from "dayjs";
 const { supportTags } = (
   await import("../../../config.json", {
     with: { type: "json" },
@@ -39,7 +39,7 @@ const closeWithCommandText = (commands: APIApplicationCommand[]) =>
   }>.`;
 
 export default async function (ctx: ChatInputCommandInteraction) {
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
 
   /* Basically the same code but just with a shorter timespan (5 mins) */
 

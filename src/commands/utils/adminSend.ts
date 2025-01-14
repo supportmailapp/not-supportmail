@@ -14,7 +14,7 @@ const { featureRequestChannel, supportPanelChannel } = (
 
 export default async function (ctx: ChatInputCommandInteraction) {
   const option = ctx.options.getString("option");
-  await ctx.deferReply({ ephemeral: true });
+  await ctx.deferReply({ flags: "Ephemeral" });
 
   switch (option) {
     case "featureRequestSticky": {

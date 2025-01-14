@@ -28,7 +28,7 @@ export default {
     )
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
 
     const supportIssue = await SupportQuestion.findOne({
@@ -38,12 +38,12 @@ export default {
     if (!supportIssue) {
       return await ctx.reply({
         content: "This post is not a support question.",
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     } else if (!ctx.member.roles.cache.has(devRoleId)) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nOnly a dev can mark this post as pending.`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
     }
 
