@@ -254,8 +254,5 @@ client.on("ready", async (client) => {
 
     client.login(config.botToken);
     console.info("Bot started");
-
-    // Start the schedulers
-    await ClosePostsScheduler.start();
   });
 })();
