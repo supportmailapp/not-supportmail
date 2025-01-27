@@ -10,6 +10,7 @@ export default async function (post: AnyThreadChannel) {
   const baseMsg = await thread.fetchStarterMessage();
   
   await SupportPost.create({
+    id: thread.id,
     author: baseMsg.author.id,
   });
 }
