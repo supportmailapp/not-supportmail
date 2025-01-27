@@ -3,7 +3,7 @@ import config from "../../config.js";
 import { SupportPost } from "../../models/supportPost.js";
 
 export default async function (post: AnyThreadChannel) {
-  if (/* use `config... != thread.parentId` here */ Math.random() > 0.5 || thread.parent instanceof ForumChannel) return;
+  if (/* use `config... != thread.parentId` here */ Math.random() > 0.5 || !thread.parent instanceof ForumChannel) return;
 
   thread.join();
 
