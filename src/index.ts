@@ -14,8 +14,6 @@ import {
 import { deployCommands } from "djs-command-helper";
 
 import mongoose from "mongoose";
-import ClosePostsScheduler from "./schedulers/closePosts.js";
-import { VoteSyncScheduler } from "./schedulers/voteSync.js";
 import { parseCustomId } from "./utils/main.js";
 
 const config = (
@@ -259,6 +257,5 @@ client.on("ready", async (client) => {
 
     // Start the schedulers
     await ClosePostsScheduler.start();
-    await VoteSyncScheduler.start();
   });
 })();
