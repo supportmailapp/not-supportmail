@@ -1,9 +1,10 @@
-import dayjs from "dayjs";
 import { model, Schema } from "mongoose";
 
 export interface SupportPostIgnoreFlags {
   /**
    * If `true` then no reminder should be sent.
+   *
+   * Note, that if this is set, automtic close will still happen.
    */
   reminder?: boolean;
   /**
@@ -25,19 +26,26 @@ export interface ISupportPost {
   postId: string;
   remindedAt: Date | null;
   ignoreFlags?: SupportPostIgnoreFlags;
+  flags?: SupportPostFlags;
   closedAt?: Date;
   createdAt: NativeDate; // MongoDB field
   updatedAt: NativeDate; // MongoDB field
 }
 
-const SupportPostIgnoreFlagsSchema = new Schema<SupportPostIgnoreFlags>({
-  reminder: { type: Boolean, required: false },
-  close: { type: Boolean, required: false },
-}, { _id: false });
+const SupportPostIgnoreFlagsSchema = new Schema<SupportPostIgnoreFlags>(
+  {
+    reminder: { type: Boolean, required: false },
+    close: { type: Boolean, required: false },
+  },
+  { _id: false }
+);
 
-const SupportPostFlags =  new Schema<SupportPostFlags>({
-  noArchive: { type: Boolean, required: false },
-}, { _id: false });
+const SupportPostFlags = new Schema<SupportPostFlags>(
+  {
+    noArchive: { type: Boolean, required: false },
+  },
+  { _id: false }
+);
 
 const SupportPostSchema = new Schema<ISupportPost>(
   {

@@ -1,16 +1,19 @@
-import { ForumChannel, type AnyThreadChannel } from "discord.js";
+import { AnyThreadChannel, ChannelType } from "discord.js";
 import config from "../../config.js";
 import { SupportPost } from "../../models/supportPost.js";
 
-export default async function (post: AnyThreadChannel) {
-  if (/* use `config... != thread.parentId` here */ Math.random() > 0.5 || !thread.parent instanceof ForumChannel) return;
+export default async function (thread: AnyThreadChannel) {
+  if (
+    config.supportForumId != thread.parentId ||
+    thread.type != ChannelType.PublicThread
+  )
+    return;
 
   thread.join();
 
-  const baseMsg = await thread.fetchStarterMessage();
-  
   await SupportPost.create({
     id: thread.id,
-    author: baseMsg.author.id,
+    author: thread.ownerId,
+    postId: thread.id,
   });
 }
