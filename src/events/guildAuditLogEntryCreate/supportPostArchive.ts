@@ -1,6 +1,5 @@
 import {
   AuditLogEvent,
-  ForumThreadChannel,
   Guild,
   GuildAuditLogsEntry,
   ThreadAutoArchiveDuration,
@@ -24,12 +23,12 @@ export default async function (entry: GuildAuditLogsEntry, guild: Guild) {
   const autoArchiveChange = entry.changes.find(
     (c) => c.key == "auto_archive_duration"
   );
-  if (autoArchiveChange) {
-    const thread = (await guild.channels.fetch(
-      entry.targetId
-    )) as ForumThreadChannel;
-    if (thread) {
-      await thread.setAutoArchiveDuration(ThreadAutoArchiveDuration.OneDay);
-    }
+  if (
+    autoArchiveChange &&
+    autoArchiveChange.new != ThreadAutoArchiveDuration.OneDay
+  ) {
+    await guild.channels.edit(entry.targetId, {
+      defaultAutoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+    });
   }
 }

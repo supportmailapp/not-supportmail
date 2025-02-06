@@ -38,7 +38,7 @@ export default async function (
   ) {
     await thread.send(getRandomReminder(supportPost.author));
 
-    await supportPost.updateOne({ reminded: true });
+    await supportPost.updateOne({ remindedAt: dayjs().toDate() });
     return;
   }
 
@@ -46,7 +46,7 @@ export default async function (
 
   if (PostArchiveCache.get(thread.id)) {
     // If the post is already archived, we need to be sure that we don't update it again because this event could also be sent if the client archives the post.
-    await delay(2000);
+    await delay(3000);
     const alreadyClosed = await SupportPost.findOne({ id: thread.id });
     if (alreadyClosed?.closedAt) return;
   }
@@ -57,7 +57,7 @@ export default async function (
   await thread.setAppliedTags(
     thread.appliedTags.concat(config.supportTags.resolved)
   );
-  await delay(3000); // Just to be safe...
+  await delay(500);
 
-  await thread.setArchived(true, "Closed due to inactivity");
+  await thread.setArchived(true, "Closed due to inactivity"); // This triggers the threadUpdate event again
 }
