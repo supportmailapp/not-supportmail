@@ -1,10 +1,11 @@
+import dayjs from "dayjs";
 import {
-    ChannelType,
-    ChatInputCommandInteraction,
-    SlashCommandBuilder,
-    ThreadAutoArchiveDuration,
+  ChannelType,
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  ThreadAutoArchiveDuration,
 } from "discord.js";
-import { SupportQuestion } from "../models/supportQuestion.js";
+import { SupportPost } from "../models/supportPost.js";
 // import dayjs from "dayjs";
 const { supportForumId, threadManagerRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
@@ -36,52 +37,55 @@ export default {
     )
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
-        flags: "Ephemeral",
+        flags: 64,
       });
 
-    const supportIssue = await SupportQuestion.findOne({
+    const supportPost = await SupportPost.findOne({
       postId: ctx.channel.id,
     });
 
     const hasManagerRole = ctx.member.roles.cache.has(threadManagerRole);
 
-    if (!supportIssue) {
+    if (!supportPost) {
       return await ctx.reply({
         content: "This post is not a support question.",
-        flags: "Ephemeral",
+        flags: 64,
       });
-    } else if (
-      supportIssue.userId != ctx.user.id &&
+    }
+
+    if (supportPost.closedAt) {
+      return await ctx.reply({
+        content: "This post has already been resolved.",
+        flags: 64,
+      });
+    }
+
+    if (
+      supportPost.author != ctx.user.id &&
       !hasManagerRole &&
       !ctx.member.permissions.has("ManageGuild") &&
       !ctx.member.permissions.has("Administrator")
     ) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.`,
-        flags: "Ephemeral",
-      });
-    } else if (supportIssue.resolved) {
-      return await ctx.reply({
-        content: "This post has already been resolved.",
-        flags: "Ephemeral",
+        flags: 64,
       });
     }
 
     const reason = ctx.options.getString("reason") || null;
 
     await ctx.channel.edit({
-      appliedTags: [supportTags.resolved, supportTags[supportIssue._type]],
+      appliedTags: [supportTags.resolved],
       autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
     });
 
-    await supportIssue.updateOne({
-      resolved: true,
-      state: "resolved",
+    await supportPost.updateOne({
+      closedAt: dayjs().toDate(),
     });
 
     await ctx.reply({
       content:
-        `### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.` +
+        "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours." +
         (reason ? `\n\n**Reason:** ${reason}` : ""),
     });
   },

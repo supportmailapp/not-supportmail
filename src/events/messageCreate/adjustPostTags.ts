@@ -23,11 +23,11 @@ export default async function adjustPostTags(message: Message) {
   });
   if (!supportPost || supportPost.closedAt) return;
 
-  if (tags.includes(config.supportTags.unsolved)) {
-    if (supportPost.author != message.author.id)
-      await message.channel.setAppliedTags(
-        tags.filter((t) => t !== config.supportTags.unsolved)
-      );
+  if (
+    tags.includes(config.supportTags.unanswered) &&
+    supportPost.author != message.author.id
+  ) {
+    await message.channel.setAppliedTags([config.supportTags.unsolved]);
   }
 
   if (supportPost.remindedAt) {

@@ -15,8 +15,8 @@ const reminders = [
 ];
 
 // random because of ratelimits
-function getRandomReminder() {
-  return reminders[~~(Math.random() * reminders.length)];
+function getRandomReminder(uid: string) {
+  return reminders[~~(Math.random() * reminders.length)](uid);
 }
 
 export default async function (
@@ -36,7 +36,7 @@ export default async function (
     supportPost.remindedAt == null &&
     supportPost.ignoreFlags?.reminder == true
   ) {
-    await thread.send(getRandomReminder()(supportPost.author));
+    await thread.send(getRandomReminder(supportPost.author));
 
     await supportPost.updateOne({ reminded: true });
     return;

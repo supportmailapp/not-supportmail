@@ -1,4 +1,8 @@
-import { AnyThreadChannel, ChannelType } from "discord.js";
+import {
+  AnyThreadChannel,
+  ChannelType,
+  ThreadAutoArchiveDuration,
+} from "discord.js";
 import config from "../../config.js";
 import { SupportPost } from "../../models/supportPost.js";
 
@@ -9,7 +13,11 @@ export default async function (thread: AnyThreadChannel) {
   )
     return;
 
-  thread.join();
+  await thread.join();
+  await thread.edit({
+    autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+    appliedTags: [config.supportTags.unanswered],
+  });
 
   await SupportPost.create({
     id: thread.id,

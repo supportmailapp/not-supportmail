@@ -1,11 +1,10 @@
-import dayjs from "dayjs";
 import {
-    ChannelType,
-    ChatInputCommandInteraction,
-    Colors,
-    SlashCommandBuilder,
+  ChannelType,
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  ThreadAutoArchiveDuration,
 } from "discord.js";
-import { SupportQuestion } from "../models/supportQuestion.js";
+import { SupportPost } from "../models/supportPost.js";
 const { devRoleId, supportForumId, threadManagerRole, supportTags } = (
   await import("../../config.json", { with: { type: "json" } })
 ).default;
@@ -28,10 +27,10 @@ export default {
     )
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
-        flags: "Ephemeral",
+        flags: 64,
       });
 
-    const supportIssue = await SupportQuestion.findOne({
+    const supportPost = await SupportPost.findOne({
       postId: ctx.channel.id,
     });
 
@@ -39,49 +38,54 @@ export default {
       (r) => r.id === devRoleId || r.id === threadManagerRole
     );
 
-    if (!supportIssue) {
+    if (!supportPost) {
       return await ctx.reply({
         content: "This post is not a support question.",
-        flags: "Ephemeral",
-      });
-    } else if (
-      !(
-        canMark ||
-        ctx.member.permissions.has("ManageGuild") ||
-        ctx.member.permissions.has("Administrator")
-      )
-    ) {
-      return await ctx.reply({
-        content: `### :x: You are not authorized.\nOnly a staff member or voluntary helper can mark this post for review by a dev.`,
-        flags: "Ephemeral",
+        flags: 64,
       });
     }
 
-    await ctx.channel.setAppliedTags([
-      supportTags.reviewNeeded,
-      supportTags[supportIssue._type],
-    ]);
+    if (supportPost.closedAt) {
+      return await ctx.reply({
+        content: "This post has already been resolved.",
+        flags: 64,
+      });
+    }
 
-    await supportIssue.updateOne({
-      "flags.noAutoClose": true,
-      state: "reviewNeeded",
+    if (
+      supportPost.author != ctx.user.id &&
+      !canMark &&
+      !ctx.member.permissions.has("ManageGuild") &&
+      !ctx.member.permissions.has("Administrator")
+    ) {
+      return await ctx.reply({
+        content:
+          "### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.",
+        flags: 64,
+      });
+    }
+
+    await supportPost.updateOne({
+      remindedAt: null,
+      ignoreFlags: {
+        reminder: true,
+        close: true,
+      },
+      flags: {
+        noArchive: true,
+      },
+    });
+
+    await ctx.channel.edit({
+      appliedTags: [supportTags.reviewNeeded],
+      autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
     });
 
     await ctx.reply({
-      embeds: [
-        {
-          author: {
-            name: ctx.user.username,
-            icon_url: ctx.user.avatarURL(),
-          },
-          description:
-            "## ✅ Post Marked for Review\n_ _\n" +
-            ">>> This post has been marked for review by a developer. Please be patient while we review your issue.\n" +
-            "Make sure to keep an eye on this post for any updates!",
-          color: Colors.Green,
-          timestamp: dayjs().toISOString(),
-        },
-      ],
+      content:
+        "### ✅ Post Marked for Review\n" +
+        ">>> This post has been marked for review by a developer. Please be patient while we review your issue.\n" +
+        "Make sure to keep an eye on this post for any updates!",
     });
   },
 };
