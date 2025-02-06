@@ -1,6 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import adminSend from "./utils/adminSend.js";
-import adminManualClose from "./utils/adminManualClose.js";
 import adminTest from "./utils/adminTest.js";
 
 export default {
@@ -41,11 +40,6 @@ export default {
               }
             )
         )
-    )
-    .addSubcommand((sub) =>
-      sub
-        .setName("manual-autoclose")
-        .setDescription("Manually execute the autoclose scheduler")
     ),
 
   run(ctx: ChatInputCommandInteraction) {
@@ -56,8 +50,6 @@ export default {
         return adminTest(ctx);
       case "send":
         return adminSend(ctx);
-      case "manual-autoclose":
-        return adminManualClose(ctx);
     }
   },
 };
