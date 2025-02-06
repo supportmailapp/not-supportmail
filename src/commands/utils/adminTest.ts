@@ -1,5 +1,5 @@
-import { ChatInputCommandInteraction, Message } from "discord.js";
 import { randomBytes } from "crypto";
+import { ChatInputCommandInteraction, Message } from "discord.js";
 import NodeCache from "node-cache";
 
 // Stores message objects
@@ -11,7 +11,7 @@ let cache = new NodeCache({
 
 export default async function (ctx: ChatInputCommandInteraction) {
   // const messageId = ctx.options.getString("message-id", false);
-  await ctx.deferReply({ flags: "Ephemeral" });
+  await ctx.deferReply({ flags: 64 });
 
   const messageData = cache.get(ctx.channelId) as
     | { message: Message<true> }

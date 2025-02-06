@@ -11,7 +11,7 @@ export default {
   async run(ctx: ChatInputCommandInteraction) {
     const sent = await ctx.reply({
       content: "Pinging...",
-      flags: "Ephemeral",
+      flags: 64,
       fetchReply: true,
     });
 

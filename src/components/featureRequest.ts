@@ -46,7 +46,7 @@ export default {
         content:
           "### ⏳ You can only submit one request per hour.\n" +
           `You can submit a new request <t:${waitUntil}:R>`,
-        flags: "Ephemeral",
+        flags: 64,
       });
     }
 
