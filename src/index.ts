@@ -248,6 +248,17 @@ client.on("ready", async (client) => {
   });
 });
 
+process
+  .on("unhandledRejection", (error) => {
+    console.error("Unhandled promise rejection:", error);
+  })
+  .on("uncaughtException", (error) => {
+    console.error("Uncaught exception:", error);
+  })
+  .on("error", (error) => {
+    console.error("Error:", error);
+  });
+
 (async function start() {
   mongoose.connect(config.MongoDBUrl).then(async () => {
     console.info("Connected to DB");
