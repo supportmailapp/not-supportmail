@@ -5,8 +5,7 @@ import * as Sentry from "@sentry/node";
 import { ISupportPost } from "../models/supportPost.js";
 import dayjs from "dayjs";
 import { DiscordAPIError, REST, Routes } from "discord.js";
-const config = (await import("../../config.json", { with: { type: "json" } }))
-  .default;
+import config from "../config.js";
 
 // Constants
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);

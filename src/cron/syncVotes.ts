@@ -1,8 +1,7 @@
 import { REST, Routes } from "discord.js";
 import { MongoClient } from "mongodb";
 import type { IBotVote } from "supportmail-types";
-const config = (await import("../../config.json", { with: { type: "json" } }))
-  .default;
+import config from "../config.js";
 
 const client = new MongoClient(process.env.MONGO_URI_MAIN);
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);

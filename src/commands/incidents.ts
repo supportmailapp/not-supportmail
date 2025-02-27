@@ -17,9 +17,7 @@ import {
 } from "../models/incident.js";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
 import { delay } from "../utils/main.js";
-const { statusChannelId, statusPing } = (
-  await import("../../config.json", { with: { type: "json" } })
-).default;
+import config from "../config.js";
 
 function run(ctx: ChatInputCommandInteraction) {
   const subcommand = ctx.options.getSubcommand(true);
@@ -100,12 +98,12 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
   });
 
   const channel = (await ctx.guild.channels.fetch(
-    statusChannelId
+    config.statusChannelId
   )) as TextChannel;
 
   // Send the incident to the status channel
   const message = await channel.send({
-    content: ping ? `<@&${statusPing}>` : "",
+    content: ping ? `<@&${config.statusPing}>` : "",
     embeds: [formatIncident(incident, [statusU])],
   });
 
@@ -121,7 +119,9 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
     ],
   });
 
-  await Incident.findByIdAndUpdate(statusU.incidentId, { messageId: message.id });
+  await Incident.findByIdAndUpdate(statusU.incidentId, {
+    messageId: message.id,
+  });
 }
 
 async function updateIncident(ctx: ChatInputCommandInteraction) {
@@ -174,7 +174,7 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
     await incident.updateOne({ resolvedAt: dayjs().toDate() });
 
   const channel = (await ctx.guild.channels.fetch(
-    statusChannelId
+    config.statusChannelId
   )) as TextChannel;
 
   await channel.messages.edit(incident.messageId, incidentMessage);

@@ -20,12 +20,7 @@ import {
 } from "../utils/enums.js";
 import { delay } from "../utils/main.js";
 import { sendRequestSticky } from "../utils/requestsUtils.js";
-
-const { featureRequestChannel } = (
-  await import("../../config.json", {
-    with: { type: "json" },
-  })
-).default;
+import config from "../config.js";
 
 // Only one request per hour
 let cache = new NodeCache({
@@ -124,7 +119,7 @@ export default {
     const fRequest = await FeatureRequest.create(requestData);
 
     const channel = (await ctx.guild.channels.fetch(
-      featureRequestChannel
+      config.featureRequestChannel
     )) as TextChannel;
     const message = await channel.send({
       embeds: [

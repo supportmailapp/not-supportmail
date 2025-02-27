@@ -5,9 +5,7 @@ import {
   ThreadAutoArchiveDuration,
 } from "discord.js";
 import { SupportPost } from "../models/supportPost.js";
-const { devRoleId, supportForumId, threadManagerRole, supportTags } = (
-  await import("../../config.json", { with: { type: "json" } })
-).default;
+import config from "../config.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -22,7 +20,7 @@ export default {
         ctx.channel.type === ChannelType.PublicThread ||
         ctx.channel.type === ChannelType.PrivateThread
       ) ||
-      ctx.channel.parentId !== supportForumId ||
+      ctx.channel.parentId !== config.supportForumId ||
       ctx.channel.parent?.type !== ChannelType.GuildForum
     )
       return await ctx.reply({
@@ -35,7 +33,7 @@ export default {
     });
 
     const canMark = ctx.member.roles.cache.some(
-      (r) => r.id === devRoleId || r.id === threadManagerRole
+      (r) => r.id === config.devRoleId || r.id === config.threadManagerRole
     );
 
     if (!supportPost) {
@@ -77,7 +75,7 @@ export default {
     });
 
     await ctx.channel.edit({
-      appliedTags: [supportTags.reviewNeeded],
+      appliedTags: [config.supportTags.reviewNeeded],
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
     });
 

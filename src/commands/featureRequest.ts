@@ -1,22 +1,18 @@
 import {
-    ChannelType,
-    ChatInputCommandInteraction,
-    Colors,
-    PublicThreadChannel,
-    SlashCommandBuilder,
-    ThreadEditOptions,
+  ChannelType,
+  ChatInputCommandInteraction,
+  Colors,
+  PublicThreadChannel,
+  SlashCommandBuilder,
+  ThreadEditOptions,
 } from "discord.js";
 import { HydratedDocument } from "mongoose";
 import { FeatureRequest, IFeatureRequest } from "../models/featureRequest.js";
 import {
-    FeatureRequestStatus,
-    FeatureRequestStatusEmojis,
+  FeatureRequestStatus,
+  FeatureRequestStatusEmojis,
 } from "../utils/enums.js";
-const { devRoleId, threadManagerRole } = (
-  await import("../../config.json", {
-    with: { type: "json" },
-  })
-).default;
+import config from "../config.js";
 
 const STATUS_COLORS = {
   [FeatureRequestStatus.Accepted]: Colors.Aqua,
@@ -92,8 +88,10 @@ export default {
     // Other staff members can mark it as a duplicate
 
     const newStatusDuplicate = statusInt == FeatureRequestStatus.Duplicate;
-    const isDev = ctx.member.roles.cache.has(devRoleId);
-    const isThreadManager = ctx.member.roles.cache.has(threadManagerRole);
+    const isDev = ctx.member.roles.cache.has(config.devRoleId);
+    const isThreadManager = ctx.member.roles.cache.has(
+      config.threadManagerRole
+    );
 
     if (
       (newStatusDuplicate && !isThreadManager) ||

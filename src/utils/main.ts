@@ -1,7 +1,3 @@
-// const { supportForumId } = (
-//   await import("../../config.json", { with: { type: "json" } })
-// ).default;
-
 type ParsedCustomId = {
   compPath: string[];
   prefix: string;

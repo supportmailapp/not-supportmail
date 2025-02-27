@@ -6,10 +6,7 @@ import {
   ThreadAutoArchiveDuration,
 } from "discord.js";
 import { SupportPost } from "../models/supportPost.js";
-// import dayjs from "dayjs";
-const { supportForumId, threadManagerRole, supportTags } = (
-  await import("../../config.json", { with: { type: "json" } })
-).default;
+import config from "../config.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -32,7 +29,7 @@ export default {
         ctx.channel.type === ChannelType.PublicThread ||
         ctx.channel.type === ChannelType.PrivateThread
       ) ||
-      ctx.channel.parentId !== supportForumId ||
+      ctx.channel.parentId !== config.supportForumId ||
       ctx.channel.parent?.type !== ChannelType.GuildForum
     )
       return await ctx.reply({
@@ -44,7 +41,7 @@ export default {
       postId: ctx.channel.id,
     });
 
-    const hasManagerRole = ctx.member.roles.cache.has(threadManagerRole);
+    const hasManagerRole = ctx.member.roles.cache.has(config.threadManagerRole);
 
     if (!supportPost) {
       return await ctx.reply({
@@ -75,7 +72,7 @@ export default {
     const reason = ctx.options.getString("reason") || null;
 
     await ctx.channel.edit({
-      appliedTags: [supportTags.resolved],
+      appliedTags: [config.supportTags.resolved],
       autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
     });
 

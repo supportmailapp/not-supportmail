@@ -2,8 +2,7 @@
 
 import { scheduleJob } from "node-schedule";
 import { APIGuildMember, REST } from "discord.js";
-const config = (await import("../../config.json", { with: { type: "json" } }))
-  .default;
+import config from "../config.js";
 
 async function getGuildMembersPage(
   rest: REST,

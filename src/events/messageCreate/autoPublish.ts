@@ -1,7 +1,5 @@
 import { Message, MessageType } from "discord.js";
-const { autoPublishChannels } = (
-  await import("../../../config.json", { with: { type: "json" } })
-).default;
+import config from "../../config.js";
 
 export default async function autoPublish(message: Message) {
   if (
@@ -10,7 +8,7 @@ export default async function autoPublish(message: Message) {
   )
     return;
 
-  const validChannel = autoPublishChannels.find(
+  const validChannel = config.autoPublishChannels.find(
     (channel) => channel.id === message.channelId
   );
 

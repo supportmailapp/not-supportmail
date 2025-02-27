@@ -6,11 +6,7 @@ import {
 } from "discord.js";
 import { DBStickyMessage } from "../../models/stickyMessage.js";
 import { sendRequestSticky } from "../../utils/requestsUtils.js";
-const { featureRequestChannel, supportPanelChannel } = (
-  await import("../../../config.json", {
-    with: { type: "json" },
-  })
-).default;
+import config from "../../config.js";
 
 export default async function (ctx: ChatInputCommandInteraction) {
   const option = ctx.options.getString("option");
@@ -19,7 +15,7 @@ export default async function (ctx: ChatInputCommandInteraction) {
   switch (option) {
     case "featureRequestSticky": {
       const channel = (await ctx.guild.channels.fetch(
-        featureRequestChannel
+        config.featureRequestChannel
       )) as TextChannel;
       const currentMessage = await DBStickyMessage.findOneAndDelete({
         channelId: channel.id,
@@ -41,7 +37,7 @@ export default async function (ctx: ChatInputCommandInteraction) {
     }
     case "supportPanel": {
       const channel = (await ctx.guild.channels.fetch(
-        supportPanelChannel
+        config.supportPanelChannel
       )) as TextChannel;
 
       await channel.send({
