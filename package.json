@@ -2,7 +2,7 @@
   "name": "supportmail-helper",
   "version": "1.4.0",
   "description": "SupportMail Management Bot",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "build": "npx tsc",
     "dev": "npx tsc && node --env-file=.env.dev ./dist/index.js",
@@ -10,16 +10,7 @@
     "cron:support-questions": "node --env-file=.env.production ./dist/cron/supportQuestions.js",
     "cron:sync-votes": "node --env-file=.env.production ./dist/cron/syncVotes.js"
   },
-  "keywords": [
-    "discord",
-    "discord.js",
-    "bot",
-    "template",
-    "djsCommandHelper",
-    "chatbot",
-    "discord-bot"
-  ],
-  "author": "",
+  "author": "The-LukeZ",
   "license": "ISC",
   "type": "module",
   "dependencies": {
