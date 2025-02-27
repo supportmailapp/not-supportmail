@@ -16,12 +16,6 @@ import { deployCommands } from "djs-command-helper";
 import mongoose from "mongoose";
 import { parseCustomId } from "./utils/main.js";
 
-const config = (
-  await import("../config.json", {
-    with: { type: "json" },
-  })
-).default;
-
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
 
@@ -260,10 +254,10 @@ process
   });
 
 (async function start() {
-  mongoose.connect(config.MongoDBUrl).then(async () => {
+  mongoose.connect(process.env.MONGO_URI).then(async () => {
     console.info("Connected to DB");
 
-    client.login(config.botToken);
+    client.login(process.env.BOT_TOKEN);
     console.info("Bot started");
   });
 })();
