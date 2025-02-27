@@ -1,8 +1,9 @@
+// @ts-nocheck | Unused atm
+
 import { scheduleJob } from "node-schedule";
-import config from "../config.js";
 import { APIGuildMember, REST } from "discord.js";
-import { Subscription } from "../models/subscription.js";
-import { delay } from "../utils/main.js";
+const config = (await import("../../config.json", { with: { type: "json" } }))
+  .default;
 
 async function getGuildMembersPage(
   rest: REST,

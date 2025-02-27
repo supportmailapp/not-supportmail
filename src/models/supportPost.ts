@@ -28,6 +28,7 @@ export interface ISupportPost {
   ignoreFlags?: SupportPostIgnoreFlags;
   flags?: SupportPostFlags;
   closedAt?: Date;
+  lastActivity: Date | null;
   createdAt: NativeDate; // MongoDB field
   updatedAt: NativeDate; // MongoDB field
 }
@@ -56,6 +57,7 @@ const SupportPostSchema = new Schema<ISupportPost>(
     remindedAt: { type: Date, default: null },
     ignoreFlags: { type: SupportPostIgnoreFlagsSchema, required: false },
     flags: { type: SupportPostFlags, required: false },
+    lastActivity: { type: Date, default: new Date() },
   },
   { timestamps: true }
 );
