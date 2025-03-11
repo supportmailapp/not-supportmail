@@ -25,9 +25,9 @@ export interface ISupportPost {
   author: string;
   postId: string;
   remindedAt: Date | null;
+  closedAt: Date | null;
   ignoreFlags?: SupportPostIgnoreFlags;
   flags?: SupportPostFlags;
-  closedAt?: Date;
   lastActivity: Date | null;
   createdAt: NativeDate; // MongoDB field
   updatedAt: NativeDate; // MongoDB field
@@ -53,7 +53,7 @@ const SupportPostSchema = new Schema<ISupportPost>(
     id: { type: String, required: true },
     postId: { type: String, required: true, unique: true },
     author: { type: String, required: true },
-    closedAt: { type: Date, required: false },
+    closedAt: { type: Date, default: null },
     remindedAt: { type: Date, default: null },
     ignoreFlags: { type: SupportPostIgnoreFlagsSchema, required: false },
     flags: { type: SupportPostFlags, required: false },
