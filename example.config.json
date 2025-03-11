@@ -1,15 +1,4 @@
 {
-  "statusChannelId": "<ChannelId>",
-  "featureRequestChannel": "<ChannelId>",
-  "supportForumId": "<ChannelId>",
-  "supportPanelChannel": "<ChannelId>",
-
-  "statusPing": "<RoleId>",
-  "threadManagerRole": "<RoleId>",
-  "devRoleId": "<RoleId>",
-  "subRoleId": "<RoleId>",
-  "voteRoleId": "<RoleId>",
-
   "autoThreadedChannels": {},
   "autoPublishChannels": [
     {
@@ -20,11 +9,5 @@
       ],
       "note": "Type 1 is a User, Type 2 is a Role"
     }
-  ],
-  "supportTags": {
-    "unanswered": "<TagId>",
-    "unsolved": "<TagId>",
-    "reviewNeeded": "<TagId>",
-    "resolved": "<TagId>"
-  }
+  ]
 }

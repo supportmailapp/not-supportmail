@@ -77,11 +77,11 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variable files
-.env.*
-.env.development.local
-.env.test.local
-.env.production.local
+# environment variable files and configs
+.env.dev
+.env.development
+.env.production
+.env.test
 .env.local
 config.json
 
