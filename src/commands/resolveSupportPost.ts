@@ -2,6 +2,8 @@ import dayjs from "dayjs";
 import {
   ChannelType,
   ChatInputCommandInteraction,
+  type GuildMemberRoleManager,
+  type PermissionsBitField,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
@@ -12,6 +14,7 @@ export default {
   data: new SlashCommandBuilder()
     .setName("resolve")
     .setDescription("Resolve a support question.")
+    .setContexts(0)
     .addStringOption((op) =>
       op
         .setName("reason")
@@ -21,48 +24,48 @@ export default {
         .setMaxLength(128)
         .setRequired(false)
     ),
+
   async run(ctx: ChatInputCommandInteraction) {
     if (
       ctx.channel.isDMBased() ||
-      !ctx.inCachedGuild() ||
-      !(
-        ctx.channel.type === ChannelType.PublicThread ||
-        ctx.channel.type === ChannelType.PrivateThread
-      ) ||
-      ctx.channel.parentId !== config.supportForumId ||
-      ctx.channel.parent?.type !== ChannelType.GuildForum
+      ctx.channel.type !== ChannelType.PublicThread ||
+      ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
     )
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
         flags: 64,
       });
 
+    if (!ctx.inCachedGuild()) await ctx.guild.fetch();
+
     const supportPost = await SupportPost.findOne({
       postId: ctx.channel.id,
     });
-
-    const hasManagerRole = ctx.member.roles.cache.has(config.threadManagerRole);
 
     if (!supportPost) {
       return await ctx.reply({
         content: "This post is not a support question.",
         flags: 64,
       });
-    }
-
-    if (supportPost.closedAt) {
+    } else if (!supportPost.closedAt) {
       return await ctx.reply({
-        content: "This post has already been resolved.",
+        content: "This post has not been resolved yet.",
         flags: 64,
       });
     }
 
-    if (
-      supportPost.author != ctx.user.id &&
-      !hasManagerRole &&
-      !ctx.member.permissions.has("ManageGuild") &&
-      !ctx.member.permissions.has("Administrator")
-    ) {
+    const memberPermissions = ctx.member
+      .permissions as Readonly<PermissionsBitField>;
+    const canReopenPostRolewise =
+      (ctx.member.roles as GuildMemberRoleManager).cache.hasAny(
+        process.env.ROLE_THREAD_MANAGER,
+        process.env.ROLE_DEVELOPER
+      ) || ctx.user.id == supportPost.author;
+    const canReopenPostPermissionwise =
+      memberPermissions.has("ManageGuild") ||
+      memberPermissions.has("Administrator");
+
+    if (!canReopenPostRolewise && !canReopenPostPermissionwise) {
       return await ctx.reply({
         content: `### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.`,
         flags: 64,
@@ -72,7 +75,7 @@ export default {
     const reason = ctx.options.getString("reason") || null;
 
     await ctx.channel.edit({
-      appliedTags: [config.supportTags.resolved],
+      appliedTags: [config.tags.solved],
       autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
     });
 
