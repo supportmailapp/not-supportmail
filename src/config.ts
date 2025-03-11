@@ -4,4 +4,12 @@ const config = (
   })
 ).default;
 
-export default config;
+export default {
+  ...config,
+  tags: {
+    unanswered: process.env.TAG_UNANSWERED,
+    unsolved: process.env.TAG_UNSOLVED,
+    solved: process.env.TAG_SOLVED,
+    review: process.env.TAG_REVIEW,
+  },
+};
