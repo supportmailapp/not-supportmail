@@ -14,12 +14,14 @@ export default async function adjustPostTags(message: Message) {
   ) {
     const supportPost = await SupportPost.findOne({
       postId: message.channel.id,
-      $or: [
-        { closedAt: { $exists: true, $ne: null } },
-        { authorId: message.author.id },
-      ],
     });
-    if (supportPost) return;
+    if (
+      !supportPost ||
+      !!supportPost.closedAt ||
+      message.author.id == supportPost.author
+    ) {
+      return;
+    }
 
     const tags = message.channel.appliedTags;
     if (tags.includes(process.env.TAG_UNANSWERED)) {
