@@ -8,7 +8,7 @@ import { SupportPost } from "../../models/supportPost.js";
 
 export default async function (thread: AnyThreadChannel) {
   if (
-    config.supportForumId != thread.parentId ||
+    process.env.CHANNEL_SUPPORT_FORUM != thread.parentId ||
     thread.type != ChannelType.PublicThread
   )
     return;
@@ -16,7 +16,7 @@ export default async function (thread: AnyThreadChannel) {
   await thread.join();
   await thread.edit({
     autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
-    appliedTags: [config.supportTags.unanswered],
+    appliedTags: [config.tags.unanswered],
   });
 
   await SupportPost.create({

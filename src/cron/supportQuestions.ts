@@ -90,7 +90,7 @@ async function updateMongoDBWithRetry(retries = 0) {
       await rest
         .patch(Routes.channel(post.postId), {
           body: {
-            available_tags: [config.supportTags.resolved],
+            available_tags: [config.tags.solved],
           },
         })
         .then(async () => {

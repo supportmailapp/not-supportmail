@@ -12,7 +12,6 @@ import {
   FeatureRequestStatus,
   FeatureRequestStatusEmojis,
 } from "../utils/enums.js";
-import config from "../config.js";
 
 const STATUS_COLORS = {
   [FeatureRequestStatus.Accepted]: Colors.Aqua,
@@ -85,17 +84,16 @@ export default {
       return;
     }
 
-    // Other staff members can mark it as a duplicate
-
     const newStatusDuplicate = statusInt == FeatureRequestStatus.Duplicate;
-    const isDev = ctx.member.roles.cache.has(config.devRoleId);
+    const isDev = ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER);
     const isThreadManager = ctx.member.roles.cache.has(
-      config.threadManagerRole
+      process.env.ROLE_THERAD_MANAGER
     );
 
+    // Thread Managers can only mark it as duplicate; Devs can mark it as anything
     if (
-      (newStatusDuplicate && !isThreadManager) ||
-      (!newStatusDuplicate && !isDev)
+      (!isDev && !isThreadManager) ||
+      (isThreadManager && !newStatusDuplicate)
     ) {
       return await ctx.reply({
         content: "### :x: You do not have permission to do this.",

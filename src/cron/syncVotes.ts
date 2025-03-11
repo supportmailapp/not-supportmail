@@ -1,7 +1,6 @@
 import { REST, Routes } from "discord.js";
 import { MongoClient } from "mongodb";
 import type { IBotVote } from "supportmail-types";
-import config from "../config.js";
 
 const client = new MongoClient(process.env.MONGO_URI_MAIN);
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
@@ -38,7 +37,7 @@ async function syncVotes() {
         Routes.guildMemberRole(
           process.env.GUILD_ID,
           vote.userId,
-          config.voteRoleId
+          process.env.ROLE_VOTER
         )
       )
       .catch(() => {});

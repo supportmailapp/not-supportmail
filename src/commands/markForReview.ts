@@ -20,7 +20,7 @@ export default {
         ctx.channel.type === ChannelType.PublicThread ||
         ctx.channel.type === ChannelType.PrivateThread
       ) ||
-      ctx.channel.parentId !== config.supportForumId ||
+      ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM ||
       ctx.channel.parent?.type !== ChannelType.GuildForum
     )
       return await ctx.reply({
@@ -32,8 +32,9 @@ export default {
       postId: ctx.channel.id,
     });
 
-    const canMark = ctx.member.roles.cache.some(
-      (r) => r.id === config.devRoleId || r.id === config.threadManagerRole
+    const canMark = ctx.member.roles.cache.hasAny(
+      process.env.ROLE_DEVELOPER,
+      process.env.ROLE_THREAD_MANAGER
     );
 
     if (!supportPost) {
@@ -75,7 +76,7 @@ export default {
     });
 
     await ctx.channel.edit({
-      appliedTags: [config.supportTags.reviewNeeded],
+      appliedTags: [config.tags.review],
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
     });
 

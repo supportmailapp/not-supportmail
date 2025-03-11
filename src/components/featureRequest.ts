@@ -1,26 +1,25 @@
 import dayjs from "dayjs";
 import {
-    ActionRowBuilder,
-    EmbedBuilder,
-    ModalBuilder,
-    ModalMessageModalSubmitInteraction,
-    StringSelectMenuInteraction,
-    TextChannel,
-    TextInputBuilder,
-    ThreadAutoArchiveDuration,
+  ActionRowBuilder,
+  EmbedBuilder,
+  ModalBuilder,
+  ModalMessageModalSubmitInteraction,
+  StringSelectMenuInteraction,
+  TextChannel,
+  TextInputBuilder,
+  ThreadAutoArchiveDuration,
 } from "discord.js";
 import NodeCache from "node-cache";
 import { FeatureRequest, IFeatureRequest } from "../models/featureRequest.js";
 import { DBStickyMessage } from "../models/stickyMessage.js";
 import {
-    FeatureRequestCategory,
-    FeatureRequestColors,
-    FeatureRequestStatusEmojis,
-    FeatureRequestTitles,
+  FeatureRequestCategory,
+  FeatureRequestColors,
+  FeatureRequestStatusEmojis,
+  FeatureRequestTitles,
 } from "../utils/enums.js";
 import { delay } from "../utils/main.js";
 import { sendRequestSticky } from "../utils/requestsUtils.js";
-import config from "../config.js";
 
 // Only one request per hour
 let cache = new NodeCache({
@@ -119,7 +118,7 @@ export default {
     const fRequest = await FeatureRequest.create(requestData);
 
     const channel = (await ctx.guild.channels.fetch(
-      config.featureRequestChannel
+      process.env.CHANNEL_FEATURE_REQUESTS
     )) as TextChannel;
     const message = await channel.send({
       embeds: [

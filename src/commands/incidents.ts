@@ -17,7 +17,6 @@ import {
 } from "../models/incident.js";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
 import { delay } from "../utils/main.js";
-import config from "../config.js";
 
 function run(ctx: ChatInputCommandInteraction) {
   const subcommand = ctx.options.getSubcommand(true);
@@ -98,12 +97,12 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
   });
 
   const channel = (await ctx.guild.channels.fetch(
-    config.statusChannelId
+    process.env.CHANNEL_STATUS
   )) as TextChannel;
 
   // Send the incident to the status channel
   const message = await channel.send({
-    content: ping ? `<@&${config.statusPing}>` : "",
+    content: ping ? `<@&${process.env.ROLE_STATUS_PING}>` : "",
     embeds: [formatIncident(incident, [statusU])],
   });
 
@@ -174,7 +173,7 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
     await incident.updateOne({ resolvedAt: dayjs().toDate() });
 
   const channel = (await ctx.guild.channels.fetch(
-    config.statusChannelId
+    process.env.CHANNEL_STATUS
   )) as TextChannel;
 
   await channel.messages.edit(incident.messageId, incidentMessage);
