@@ -1,6 +1,6 @@
 {
   "name": "supportmail-helper",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "SupportMail Management Bot",
   "main": "./dist/index.js",
   "scripts": {

@@ -47,9 +47,9 @@ export default {
         content: "This post is not a support question.",
         flags: 64,
       });
-    } else if (!supportPost.closedAt) {
+    } else if (supportPost.closedAt) {
       return await ctx.reply({
-        content: "This post has not been resolved yet.",
+        content: "This post has already been resolved.",
         flags: 64,
       });
     }

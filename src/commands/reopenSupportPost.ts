@@ -49,7 +49,7 @@ export default {
       });
     } else if (!supportPost.closedAt) {
       return await ctx.reply({
-        content: "This post is not resolved.",
+        content: "This post has not been resolved yet.",
         flags: 64,
       });
     }
