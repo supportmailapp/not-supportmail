@@ -2,11 +2,6 @@
 
 The source code of the helper bot for the SupportMail support server.
 
-> [!NOTE]
-> This bot is not intended for public use.
->
-> This code is specifically designed for the SupportMail support server.
-
 If you want to use this code, you can do so by forking this repository and modifying the code to fit your needs.
 
 ## Current Features
@@ -14,13 +9,8 @@ If you want to use this code, you can do so by forking this repository and modif
 - Auto Publishing of messages (with optional validation)
 - Auto Threading of channels (with optional validation)
 - Managing status updates for the main bot
-- Managing support questions (via a panel)
-- Handling bug reports
+- Managing support questions (via a support forum)
 - Managing feature requests (with the ability to have a sticky message in the channel)
-
-> [!NOTE]
-> Don't forget to add your bot token to the `.env` file as well as create your own `.env` file.
-> An example can be found in the `.env.example`.
 
 ## License (Summary - not binding)
 
