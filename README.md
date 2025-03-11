@@ -28,6 +28,6 @@ If you want to use this code, you can do so by forking this repository and modif
 
 More information on about the [LICENSE can be found here](http://choosealicense.com/licenses/gpl-3.0/)
 
-## TODO
+# TODO
 
-- [ ] Add option to edit submitted support questions
+> See [here](/TODO.md).
