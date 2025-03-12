@@ -1,3 +1,5 @@
+import { GuildMember } from "discord.js";
+
 type ParsedCustomId = {
   compPath: string[];
   prefix: string;
@@ -46,4 +48,15 @@ export function parseCustomId(
 
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function canUpdateSupportPost(member: GuildMember, authorId: string | null = null) {
+  const canRolewise =
+    member.roles.cache.hasAny(
+      process.env.ROLE_THREAD_MANAGER,
+      process.env.ROLE_DEVELOPER
+    ) || (authorId && member.id == authorId);
+  const canPermissionwise = member.permissions.has("ManageGuild");
+
+  return canRolewise || canPermissionwise;
 }

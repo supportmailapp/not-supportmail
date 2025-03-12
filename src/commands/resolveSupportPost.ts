@@ -2,13 +2,13 @@ import dayjs from "dayjs";
 import {
   ChannelType,
   ChatInputCommandInteraction,
-  type GuildMemberRoleManager,
-  type PermissionsBitField,
+  type GuildMember,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
 import { SupportPost } from "../models/supportPost.js";
 import config from "../config.js";
+import { canUpdateSupportPost } from "../utils/main.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -54,20 +54,9 @@ export default {
       });
     }
 
-    const memberPermissions = ctx.member
-      .permissions as Readonly<PermissionsBitField>;
-    const canReopenPostRolewise =
-      (ctx.member.roles as GuildMemberRoleManager).cache.hasAny(
-        process.env.ROLE_THREAD_MANAGER,
-        process.env.ROLE_DEVELOPER
-      ) || ctx.user.id == supportPost.author;
-    const canReopenPostPermissionwise =
-      memberPermissions.has("ManageGuild") ||
-      memberPermissions.has("Administrator");
-
-    if (!canReopenPostRolewise && !canReopenPostPermissionwise) {
+    if (!canUpdateSupportPost(ctx.member as GuildMember, supportPost.author)) {
       return await ctx.reply({
-        content: `### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.`,
+        content: `### :x: You are not authorized.\nIt can only be resolved by the author or a staff member.`,
         flags: 64,
       });
     }
