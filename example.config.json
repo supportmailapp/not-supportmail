@@ -3,7 +3,7 @@
     "<ChannelId>": {
       "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"], // Examples: User: "u-123" ; Role: "r-456"
       "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
-      "notes": "Type 1 is a User, Type 2 is a Role"
+      "notes": "some notes for something"
     }
   },
   "autoPublishChannels": {
