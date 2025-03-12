@@ -1,5 +1,7 @@
 import { Message } from "discord.js";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import config from "../../config.js";
 
 type ThreadConfig = {
@@ -12,10 +14,7 @@ type ThreadConfig = {
 export default async function autoThreads(message: Message) {
   if (message.guildId !== process.env.GUILD_ID || message.author.bot) return;
 
-  const threadConfig =
-    message.channelId in config.autoThreadedChannels
-      ? config.autoThreadedChannels[message.channelId]
-      : null;
+  const threadConfig = config.autoThreadedChannels[message.channelId] || null;
 
   if (!threadConfig) return;
   
@@ -27,7 +26,7 @@ export default async function autoThreads(message: Message) {
             : message.author.roles.cache.has(be.id)
       );
 
-  if (isBlacklisted === false) return;
+  if (isBlacklisted) return;
 
   let isWhitelisted: boolean = undefined;
   if (Array.isArray(threadConfig.whitelist))
@@ -46,7 +45,7 @@ export default async function autoThreads(message: Message) {
 
   const allVariables: { [key: string]: string } = {
     username: message.author.username,
-    displayname: message.author.displayName,
+    displayname: message.author.displayName || message.author.username,
     userid: message.author.id,
     date: currentTime.format("DD.MM.YYYY"),
     time: currentTime.format("HH:mm"),
