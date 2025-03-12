@@ -1,15 +1,24 @@
 import { Message } from "discord.js";
 import config from "../../config.js";
 
-export default async function autoThreads(message: Message) {
-  if (message.guildId !== "1064594649668395128" || message.author.bot) return;
+type ThreadConfig = {
+  schema: string;
+  whitelist: { id: string; type: 1 | 2 }[];
+  blacklist: { id: string; type: 1 | 2 }[];
+  notes?: string;
+};
 
-  const threadNameTamplate =
+export default async function autoThreads(message: Message) {
+  if (message.guildId !== process.env.GUILD_ID || message.author.bot) return;
+
+  const threadConfig =
     message.channelId in config.autoThreadedChannels
       ? config.autoThreadedChannels[message.channelId]
       : null;
 
-  if (!threadNameTamplate) return;
+  if (!threadConfig) return;
 
-  // Currently not used
+  let isBlacklisted = false;
+  if (threadConfig.blacklist?.length)
+      threadConfig.blacklist.forEach((be) => be.type = 1);
 }
