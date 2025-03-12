@@ -56,7 +56,7 @@ export default {
 
     if (!canUpdateSupportPost(ctx.member as GuildMember, supportPost.author)) {
       return await ctx.reply({
-        content: `### :x: You are not authorized.\nIt can only be resolved by the author or a staff member.`,
+        content: `### :x: You are not authorized.\nIt can only be reopened by the author or a staff member.`,
         flags: 64,
       });
     }
