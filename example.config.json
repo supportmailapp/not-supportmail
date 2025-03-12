@@ -28,5 +28,9 @@
       ],
       "notes": "Type 1 is a User, Type 2 is a Role"
     }
+  },
+  "flagRemoval": {
+    "allowedChannels": ["channel-id1", "channel-id2"],
+    "allowedUsers": ["global-user-ids", "to-bypass-the-filter"]
   }
 }
