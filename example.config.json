@@ -21,22 +21,22 @@
   "autoReactions": {
     "<ChannelId>": {
       "emojis": [
-          // Note: The order in which the emojis are listed here the emojis are applied
-          {
-            "id": "emoji-id", // When unicode, leave blank ("")
-            "name": "emoji-name", // When unicode emoji, paste it in here
-            "animated": false // Only used for custom emojis
-          },
-          {
-            "id": "123",
-            "name": "custom-animated-emoji-example",
-            "animated": true
-          },
-          {
-            "id": "",
-            "name": "😀",
-            "animated": false
-          }
+        // Note: The order in which the emojis are listed here the emojis are applied
+        {
+          "id": "emoji-id", // When unicode, leave blank ("")
+          "name": "emoji-name", // When unicode emoji, paste it in here
+          "animated": false // Only used for custom emojis
+        },
+        {
+          "id": "123",
+          "name": "custom-animated-emoji-example",
+          "animated": true
+        },
+        {
+          "id": "",
+          "name": "😀",
+          "animated": false
+        }
       ],
       "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"], // Examples: User: "u-123" ; Role: "r-456"
       "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"]
