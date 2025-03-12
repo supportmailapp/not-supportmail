@@ -1,4 +1,6 @@
 import { Message, MessageType } from "discord.js";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import config from "../../config.js";
 
 type ChannelConfig = {
@@ -15,9 +17,7 @@ export default async function autoPublish(message: Message) {
   )
     return;
 
-  const channelConfig = config.autoPublishChannels.find(
-    (c) => c.id === message.channelId
-  );
+  const channelConfig = config.autoPublishChannels[message.channelId] || null;
 
   if (!channelConfig) return;
 
@@ -29,7 +29,7 @@ export default async function autoPublish(message: Message) {
             : message.author.roles.cache.has(be.id)
       );
 
-  if (isBlacklisted === false) return;
+  if (isBlacklisted) return;
 
   let isWhitelisted: boolean = undefined;
   if (Array.isArray(channelConfig.whitelist))
@@ -51,11 +51,11 @@ export default async function autoPublish(message: Message) {
     );
   }
 
-  if (validChannel && isValidPing) {
+  if (isValidPing) {
     try {
       await message.crosspost();
     } catch (error) {
-      console.error("Message crosst failed:", error);
+      console.error("Message crosspost failed:", error);
     }
   }
 }
