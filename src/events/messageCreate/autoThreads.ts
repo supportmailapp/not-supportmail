@@ -4,8 +4,8 @@ import config from "../../config.js";
 
 type ThreadConfig = {
   schema: string;
-  whitelist: { id: string; type: 1 | 2 }[];
-  blacklist: { id: string; type: 1 | 2 }[];
+  whitelist?: { id: string; type: 1 | 2 }[];
+  blacklist?: { id: string; type: 1 | 2 }[];
   notes?: string;
 };
 
@@ -19,30 +19,30 @@ export default async function autoThreads(message: Message) {
 
   if (!threadConfig) return;
   
-  let isBlacklisted = false;
-  if (threadConfig.blacklist?.length)
+  let isBlacklisted: boolean = undefined;
+  if (Array.isArray(threadConfig.blacklist))
       isBlacklisted = threadConfig.blacklist.some((be) =>
           be.type == 1
             ? be.id == message.author.id
             : message.author.roles.cache.has(be.id)
       );
 
-  if (isBlacklisted) return;
+  if (isBlacklisted === false) return;
 
-  let isWhitelisted = false;
-  if (threadConfig.whitelist?.length)
+  let isWhitelisted: boolean = undefined;
+  if (Array.isArray(threadConfig.whitelist))
       isWhitelisted = threadConfig.whitelist.some((be) =>
           be.type == 1
             ? be.id == message.author.id
             : message.author.roles.cache.has(be.id)
       );
 
-  if (!isWhitelisted) return;
+  if (isWhitelisted === false) return;
 
   // subsitute any {variables} in threadConfig.schema
   dayjs.extend(utc);
   dayjs.extend(timezone);
-  const currentTime = dayjs().tz(config.timezone as any);
+  const currentTime = dayjs().tz((config.timezone || "UTC") as any);
 
   const allVariables: { [key: string]: string } = {
     username: message.author.username,
