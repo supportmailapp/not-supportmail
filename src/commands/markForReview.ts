@@ -1,6 +1,8 @@
 import {
   ChannelType,
   ChatInputCommandInteraction,
+  type GuildMemberRoleManager,
+  type PermissionsBitField,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
@@ -14,7 +16,6 @@ export default {
 
   async run(ctx: ChatInputCommandInteraction) {
     if (
-      ctx.channel.isDMBased() ||
       ctx.channel.type !== ChannelType.PublicThread ||
       ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
     )
@@ -41,13 +42,16 @@ export default {
       });
     }
 
-    const canMarkRolewise = ctx.member.roles.cache.hasAny(
-      process.env.ROLE_DEVELOPER,
-      process.env.ROLE_THREAD_MANAGER
-    );
-    const canMarkPermissionwise = ctx.member.permissions.has("ManageGuild");
+    const memberPermissions = ctx.member
+      .permissions as Readonly<PermissionsBitField>;
+    const !canMarkRolewise =
+      (ctx.member.roles as GuildMemberRoleManager).cache.hasAny(
+        process.env.ROLE_THREAD_MANAGER,
+        process.env.ROLE_DEVELOPER
+      ) || ctx.user.id == supportPost.author;
+    const canMarkPermissionwise = memberPermissions.has("ManageGuild");
 
-    if (!canMark && !canMarkPermissionwise) {
+    if (!canMarkRolewise && !canMarkPermissionwise) {
       return await ctx.reply({
         content:
           "### :x: You are not authorized.\nIt can only be resolved by the author, a staff member or voluntary helper.",
