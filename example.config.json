@@ -1,13 +1,32 @@
 {
-  "autoThreadedChannels": {},
-  "autoPublishChannels": [
-    {
-      "id": "<ChannelId>",
+  "autoThreadedChannels": {
+    "<ChannelId>": {
+      "blacklist": [
+        { "id": "<UserIdToBlacklist>", "type": 1 },
+        { "id": "<RoleIdToBlacklist>", "type": 2 }
+      ],
+      "whitelist": [
+        { "id": "<UserIdToWhitelist>", "type": 1 },
+        { "id": "<RoleIdToWhitelist>", "type": 2 }
+      ],
+      "notes": "Type 1 is a User, Type 2 is a Role"
+    }
+  },
+  "autoPublishChannels": {
+    "<ChannelId>": {
+      "blacklist": [
+        { "id": "<UserIdToBlacklist>", "type": 1 },
+        { "id": "<RoleIdToBlacklist>", "type": 2 }
+      ],
+      "whitelist": [
+        { "id": "<UserIdToWhitelist>", "type": 1 },
+        { "id": "<RoleIdToWhitelist>", "type": 2 }
+      ],
       "pings": [
         { "id": "<UserIdToPing>", "type": 1 },
         { "id": "<RoleIdToPing>", "type": 2 }
       ],
-      "note": "Type 1 is a User, Type 2 is a Role"
+      "notes": "Type 1 is a User, Type 2 is a Role"
     }
-  ]
+  }
 }

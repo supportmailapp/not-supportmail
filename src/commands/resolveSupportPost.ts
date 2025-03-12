@@ -84,9 +84,18 @@ export default {
     });
 
     await ctx.reply({
-      content:
-        "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours." +
-        (reason ? `\n\n**Reason:** ${reason}` : ""),
+      content: "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.",
+      embeds: ctx.options.getString("reason")
+        ? [
+            {
+              author: {
+                name: "Reason",
+              },
+              description: ctx.options.getString("reason"),
+              color: 0x2b2d31,
+            },
+          ]
+        : undefined,
     });
   },
 };
