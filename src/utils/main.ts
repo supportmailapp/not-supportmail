@@ -50,7 +50,7 @@ export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function canUpdateSupportPost(member: GuildMember, authorId = null) {
+export function canUpdateSupportPost(member: GuildMember, authorId: string | null = null) {
   const canRolewise =
     member.roles.cache.hasAny(
       process.env.ROLE_THREAD_MANAGER,
