@@ -1,3 +1,3 @@
 # TODO
 
-- nothing to see here
+- think about removing subscription checks as this seems very specific
