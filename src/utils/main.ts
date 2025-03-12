@@ -51,14 +51,12 @@ export function delay(ms: number) {
 }
 
 export function canUpdateSupportPost(member: GuildMember, authorId = null) {
-  const memberPermissions = member
-      .permissions;
-    const canRolewise =
-      member.roles.cache.hasAny(
-        process.env.ROLE_THREAD_MANAGER,
-        process.env.ROLE_DEVELOPER
-      ) || (authorId && member.id == authorId);
-    const canPermissionwise = memberPermissions.has("ManageGuild");
+  const canRolewise =
+    member.roles.cache.hasAny(
+      process.env.ROLE_THREAD_MANAGER,
+      process.env.ROLE_DEVELOPER
+    ) || (authorId && member.id == authorId);
+  const canPermissionwise = member.permissions.has("ManageGuild");
 
   return canRolewise || canPermissionwise;
 }
