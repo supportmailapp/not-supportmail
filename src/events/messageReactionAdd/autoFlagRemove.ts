@@ -5,6 +5,8 @@ import type {
 } from "discord.js";
 import config from "../../config.js";
 
+const { flagRemoval: _config } = config;
+
 const FlagRegex = /^[\u{1F1E6}-\u{1F1FF}]{2}$/u;
 
 export default async function (
@@ -16,10 +18,10 @@ export default async function (
 
   const { emoji, channel } = reaction;
 
-  const channelIsAllowed = config.flagRemoval.allowedChannels?.includes(
+  const channelIsAllowed = _config.allowedChannels?.includes(
     channel.id
   );
-  const userBypass = config.flagRemoval.allowedUsers?.includes(user.id);
+  const userBypass = _config.allowedUsers?.includes(user.id);
 
   if (!userBypass && !channelIsAllowed) {
     return;
