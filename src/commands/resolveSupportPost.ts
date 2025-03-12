@@ -3,8 +3,6 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   type GuildMember,
-  type GuildMemberRoleManager,
-  type PermissionsBitField,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
