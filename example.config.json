@@ -8,9 +8,9 @@
   },
   "autoPublishChannels": {
     "<ChannelId>": {
-      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"], // Examples: User: "u-123" ; Role: "r-456"
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
       "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
-      "pings": ["@UserIdToBlacklist", "@&RoleIdToBlacklist"], // Examples: User: "@123" ; Role: "@&456"
+      "pings": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
       "notes": "some notes for something"
     }
   },
@@ -38,7 +38,7 @@
           "animated": false
         }
       ],
-      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"], // Examples: User: "u-123" ; Role: "r-456"
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
       "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"]
     }
   }
