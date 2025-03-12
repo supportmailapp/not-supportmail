@@ -17,8 +17,28 @@ export default async function autoThreads(message: Message) {
       : null;
 
   if (!threadConfig) return;
-
+  
   let isBlacklisted = false;
   if (threadConfig.blacklist?.length)
-      threadConfig.blacklist.forEach((be) => be.type = 1);
+      isBlacklisted = threadConfig.blacklist.some((be) =>
+          be.type == 1
+            ? be.id == message.author.id
+            : message.author.roles.cache.has(be.id)
+      );
+
+  if (isBlacklisted) return;
+
+  let isWhitelisted = false;
+  if (threadConfig.whitelist?.length)
+      isWhitelisted = threadConfig.whitelist.some((be) =>
+          be.type == 1
+            ? be.id == message.author.id
+            : message.author.roles.cache.has(be.id)
+      );
+
+  if (!isWhitelisted) return;
+
+  const allVariables: any = {};
+
+  // subsitute any {variables} in threadConfig.scheme
 }
