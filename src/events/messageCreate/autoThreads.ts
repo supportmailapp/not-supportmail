@@ -3,40 +3,33 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import config from "../../config.js";
+import { checkUserAccess } from "../../utils/main.js";
 
 type ThreadConfig = {
   schema: string;
-  whitelist?: { id: string; type: 1 | 2 }[];
-  blacklist?: { id: string; type: 1 | 2 }[];
+  blacklist?: string[];
+  whitelist?: string[];
   notes?: string;
 };
 
 export default async function autoThreads(message: Message) {
   if (message.guildId !== process.env.GUILD_ID || message.author.bot) return;
 
-  const threadConfig = config.autoThreadedChannels[message.channelId] || null;
+  const threadConfig = (config.autoThreadedChannels[message.channelId] ||
+    null) as ThreadConfig | null;
 
   if (!threadConfig) return;
-  
-  let isBlacklisted: boolean = undefined;
-  if (Array.isArray(threadConfig.blacklist))
-      isBlacklisted = threadConfig.blacklist.some((be) =>
-          be.type == 1
-            ? be.id == message.author.id
-            : message.author.roles.cache.has(be.id)
-      );
 
-  if (isBlacklisted) return;
-
-  let isWhitelisted: boolean = undefined;
-  if (Array.isArray(threadConfig.whitelist))
-      isWhitelisted = threadConfig.whitelist.some((be) =>
-          be.type == 1
-            ? be.id == message.author.id
-            : message.author.roles.cache.has(be.id)
-      );
-
-  if (isWhitelisted === false) return;
+  if (
+    !checkUserAccess(
+      message.author.id,
+      message.member.roles.cache.map((r) => r.id),
+      threadConfig.blacklist || [],
+      threadConfig.whitelist || []
+    )
+  ) {
+    return;
+  }
 
   // subsitute any {variables} in threadConfig.schema
   dayjs.extend(utc);
