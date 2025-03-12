@@ -24,7 +24,7 @@ To set up the Bot, follow these steps:
 5. **Run the Bot**: Start the bot using 
 
 > [!TIP]
-> To run the bot in develoment mode, make a `.env.dev` and use the command `npm start` or `yarn start`.
+> To run the bot in develoment mode, make a `.env.dev` and use the command `npm dev` or `yarn dev`.
 
 By following these steps, you will have the Supportmail Helper bot set up and running on your server. Make sure to review the configuration files and adjust them to fit your specific needs.
 
