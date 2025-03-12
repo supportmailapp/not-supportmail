@@ -12,6 +12,7 @@ import { canUpdateSupportPost } from "../utils/main.js";
 export default {
   data: new SlashCommandBuilder()
     .setName("mark-for-review")
+    .setContexts(0)
     .setDescription("Mark a post for review by a developer."),
 
   async run(ctx: ChatInputCommandInteraction) {
