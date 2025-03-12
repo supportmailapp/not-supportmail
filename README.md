@@ -12,6 +12,22 @@ If you want to use this code, you can do so by forking this repository and modif
 - Managing support questions (via a support forum)
 - Managing feature requests (with the ability to have a sticky message in the channel)
 
+
+## Setup Instructions
+
+To set up the Bot, follow these steps:
+
+1. **Clone the Repository**: Start by cloning the repository to your local machine using `git clone https://github.com/The-LukeZ/not-supportmail.git`.
+2. **Install Dependencies**: Navigate to the project directory and install the necessary dependencies using `npm install` or `yarn install`.
+3. **Configure Environment Variables**: Duplicate `.env.example` to `.env.production` and fill in the required environment variables with your specific values.
+4. **Edit Configuration Files**: Duplicate the `example.config.json` to `config.json` and fill it with your own configuration values..
+5. **Run the Bot**: Start the bot using 
+
+> [!TIP]
+> To run the bot in develoment mode, make a `.env.dev` and use the command `npm start` or `yarn start`.
+
+By following these steps, you will have the Supportmail Helper bot set up and running on your server. Make sure to review the configuration files and adjust them to fit your specific needs.
+
 ## License (Summary - not binding)
 
 ### **GPL3 LICENSE**
