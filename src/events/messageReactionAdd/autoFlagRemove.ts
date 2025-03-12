@@ -18,9 +18,7 @@ export default async function (
 
   const { emoji, channel } = reaction;
 
-  const channelIsAllowed = _config.allowedChannels?.includes(
-    channel.id
-  );
+  const channelIsAllowed = _config.allowedChannels?.includes(channel.id);
   const userBypass = _config.allowedUsers?.includes(user.id);
 
   if (!userBypass && !channelIsAllowed) {

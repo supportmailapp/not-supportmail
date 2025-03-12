@@ -50,23 +50,32 @@ export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function canUpdateSupportPost(member: GuildMember, authorId: string | null = null) {
+export function canUpdateSupportPost(
+  member: GuildMember,
+  authorId: string | null = null
+) {
   const canRolewise =
     member.roles.cache.hasAny(
       process.env.ROLE_THREAD_MANAGER,
       process.env.ROLE_DEVELOPER
-    ) || (authorId && member.id == authorId);
+    ) ||
+    (authorId && member.id == authorId);
   const canPermissionwise = member.permissions.has("ManageGuild");
 
   return canRolewise || canPermissionwise;
 }
 
 /**
- * 
+ *
  * @param userId The Discord Snowflake ID of the user
  * @param roleIds The Discord Snowflake IDs of the user's roles
  */
-export function checkUserAccess(userId: string, roleIds: string[], blacklist: string[], whitelist: string[]) {
+export function checkUserAccess(
+  userId: string,
+  roleIds: string[],
+  blacklist: string[],
+  whitelist: string[]
+) {
   const _userId = `u-${userId}`;
   const _roleIds = roleIds.map((id) => `r-${id}`);
 
