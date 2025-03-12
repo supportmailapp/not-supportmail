@@ -9,16 +9,16 @@ export default async function autoPublish(message: Message) {
     return;
 
   const validChannel = config.autoPublishChannels.find(
-    (channel) => channel.id === message.channelId
+    (c) => c.id === message.channelId
   );
 
-  let isValidPing = Boolean(validChannel);
+  let isValidPing = !!validChannel;
   if (isValidPing) {
     if (typeof validChannel.pings != "undefined") {
-      isValidPing = validChannel.pings.some(
-        (ping) =>
-          (ping.type == 1 && message.mentions.users.has(ping.id)) ||
-          (ping.type == 2 && message.mentions.roles.has(ping.id))
+      isValidPing = validChannel.pings.some((ping) =>
+          ping.type == 1
+            ? message.mentions.users.has(ping.id))
+            : message.mentions.roles.has(ping.id))
       );
     }
   }
@@ -27,7 +27,7 @@ export default async function autoPublish(message: Message) {
     try {
       await message.crosspost();
     } catch (error) {
-      console.error(error);
+      console.error("Message crosst failed:", error);
     }
   }
 }
