@@ -1,4 +1,5 @@
 import { Message } from "discord.js";
+import dayjs from "dayjs";
 import config from "../../config.js";
 
 type ThreadConfig = {
@@ -38,7 +39,33 @@ export default async function autoThreads(message: Message) {
 
   if (!isWhitelisted) return;
 
-  const allVariables: any = {};
+  // subsitute any {variables} in threadConfig.schema
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+  const currentTime = dayjs().tz(config.timezone as any);
 
-  // subsitute any {variables} in threadConfig.scheme
+  const allVariables: { [key: string]: string } = {
+    username: message.author.username,
+    displayname: message.author.displayName,
+    userid: message.author.id,
+    date: currentTime.format("DD.MM.YYYY"),
+    time: currentTime.format("HH:mm"),
+  };
+
+  let threadName = threadConfig.schema;
+  for (const [key, value] of Object.entries(allVariables)) {
+    threadName = threadName.replace(new RegExp(`{${key}}`, "gi"), value);
+  }
+
+  try {
+    const thread = await message.channel.threads.create({
+      name: threadName.slice(0, 100),
+      reason: "Auto-created thread",
+    });
+
+    if (await thread.members.add(message.author.id).catch(() => null))
+      console.log(`Thread ${threadName} created and user added.`);
+  } catch (error) {
+    console.error("Error creating thread:", error);
+  }
 }
