@@ -2,8 +2,8 @@ import { REST, Routes } from "discord.js";
 import { MongoClient } from "mongodb";
 import type { IBotVote } from "supportmail-types";
 
-const client = new MongoClient(process.env.MONGO_URI_MAIN);
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+const client = new MongoClient(process.env.MONGO_URI_MAIN!);
+const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
 
 async function syncVotes() {
   await client.connect();
@@ -27,7 +27,7 @@ async function syncVotes() {
       acc.push(vote);
     }
     return acc;
-  }, []);
+  }, [] as IBotVote[]);
 
   if (uniqueVotes.length == 0) return;
 
@@ -35,9 +35,9 @@ async function syncVotes() {
     await rest
       .delete(
         Routes.guildMemberRole(
-          process.env.GUILD_ID,
+          process.env.GUILD_ID!,
           vote.userId,
-          process.env.ROLE_VOTER
+          process.env.ROLE_VOTER!
         )
       )
       .catch(() => {});

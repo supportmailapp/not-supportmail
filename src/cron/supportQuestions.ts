@@ -8,7 +8,7 @@ import { DiscordAPIError, REST, Routes } from "discord.js";
 import config from "../config.js";
 
 // Constants
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
 const maxRetries = 3;
 const retryDelay = 5000;
 const reminders = [
@@ -28,7 +28,7 @@ function getRandomReminder(uid: string) {
 Sentry.init({ dsn: process.env.SENTRY_DSN });
 
 async function updateMongoDBWithRetry(retries = 0) {
-  const client = new MongoClient(process.env.MONGO_URI);
+  const client = new MongoClient(process.env.MONGO_URI!);
 
   try {
     await client.connect();
@@ -58,7 +58,7 @@ async function updateMongoDBWithRetry(retries = 0) {
         (post) =>
           post.remindedAt != null &&
           post.ignoreFlags?.close != true &&
-          post.flags.noArchive != true
+          post.flags?.noArchive != true
       );
 
     // 4. Send reminders

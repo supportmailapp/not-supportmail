@@ -30,12 +30,12 @@ function run(ctx: ChatInputCommandInteraction) {
 }
 
 const DEFAULT_STATUS_CONTENTS = {
+  [IncidentStatus.Resolved]: "The issue has been resolved.",
   [IncidentStatus.Investigating]: "We are currently investigating this issue.",
   [IncidentStatus.Identified]:
     "The issue was identified and we are working on a fix.",
   [IncidentStatus.Monitoring]:
     "A fix was deployed and we are monitoring the situation.",
-  [IncidentStatus.Resolved]: "The issue has been resolved.",
 };
 
 function formatIncident(
@@ -72,7 +72,7 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
     IncidentStatus.Investigating;
   const content =
     ctx.options.getString("content", false) ||
-    DEFAULT_STATUS_CONTENTS[String(status)];
+    DEFAULT_STATUS_CONTENTS[String(status) as unknown as IncidentStatus];
   const ping = ctx.options.getBoolean("ping", false);
 
   const incident = await Incident.create({
@@ -96,8 +96,8 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
     flags: 64,
   });
 
-  const channel = (await ctx.guild.channels.fetch(
-    process.env.CHANNEL_STATUS
+  const channel = (await ctx.guild!.channels.fetch(
+    process.env.CHANNEL_STATUS!
   )) as TextChannel;
 
   // Send the incident to the status channel
@@ -172,11 +172,11 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
   if (status === IncidentStatus.Resolved)
     await incident.updateOne({ resolvedAt: dayjs().toDate() });
 
-  const channel = (await ctx.guild.channels.fetch(
-    process.env.CHANNEL_STATUS
+  const channel = (await ctx.guild!.channels.fetch(
+    process.env.CHANNEL_STATUS!
   )) as TextChannel;
 
-  await channel.messages.edit(incident.messageId, incidentMessage);
+  await channel.messages.edit(incident.messageId!, incidentMessage);
 
   await ctx.editReply({
     embeds: [

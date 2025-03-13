@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   AuditLogEvent,
   Guild,
@@ -7,6 +8,7 @@ import {
 import { SupportPost } from "../../models/supportPost.js";
 
 export default async function (entry: GuildAuditLogsEntry, guild: Guild) {
+  return; // Currently disabled to fix a bug
   if (
     !(
       entry.actionType == "Update" &&

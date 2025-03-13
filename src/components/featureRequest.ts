@@ -117,15 +117,15 @@ export default {
 
     const fRequest = await FeatureRequest.create(requestData);
 
-    const channel = (await ctx.guild.channels.fetch(
-      process.env.CHANNEL_FEATURE_REQUESTS
+    const channel = (await ctx.guild!.channels.fetch(
+      process.env.CHANNEL_FEATURE_REQUESTS!
     )) as TextChannel;
     const message = await channel.send({
       embeds: [
         new EmbedBuilder()
           .setAuthor({
             name: `${ctx.user.username} | ${ctx.user.id}`,
-            iconURL: ctx.user.avatarURL(),
+            iconURL: ctx.user.avatarURL() || ctx.user.defaultAvatarURL,
             url: `https://discord.com/users/${ctx.user.id}`,
           })
           .setTitle(requestTitle)
@@ -173,7 +173,7 @@ export default {
         embeds: [
           {
             title: "Your feature request has been submitted!",
-            description: `View it [here](https://discord.com/channels/${ctx.guild.id}/${thread.id})`,
+            description: `View it [here](https://discord.com/channels/${ctx.guildId}/${thread.id})`,
             color: requestColor,
             footer: {
               text: `Request ID: ${fRequest._id.toHexString()}`,

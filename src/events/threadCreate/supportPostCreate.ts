@@ -3,8 +3,8 @@ import {
   ChannelType,
   ThreadAutoArchiveDuration,
 } from "discord.js";
-import config from "../../config.js";
 import { SupportPost } from "../../models/supportPost.js";
+import config from "../../config.js";
 
 export default async function (thread: AnyThreadChannel) {
   if (

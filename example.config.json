@@ -1,32 +1,45 @@
 {
   "autoThreadedChannels": {
     "<ChannelId>": {
-      "blacklist": [
-        { "id": "<UserIdToBlacklist>", "type": 1 },
-        { "id": "<RoleIdToBlacklist>", "type": 2 }
-      ],
-      "whitelist": [
-        { "id": "<UserIdToWhitelist>", "type": 1 },
-        { "id": "<RoleIdToWhitelist>", "type": 2 }
-      ],
-      "notes": "Type 1 is a User, Type 2 is a Role"
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"], // Examples: User: "u-123" ; Role: "r-456"
+      "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "notes": "some notes for something"
     }
   },
   "autoPublishChannels": {
     "<ChannelId>": {
-      "blacklist": [
-        { "id": "<UserIdToBlacklist>", "type": 1 },
-        { "id": "<RoleIdToBlacklist>", "type": 2 }
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "pings": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "notes": "some notes for something"
+    }
+  },
+  "flagRemoval": {
+    "allowedChannels": ["channel-id1", "channel-id2"],
+    "allowedUsers": ["global-user-ids", "to-bypass-the-filter"]
+  },
+  "autoReactions": {
+    "<ChannelId>": {
+      "emojis": [
+        // Note: The order in which the emojis are listed here the emojis are applied
+        {
+          "id": "emoji-id", // When unicode, leave blank ("")
+          "name": "emoji-name", // When unicode emoji, paste it in here
+          "animated": false // Only used for custom emojis
+        },
+        {
+          "id": "123",
+          "name": "custom-animated-emoji-example",
+          "animated": true
+        },
+        {
+          "id": "",
+          "name": "😀",
+          "animated": false
+        }
       ],
-      "whitelist": [
-        { "id": "<UserIdToWhitelist>", "type": 1 },
-        { "id": "<RoleIdToWhitelist>", "type": 2 }
-      ],
-      "pings": [
-        { "id": "<UserIdToPing>", "type": 1 },
-        { "id": "<RoleIdToPing>", "type": 2 }
-      ],
-      "notes": "Type 1 is a User, Type 2 is a Role"
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"]
     }
   }
 }

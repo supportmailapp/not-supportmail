@@ -1,47 +1,66 @@
 import { Message } from "discord.js";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import config from "../../config.js";
+import { checkUserAccess } from "../../utils/main.js";
 
-type ThreadConfig = {
-  schema: string;
-  whitelist?: { id: string; type: 1 | 2 }[];
-  blacklist?: { id: string; type: 1 | 2 }[];
-  notes?: string;
-};
+const UTCOffeset = process.env.UTC_OFFSET || null;
 
 export default async function autoThreads(message: Message) {
-  if (message.guildId !== process.env.GUILD_ID || message.author.bot) return;
+  if (
+    message.channel.isDMBased() ||
+    message.channel.isThread() ||
+    message.channel.isVoiceBased() ||
+    message.guildId !== process.env.GUILD_ID ||
+    message.author.bot
+  ) {
+    return;
+  }
 
   const threadConfig = config.autoThreadedChannels[message.channelId] || null;
 
   if (!threadConfig) return;
-  
-  let isBlacklisted: boolean = undefined;
-  if (Array.isArray(threadConfig.blacklist))
-      isBlacklisted = threadConfig.blacklist.some((be) =>
-          be.type == 1
-            ? be.id == message.author.id
-            : message.author.roles.cache.has(be.id)
+
+  if (
+    !checkUserAccess(
+      message.author.id,
+      message.member?.roles.cache.map((r) => r.id) || [],
+      threadConfig.blacklist || [],
+      threadConfig.whitelist || []
+    )
+  ) {
+    return;
+  }
+
+  let currentTime = dayjs();
+  if (UTCOffeset) {
+    if (/^\+?\d+$/i.test(UTCOffeset)) {
+      currentTime = currentTime.add(parseInt(UTCOffeset), "h");
+    } else {
+      currentTime = currentTime.subtract(Math.abs(parseInt(UTCOffeset)), "h");
+    }
+  } else if (process.env.ABSTRACT_API_KEY) {
+    const abstractRes = await fetch(
+      "https://timezone.abstractapi.com/v1/current_time/?" +
+        new URLSearchParams({
+          api_key: process.env.ABSTRACT_API_KEY,
+          location: process.env.LOCATION || "Europe/London",
+        }).toString(),
+      {
+        method: "GET",
+      }
+    );
+
+    if (abstractRes.ok) {
+      const data = await abstractRes.json();
+      currentTime = dayjs(data.datetime, "YYYY-MM-DD HH:mm:ss");
+    } else {
+      console.error(
+        "Error fetching time from AbstractAPI:",
+        abstractRes.status,
+        abstractRes.statusText
       );
-
-  if (isBlacklisted) return;
-
-  let isWhitelisted: boolean = undefined;
-  if (Array.isArray(threadConfig.whitelist))
-      isWhitelisted = threadConfig.whitelist.some((be) =>
-          be.type == 1
-            ? be.id == message.author.id
-            : message.author.roles.cache.has(be.id)
-      );
-
-  if (isWhitelisted === false) return;
-
-  // subsitute any {variables} in threadConfig.schema
-  dayjs.extend(utc);
-  dayjs.extend(timezone);
-  const currentTime = dayjs().tz((config.timezone || "UTC") as any);
+    }
+  }
 
   const allVariables: { [key: string]: string } = {
     username: message.author.username,

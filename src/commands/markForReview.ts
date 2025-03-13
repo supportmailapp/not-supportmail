@@ -17,6 +17,7 @@ export default {
 
   async run(ctx: ChatInputCommandInteraction) {
     if (
+      !ctx.channel ||
       ctx.channel.type !== ChannelType.PublicThread ||
       ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
     )
@@ -25,7 +26,7 @@ export default {
         flags: 64,
       });
 
-    if (!ctx.inCachedGuild()) await ctx.guild.fetch();
+    if (!ctx.inCachedGuild()) await ctx.guild!.fetch();
 
     const supportPost = await SupportPost.findOne({
       postId: ctx.channel.id,

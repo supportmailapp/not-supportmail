@@ -50,11 +50,11 @@ type CommandFile = {
    *
    * @see {@link https://discord.js.org/docs/packages/builders/1.9.0/SlashCommandBuilder:Class}
    */
-  data?: SlashCommandBuilder;
+  data: SlashCommandBuilder;
   /**
    * The function that should be run when the command is executed
    */
-  run?: Function;
+  run: Function;
   /**
    * The optional function that should be run when the command is autocompleted
    */
@@ -68,11 +68,11 @@ type ComponentFile = {
    *
    * @see {@link https://github.com/The-LukeZ/discordjs-app-template?tab=readme-ov-file#component-prefix}
    */
-  prefix?: string;
+  prefix: string;
   /**
    * The function that should be run when the component is triggered
    */
-  run?: Function;
+  run: Function;
   [key: string]: any;
 };
 
@@ -151,8 +151,12 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     try {
-      if (interaction.isAutocomplete()) {
+      if (interaction.isAutocomplete() && command.autocomplete) {
         await command.autocomplete(interaction);
+      } else if (interaction.isAutocomplete() && !command.autocomplete) {
+        console.error(
+          `No autocomplete function found for command '${interaction.commandName}'`
+        );
       } else {
         await command.run(interaction);
       }
@@ -254,7 +258,7 @@ process
   });
 
 (async function start() {
-  mongoose.connect(process.env.MONGO_URI).then(async () => {
+  mongoose.connect(process.env.MONGO_URI!).then(async () => {
     console.info("Connected to DB");
 
     client.login(process.env.BOT_TOKEN);

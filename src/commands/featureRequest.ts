@@ -18,6 +18,7 @@ const STATUS_COLORS = {
   [FeatureRequestStatus.Denied]: Colors.Red,
   [FeatureRequestStatus.Duplicate]: Colors.Yellow,
   [FeatureRequestStatus.Implemented]: Colors.Green,
+  [FeatureRequestStatus.Pending]: Colors.Grey,
 };
 
 export default {
@@ -66,11 +67,12 @@ export default {
     ),
 
   async run(ctx: ChatInputCommandInteraction) {
-    if (!ctx.inCachedGuild()) return; // Because of TS bs
+    if (!ctx.inCachedGuild() || !ctx.channel) return; // Because of TS bs
 
-    const statusInt = Number(
-      ctx.options.getString("status")
-    ) as FeatureRequestStatus;
+    const statusInt = Number(ctx.options.getString("status")) as Exclude<
+      FeatureRequestStatus,
+      FeatureRequestStatus.Pending
+    >;
 
     if (
       ctx.channel.type != ChannelType.PublicThread &&
@@ -85,9 +87,9 @@ export default {
     }
 
     const newStatusDuplicate = statusInt == FeatureRequestStatus.Duplicate;
-    const isDev = ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER);
+    const isDev = ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER!);
     const isThreadManager = ctx.member.roles.cache.has(
-      process.env.ROLE_THERAD_MANAGER
+      process.env.ROLE_THERAD_MANAGER!
     );
 
     // Thread Managers can only mark it as duplicate; Devs can mark it as anything
@@ -102,14 +104,14 @@ export default {
     }
 
     const id = ctx.options.getString("id");
-    let fr: HydratedDocument<IFeatureRequest>;
+    let fr: HydratedDocument<IFeatureRequest> | null;
     if (id) fr = await FeatureRequest.findById(id);
     else
       fr = await FeatureRequest.findOne({
         threadId: ctx.channel.id,
       });
 
-    if (!fr) {
+    if (!fr || !fr.threadId) {
       return await ctx.reply({
         content: "### :x: Request not found.",
         flags: 64,
@@ -171,7 +173,7 @@ export default {
       thread = ctx.channel as PublicThreadChannel;
     } else {
       thread = (await ctx.guild.channels.fetch(
-        fr.threadId
+        fr.threadId!
       )) as PublicThreadChannel;
     }
 
