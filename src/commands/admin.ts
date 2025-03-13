@@ -1,25 +1,11 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import adminSend from "./utils/adminSend.js";
-import adminTest from "./utils/adminTest.js";
 
 export default {
   data: new SlashCommandBuilder()
     .setName("admin")
     .setDescription("Admin commands")
     .setDefaultMemberPermissions(8)
-    .addSubcommand((sub) =>
-      sub
-        .setName("test")
-        .setDescription("Test")
-        .addStringOption((op) =>
-          op
-            .setName("message-id")
-            .setDescription(
-              "Message ID to edit | if not provided, will send a test message"
-            )
-            .setRequired(false)
-        )
-    )
     .addSubcommand((sub) =>
       sub
         .setName("send")
@@ -46,8 +32,6 @@ export default {
     const subcommand = ctx.options.getSubcommand(true);
 
     switch (subcommand) {
-      case "test":
-        return adminTest(ctx);
       case "send":
         return adminSend(ctx);
     }
