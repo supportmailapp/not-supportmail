@@ -1,8 +1,8 @@
 import {
-    ChatInputCommandInteraction,
-    Colors,
-    EmbedBuilder,
-    SlashCommandBuilder,
+  ChatInputCommandInteraction,
+  Colors,
+  EmbedBuilder,
+  SlashCommandBuilder,
 } from "discord.js";
 
 export default {
@@ -12,11 +12,11 @@ export default {
     const sent = await ctx.reply({
       content: "Pinging...",
       flags: 64,
-      fetchReply: true,
+      withResponse: true,
     });
 
     const wsPing = ctx.client.ws.ping;
-    const guildPing = sent.createdTimestamp - ctx.createdTimestamp;
+    const guildPing = sent.interaction.createdTimestamp - ctx.createdTimestamp;
 
     await ctx.editReply({
       content: "",
