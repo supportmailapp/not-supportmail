@@ -27,7 +27,7 @@ export default {
 
   async run(ctx: ChatInputCommandInteraction) {
     if (
-      ctx.channel.isDMBased() ||
+      !ctx.channel ||
       ctx.channel.type !== ChannelType.PublicThread ||
       ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
     )
@@ -36,7 +36,7 @@ export default {
         flags: 64,
       });
 
-    if (!ctx.inCachedGuild()) await ctx.guild.fetch();
+    if (!ctx.inCachedGuild()) await ctx.guild!.fetch();
 
     const supportPost = await SupportPost.findOne({
       postId: ctx.channel.id,
@@ -81,7 +81,8 @@ export default {
     });
 
     await ctx.reply({
-      content: "### ✅ Post has been reopened!",
+      content: "### ✅ This Post has been reopened!",
+      // @ts-ignore | This works.
       embeds: ctx.options.getString("reason")
         ? [
             {

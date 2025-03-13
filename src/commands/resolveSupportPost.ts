@@ -27,7 +27,7 @@ export default {
 
   async run(ctx: ChatInputCommandInteraction) {
     if (
-      ctx.channel.isDMBased() ||
+      !ctx.channel || // TS BS
       ctx.channel.type !== ChannelType.PublicThread ||
       ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
     )
@@ -36,7 +36,7 @@ export default {
         flags: 64,
       });
 
-    if (!ctx.inCachedGuild()) await ctx.guild.fetch();
+    if (!ctx.inCachedGuild()) await ctx.guild!.fetch();
 
     const supportPost = await SupportPost.findOne({
       postId: ctx.channel.id,
@@ -61,8 +61,6 @@ export default {
       });
     }
 
-    const reason = ctx.options.getString("reason") || null;
-
     await ctx.channel.edit({
       appliedTags: [config.tags.solved],
       autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
@@ -73,7 +71,9 @@ export default {
     });
 
     await ctx.reply({
-      content: "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.",
+      content:
+        "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.",
+      // @ts-ignore | This works.
       embeds: ctx.options.getString("reason")
         ? [
             {

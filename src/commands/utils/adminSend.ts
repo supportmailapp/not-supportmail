@@ -8,8 +8,8 @@ export default async function (ctx: ChatInputCommandInteraction) {
 
   switch (option) {
     case "featureRequestSticky": {
-      const channel = (await ctx.guild.channels.fetch(
-        process.env.CHANNEL_FEATURE_REQUESTS
+      const channel = (await ctx.guild!.channels.fetch(
+        process.env.CHANNEL_FEATURE_REQUESTS!
       )) as TextChannel;
       const currentMessage = await DBStickyMessage.findOneAndDelete({
         channelId: channel.id,

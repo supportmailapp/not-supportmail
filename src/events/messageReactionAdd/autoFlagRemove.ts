@@ -1,7 +1,7 @@
 import type {
   MessageReaction,
-  User,
   MessageReactionEventDetails,
+  User,
 } from "discord.js";
 import config from "../../config.js";
 
@@ -16,9 +16,12 @@ export default async function (
 ) {
   if (user.bot) return;
 
-  const { emoji, channel } = reaction;
+  const {
+    emoji,
+    message: { channelId },
+  } = reaction;
 
-  const channelIsAllowed = _config.allowedChannels?.includes(channel.id);
+  const channelIsAllowed = _config.allowedChannels?.includes(channelId);
   const userBypass = _config.allowedUsers?.includes(user.id);
 
   if (!userBypass && !channelIsAllowed) {

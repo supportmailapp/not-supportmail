@@ -4,7 +4,7 @@ type ParsedCustomId = {
   compPath: string[];
   prefix: string;
   lastPathItem: string;
-  component?: string;
+  component: string | null;
   params?: string[];
   firstParam?: string | null;
   lastParam?: string | null;
@@ -56,8 +56,8 @@ export function canUpdateSupportPost(
 ) {
   const canRolewise =
     member.roles.cache.hasAny(
-      process.env.ROLE_THREAD_MANAGER,
-      process.env.ROLE_DEVELOPER
+      process.env.ROLE_THREAD_MANAGER!,
+      process.env.ROLE_DEVELOPER!
     ) ||
     (authorId && member.id == authorId);
   const canPermissionwise = member.permissions.has("ManageGuild");

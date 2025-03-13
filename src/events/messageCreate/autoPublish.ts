@@ -1,15 +1,6 @@
 import { Message, MessageType } from "discord.js";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import config from "../../config.js";
 import { checkUserAccess } from "../../utils/main.js";
-
-type ChannelConfig = {
-  pings?: string[];
-  blacklist?: string[];
-  whitelist?: string[];
-  notes?: string;
-};
 
 export default async function autoPublish(message: Message) {
   if (
@@ -18,15 +9,14 @@ export default async function autoPublish(message: Message) {
   )
     return;
 
-  const channelConfig = (config.autoPublishChannels[message.channelId] ||
-    null) as ChannelConfig | null;
+  const channelConfig = config.autoPublishChannels[message.channelId] || null;
 
   if (!channelConfig) return;
 
   if (
     !checkUserAccess(
       message.author.id,
-      message.member.roles.cache.map((r) => r.id),
+      message.member?.roles.cache.map((r) => r.id) || [],
       channelConfig.blacklist || [],
       channelConfig.whitelist || []
     )

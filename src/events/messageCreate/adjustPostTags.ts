@@ -24,11 +24,11 @@ export default async function adjustPostTags(message: Message) {
     }
 
     const tags = message.channel.appliedTags;
-    if (tags.includes(process.env.TAG_UNANSWERED)) {
+    if (tags.includes(process.env.TAG_UNANSWERED!)) {
       // Keep any other tags that are used for management and add the unsolved tag
       await message.channel.setAppliedTags([
         ...tags.filter((tid) => !Object.values(config.tags).includes(tid)),
-        process.env.TAG_UNSOLVED,
+        process.env.TAG_UNSOLVED!,
       ]);
     }
 
