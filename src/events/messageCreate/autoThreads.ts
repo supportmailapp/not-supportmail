@@ -32,7 +32,13 @@ export default async function autoThreads(message: Message) {
   }
 
   let currentTime = dayjs();
-  if (process.env.ABSTRACT_API_KEY) {
+  if (UTCOffeset) {
+    if (/^\+?\d+$/i.test(UTCOffeset)) {
+      currentTime = currentTime.add(parseInt(UTCOffeset), "h");
+    } else {
+      currentTime = currentTime.subtract(Math.abs(parseInt(UTCOffeset)), "h");
+    }
+  } else if (process.env.ABSTRACT_API_KEY) {
     const abstractRes = await fetch(
       "https://timezone.abstractapi.com/v1/current_time/?" +
         new URLSearchParams({
@@ -53,12 +59,6 @@ export default async function autoThreads(message: Message) {
         abstractRes.status,
         abstractRes.statusText
       );
-    }
-  } else if (UTCOffeset) {
-    if (/^\+?\d+$/i.test(UTCOffeset)) {
-      currentTime = currentTime.add(parseInt(UTCOffeset), "h");
-    } else {
-      currentTime = currentTime.subtract(Math.abs(parseInt(UTCOffeset)), "h");
     }
   }
 
