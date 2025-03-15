@@ -9,8 +9,18 @@ If you want to use this code, you can do so by forking this repository and modif
 - Auto Publishing of messages (with optional validation)
 - Auto Threading of channels (with optional validation)
 - Managing status updates for the main bot
-- Managing support questions (via a support forum)
+- Managing support posts (via a support forum)
 - Managing feature requests (with the ability to have a sticky message in the channel)
+- Bug Tracking
+  - Increment the bug report count for a user with `/bugs add`
+  - Decrement the bug report count for a user with `/bugs remove`
+- User stats tracking (example below)
+  - Bug Tracking
+  - Created support posts count
+  - Who helped the most in support posts (when resolving a post, the author is asked to select the users who helped him the most)
+  - Feature request stats
+
+![image](https://github.com/user-attachments/assets/6249640a-5e66-43dc-90ef-6d66e2e86cc6)
 
 
 ## Setup Instructions
