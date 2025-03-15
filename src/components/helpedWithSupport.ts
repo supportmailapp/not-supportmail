@@ -8,7 +8,7 @@ export default {
   prefix: "helpful",
 
   async run(ctx: StringSelectMenuInteraction) {
-    await ctx.update({ content: "Saving..." });
+    await ctx.update({ content: "Saving...", embeds: [], components: [] });
 
     await SupportPost.findOneAndUpdate(
       { postId: ctx.channelId },
