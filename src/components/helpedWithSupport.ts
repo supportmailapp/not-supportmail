@@ -25,11 +25,16 @@ export default {
       }
     );
     users = users.filter((u) => !ctx.values.includes(u.id));
-    UsersCache.setUsers(
-      ctx.channelId,
-      users.map((u) => u.id)
-    );
 
-    await ctx.editReply(buildHelpfulResponse(users));
+    if (users.length > 0) {
+      UsersCache.setUsers(
+        ctx.channelId,
+        users.map((u) => u.id)
+      );
+
+      await ctx.editReply(buildHelpfulResponse(users));
+    } else {
+      await ctx.editReply("No more users to show. Thank you!");
+    }
   },
 };
