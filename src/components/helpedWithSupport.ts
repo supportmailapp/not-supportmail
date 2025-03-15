@@ -1,7 +1,7 @@
 import { type StringSelectMenuInteraction } from "discord.js";
+import * as UsersCache from "../caches/helpfulUsers.js";
 import { SupportPost } from "../models/supportPost.js";
 import { DBUser } from "../models/user.js";
-import * as UsersCache from "../caches/helpfulUsers.js";
 import { buildHelpfulResponse } from "../utils/main.js";
 
 export default {
@@ -34,7 +34,9 @@ export default {
 
       await ctx.editReply(buildHelpfulResponse(users));
     } else {
-      await ctx.editReply("No more users to show. Thank you!");
+      await ctx.editReply(
+        "<:gigapepo:1350161277347037305> No more users to show. Thank you!"
+      );
     }
   },
 };
