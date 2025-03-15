@@ -5,10 +5,6 @@ export interface IUserStats {
    * The number of bugs reported by the user.
    */
   bugsReported: number;
-  /**
-   * The number of accepted feature requests.
-   */
-  featuresRequests: number;
 }
 
 export interface IUser {
