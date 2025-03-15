@@ -55,10 +55,12 @@ export default {
     }
 
     if (subcommand === "add") {
-      await dbUser.updateOne({
-        $inc: { "stats.bugsReported": 1 },
-      });
       const newCount = dbUser.stats.bugsReported + 1;
+      await dbUser.updateOne({
+        $set: {
+          "stats.bugsReported": newCount,
+        },
+      });
 
       let roleAdded = false;
       if (
@@ -71,7 +73,7 @@ export default {
 
       await ctx.reply({
         content:
-          `Bug count incremented for ${targetUser.username}! Total bugs reported: ${dbUser.stats.bugsReported}` +
+          `Bug count incremented for ${targetUser.username}! Total bugs reported: ${newCount}` +
           (roleAdded
             ? "\n\nUser has also been awarded the Bug Hunter role!"
             : ""),
@@ -79,15 +81,16 @@ export default {
       });
       return;
     } else if (subcommand === "remove") {
-      await dbUser!.updateOne({
+      const newCount = Math.max(0, dbUser.stats.bugsReported - 1);
+      await dbUser.updateOne({
         $set: {
-          "stats.bugsReported": Math.max(0, dbUser.stats.bugsReported - 1),
+          "stats.bugsReported": newCount,
         },
       });
 
       let roleRemoved = false;
       if (
-        dbUser.stats.bugsReported < BUG_TRACKER_THRESHOLD &&
+        newCount < BUG_TRACKER_THRESHOLD &&
         member.roles.cache.has(process.env.ROLE_BUG_HUNTER!)
       ) {
         await member.roles.remove(process.env.ROLE_BUG_HUNTER!);
@@ -96,7 +99,7 @@ export default {
 
       await ctx.reply({
         content:
-          `Bug count decremented for ${targetUser.username}! Total bugs reported: ${dbUser.stats.bugsReported}` +
+          `Bug count decremented for ${targetUser.username}! Total bugs reported: ${newCount}` +
           (roleRemoved ? "\n\nUser has also lost the Bug Hunter role!" : ""),
         flags: 64,
       });
