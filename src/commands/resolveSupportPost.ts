@@ -2,13 +2,15 @@ import dayjs from "dayjs";
 import {
   ChannelType,
   ChatInputCommandInteraction,
+  Colors,
   type GuildMember,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
 import { SupportPost } from "../models/supportPost.js";
 import config from "../config.js";
-import { canUpdateSupportPost } from "../utils/main.js";
+import { buildHelpfulResponse, canUpdateSupportPost } from "../utils/main.js";
+import { DBUser } from "../models/user.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -70,21 +72,37 @@ export default {
       closedAt: dayjs().toDate(),
     });
 
-    await ctx.reply({
+    await ctx.deferReply({ flags: 64 });
+
+    await ctx.channel.send({
       content:
         "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.",
-      // @ts-ignore | This works.
-      embeds: ctx.options.getString("reason")
-        ? [
-            {
-              author: {
-                name: "Reason",
-              },
-              description: ctx.options.getString("reason"),
-              color: 0x2b2d31,
-            },
-          ]
-        : undefined,
+      embeds: [
+        {
+          author: {
+            name: ctx.user.username,
+            icon_url: ctx.user.displayAvatarURL() ?? ctx.user.defaultAvatarURL,
+          },
+          footer: ctx.options.getString("reason")
+            ? {
+                text: "Reason: " + ctx.options.getString("reason", true),
+              }
+            : undefined,
+          color: Colors.Aqua,
+        },
+      ],
     });
+
+    const users = await DBUser.find(
+      {
+        id: { $in: supportPost.users },
+      },
+      null,
+      {
+        limit: 25, // just in case
+      }
+    );
+
+    await ctx.editReply(buildHelpfulResponse(users));
   },
 };

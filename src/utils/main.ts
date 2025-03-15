@@ -1,4 +1,10 @@
-import { GuildMember } from "discord.js";
+import {
+  ActionRowBuilder,
+  GuildMember,
+  StringSelectMenuBuilder,
+} from "discord.js";
+import { DBUser, IUser } from "../models/user.js";
+import { HydratedDocument } from "mongoose";
 
 type ParsedCustomId = {
   compPath: string[];
@@ -92,4 +98,41 @@ export function checkUserAccess(
   }
 
   return true;
+}
+
+/**
+ * Updates the username of a user in the database.
+ */
+export function updateDBUsername(
+  user: { id: string; username: string } & Record<string, unknown>
+) {
+  return DBUser.updateOne({ id: user.id }, { username: user.username });
+}
+
+export function buildHelpfulResponse(users: HydratedDocument<IUser>[]) {
+  return {
+    embeds: [
+      {
+        author: { name: "Optional" },
+        title: "Select the user(s) who helped you the most.",
+        description: "-# This will help us to reward the most helpful users.",
+        color: 0x2b2d31,
+      },
+    ],
+    components: [
+      new ActionRowBuilder<StringSelectMenuBuilder>({
+        components: [
+          new StringSelectMenuBuilder({
+            customId: "helpful",
+          }).setOptions(
+            users.map((user) => ({
+              label: user.username,
+              value: user.id,
+              description: user.username,
+            }))
+          ),
+        ],
+      }),
+    ],
+  };
 }
