@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
@@ -31,19 +30,17 @@ export default {
   async run(ctx: ChatInputCommandInteraction) {
     if (!ctx.inCachedGuild()) return;
 
+    // Initialize response flags based on channel
+    let responseFlags =
+      ctx.channelId !== process.env.CHANNEL_BOT_COMMANDS ? 64 : undefined;
+
     let targetUser = ctx.options.getUser("user") ?? ctx.user;
 
     const cacheValue = cache.get(`${ctx.user.id}-${targetUser.id}`) as
       | string
       | undefined;
     if (cacheValue) {
-      await ctx.reply({
-        content: `You are doing this too fast. Try again <t:${dayjs(
-          cacheValue
-        ).unix()}:R>.`,
-        flags: 64,
-      });
-      return;
+      responseFlags = 64;
     }
 
     let dbUser = await DBUser.findOne({ id: targetUser.id });
@@ -128,15 +125,11 @@ export default {
           timestamp: new Date().toISOString(),
         }),
       ],
-      flags:
-        ctx.channelId !== process.env.CHANNEL_BOT_COMMANDS ? 64 : undefined,
+      flags: responseFlags,
     });
 
     if (ctx.channelId === process.env.CHANNEL_BOT_COMMANDS) {
-      cache.set(
-        `${ctx.user.id}-${targetUser.id}`,
-        dayjs().add(10, "minutes").toISOString()
-      );
+      cache.set(`${ctx.user.id}-${targetUser.id}`, true);
     }
   },
 };
