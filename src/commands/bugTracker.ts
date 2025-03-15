@@ -47,6 +47,7 @@ export default {
       dbUser = await DBUser.create({
         id: targetUser!.id,
         username: targetUser!.username,
+        displayName: targetUser.displayName || targetUser.username,
       });
     }
 

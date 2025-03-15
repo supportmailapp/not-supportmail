@@ -2,12 +2,14 @@ import { ChannelType, Message } from "discord.js";
 
 import { SupportPost } from "../../models/supportPost.js";
 import config from "../../config.js";
+import { updateDBUsername } from "../../utils/main.js";
 
 /**
  * Adjusts exchanges the `Unanswered` tag for the `Unsolved` tag if the message is sent in a support thread.
  */
 export default async function adjustPostTags(message: Message) {
   if (
+    message.inGuild() &&
     message.channel.type === ChannelType.PublicThread &&
     message.channel.parentId === process.env.CHANNEL_SUPPORT_FORUM &&
     message.author.bot === false
@@ -42,5 +44,12 @@ export default async function adjustPostTags(message: Message) {
     }
 
     await supportPost.updateOne(updateQuery);
+    await updateDBUsername({
+      id: message.author.id,
+      username: message.author.username,
+      displayName: message.member
+        ? message.member.displayName
+        : message.author.displayName,
+    });
   }
 }

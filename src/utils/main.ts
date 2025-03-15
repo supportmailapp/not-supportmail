@@ -103,10 +103,22 @@ export function checkUserAccess(
 /**
  * Updates the username of a user in the database.
  */
-export function updateDBUsername(
-  user: { id: string; username: string } & Record<string, unknown>
+export async function updateDBUsername(
+  user: { id: string; username: string; displayName?: string },
+  checkForExistence = false
 ) {
-  return DBUser.updateOne({ id: user.id }, { username: user.username });
+  let updateQuery = { username: user.username } as any;
+  if (user.displayName) updateQuery["displayName"] = user.displayName;
+  if (checkForExistence) {
+    const userExists = await DBUser.exists({ id: user.id });
+    if (!userExists) {
+      await DBUser.create(updateQuery);
+      return;
+    }
+  }
+
+  await DBUser.updateOne({ id: user.id }, updateQuery);
+  return;
 }
 
 export function buildHelpfulResponse(users: HydratedDocument<IUser>[]) {
@@ -126,7 +138,7 @@ export function buildHelpfulResponse(users: HydratedDocument<IUser>[]) {
             customId: "helpful",
           }).setOptions(
             users.map((user) => ({
-              label: user.username,
+              label: user.displayName ?? user.username,
               value: user.id,
               description: user.username,
             }))

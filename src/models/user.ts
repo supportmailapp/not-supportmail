@@ -10,6 +10,7 @@ export interface IUserStats {
 export interface IUser {
   id: string;
   username: string;
+  displayName?: string;
   stats: IUserStats;
   createdAt: NativeDate;
   updatedAt: NativeDate;
@@ -26,6 +27,7 @@ const UserSchema = new Schema<IUser>(
   {
     id: { type: String, required: true, unique: true },
     username: { type: String, required: true },
+    displayName: { type: String, required: false },
     stats: {
       type: UserStatsSchema,
       default: { bugsReported: 0 },
