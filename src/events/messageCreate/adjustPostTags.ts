@@ -35,5 +35,12 @@ export default async function adjustPostTags(message: Message) {
     if (supportPost.remindedAt) {
       await supportPost.updateOne({ remindedAt: null });
     }
+
+    let updateQuery = { lastActivityAt: new Date() } as any;
+    if (!supportPost.users.includes(message.author.id)) {
+      updateQuery["$push"] = { users: message.author.id };
+    }
+
+    await supportPost.updateOne(updateQuery);
   }
 }
