@@ -93,6 +93,11 @@ export default {
       ],
     });
 
+    if (ctx.user.id !== supportPost.author) {
+      await ctx.deleteReply();
+      return;
+    }
+
     const users = await DBUser.find(
       {
         id: { $in: supportPost.users },
