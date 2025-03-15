@@ -129,10 +129,10 @@ export default {
         }),
       ],
       flags:
-        ctx.channelId !== process.env.BOT_COMMANDS_CHANNEL ? 64 : undefined,
+        ctx.channelId === process.env.CHANNEL_BOT_COMMANDS ? 64 : undefined,
     });
 
-    if (ctx.channelId === process.env.BOT_COMMANDS_CHANNEL) {
+    if (ctx.channelId === process.env.CHANNEL_BOT_COMMANDS) {
       cache.set(
         `${ctx.user.id}-${targetUser.id}`,
         dayjs().add(10, "minutes").toISOString()
