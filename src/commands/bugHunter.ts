@@ -1,13 +1,13 @@
+import dayjs from "dayjs";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
-import { DBUser } from "../models/user.js";
-import { FeatureRequest } from "../models/featureRequest.js";
-import { FeatureRequestStatus } from "../utils/enums.js";
 import NodeCache from "node-cache";
-import dayjs from "dayjs";
+import { FeatureRequest } from "../models/featureRequest.js";
+import { DBUser } from "../models/user.js";
+import { FeatureRequestStatus } from "../utils/enums.js";
 
 const cache = new NodeCache({
   stdTTL: 600,
@@ -17,34 +17,29 @@ const cache = new NodeCache({
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("bug-hunter")
+    .setName("bugs")
     .setContexts(0)
     .setDescription("Bug hunter commands")
-    .addSubcommandGroup((subcommandGroup) =>
-      subcommandGroup
-        .setName("bugs")
-        .setDescription("Bug reporting commands")
-        .addSubcommand((sub) =>
-          sub
-            .setName("add")
-            .setDescription("Increment bug count for a user")
-            .addUserOption((option) =>
-              option
-                .setName("user")
-                .setDescription("The user to increment bug count for")
-                .setRequired(true)
-            )
+    .addSubcommand((sub) =>
+      sub
+        .setName("add")
+        .setDescription("Increment bug count for a user")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The user to increment bug count for")
+            .setRequired(true)
         )
-        .addSubcommand((sub) =>
-          sub
-            .setName("remove")
-            .setDescription("Decrement bug count for a user")
-            .addUserOption((option) =>
-              option
-                .setName("user")
-                .setDescription("The user to decrement bug count for")
-                .setRequired(true)
-            )
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("remove")
+        .setDescription("Decrement bug count for a user")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The user to decrement bug count for")
+            .setRequired(true)
         )
     )
     .addSubcommand((subcommand) =>
@@ -61,10 +56,11 @@ export default {
 
   async run(ctx: ChatInputCommandInteraction) {
     if (!ctx.inCachedGuild()) return; // TS bullshit
-    const subcommandGroup = ctx.options.getSubcommandGroup(false);
     const subcommand = ctx.options.getSubcommand(true);
+    let targetUser = ctx.options.getUser("user") || ctx.user; // "user" option is given if dev-command, otherwise default to ctx.user
 
-    if (["bugs"].includes(subcommandGroup || "")) {
+    let dbUser = await DBUser.findOne({ id: targetUser.id });
+    if (["add", "remove"].includes(subcommand)) {
       if (!ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER!)) {
         await ctx.reply({
           content: "Nice try! Only developers can award bug-finding glory.",
@@ -72,22 +68,27 @@ export default {
         });
         return;
       }
-    }
-
-    if (subcommandGroup === "bugs" && subcommand === "add") {
-      const targetUser = ctx.options.getUser("user", true);
-
-      // Find or create user
-      let dbUser = await DBUser.findOne({ id: targetUser.id });
 
       if (!dbUser) {
         dbUser = await DBUser.create({
-          id: targetUser.id,
-          username: targetUser.username,
+          id: targetUser!.id,
+          username: targetUser!.username,
         });
       }
+    } else if (!dbUser) {
+      await ctx.reply({
+        content: `${
+          targetUser.id === ctx.user.id
+            ? "You haven't"
+            : `${targetUser.username} hasn't`
+        } reported any bugs yet!`,
+        flags: 64,
+      });
+      return;
+    }
 
-      await dbUser.updateOne({
+    if (subcommand === "add") {
+      await dbUser!.updateOne({
         $inc: { "stats.bugsReported": 1 },
       });
 
@@ -96,21 +97,8 @@ export default {
         flags: 64,
       });
       return;
-    } else if (subcommandGroup === "bugs" && subcommand === "remove") {
-      const targetUser = ctx.options.getUser("user", true);
-
-      // Find or create user
-      let dbUser = await DBUser.findOne({ id: targetUser.id });
-
-      if (!dbUser) {
-        await ctx.reply({
-          content: `${targetUser.username} hasn't reported any bugs yet!`,
-          flags: 64,
-        });
-        return;
-      }
-
-      await dbUser.updateOne({
+    } else if (subcommand === "remove") {
+      await dbUser!.updateOne({
         $inc: { "stats.bugsReported": -1 },
       });
 
@@ -121,9 +109,7 @@ export default {
       return;
     }
 
-    if (subcommandGroup === null && subcommand === "stats") {
-      const targetUser = ctx.options.getUser("user") || ctx.user;
-
+    if (subcommand === "stats") {
       const cacheValue = cache.get(`${ctx.user.id}-${targetUser.id}`) as
         | string
         | undefined;
@@ -137,42 +123,29 @@ export default {
         return;
       }
 
-      const dbUser = await DBUser.findOne({ id: targetUser.id });
+      const targetMember = await ctx.guild.members.fetch(targetUser.id);
+
       const featureRequests = await FeatureRequest.find({
         userId: targetUser.id,
       });
+      const filterFRs = (status: FeatureRequestStatus) => {
+        return featureRequests
+          .filter((fr) => fr.status === status)
+          .length.toString();
+      };
       const frStats = {
         all: featureRequests.length.toString(),
-        implemented: featureRequests
-          .filter((fr) => fr.status === FeatureRequestStatus.Implemented)
-          .length.toString(),
-        pending: featureRequests
-          .filter((fr) => fr.status === FeatureRequestStatus.Pending)
-          .length.toString(),
-        accepted: featureRequests
-          .filter((fr) => fr.status === FeatureRequestStatus.Accepted)
-          .length.toString(),
-        denied: featureRequests
-          .filter((fr) => fr.status === FeatureRequestStatus.Denied)
-          .length.toString(),
+        implemented: filterFRs(FeatureRequestStatus.Implemented),
+        pending: filterFRs(FeatureRequestStatus.Pending),
+        accepted: filterFRs(FeatureRequestStatus.Accepted),
+        denied: filterFRs(FeatureRequestStatus.Denied),
       };
-
-      if (!dbUser) {
-        await ctx.reply({
-          content: `${
-            targetUser.id === ctx.user.id
-              ? "You haven't"
-              : `${targetUser.username} hasn't`
-          } reported any bugs yet!`,
-          flags: 64,
-        });
-        return;
-      }
 
       await ctx.reply({
         embeds: [
           new EmbedBuilder({
-            title: `Bug Hunter Stats: ${targetUser.username}`.slice(0, 100),
+            author: { name: "Bug Hunter Stats" },
+            title: `${targetMember.displayName || targetUser.username}`,
             thumbnail: {
               url: targetUser.avatarURL() || targetUser.defaultAvatarURL,
             },
@@ -180,17 +153,17 @@ export default {
             fields: [
               {
                 name: "__Bugs Reported__",
-                value: dbUser.stats.bugsReported.toString(),
+                value: `\`${dbUser.stats.bugsReported}\``,
                 inline: false,
               },
               {
                 name: "__Feature Requests__",
                 value: [
-                  "All: " + frStats.all,
-                  "Implemented: " + frStats.implemented,
-                  "Pending: " + frStats.pending,
-                  "Accepted: " + frStats.accepted,
-                  "Denied: " + frStats.denied,
+                  "All: `" + frStats.all + "`",
+                  "Implemented: `" + frStats.implemented + "`",
+                  "Pending: `" + frStats.pending + "`",
+                  "Accepted: `" + frStats.accepted + "`",
+                  "Denied: `" + frStats.denied + "`",
                 ].join("\n"),
                 inline: false,
               },
