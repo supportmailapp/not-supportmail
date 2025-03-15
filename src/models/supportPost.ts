@@ -29,6 +29,14 @@ export interface ISupportPost {
   ignoreFlags?: SupportPostIgnoreFlags;
   flags?: SupportPostFlags;
   lastActivity: Date | null;
+  /**
+   * List of user IDs who have participated in this post.
+   */
+  users: string[];
+  /**
+   * List of user IDs who have helped the most in this post.
+   */
+  helped: string[];
   createdAt: NativeDate; // MongoDB field
   updatedAt: NativeDate; // MongoDB field
 }
@@ -57,6 +65,8 @@ const SupportPostSchema = new Schema<ISupportPost>(
     remindedAt: { type: Date, default: null },
     ignoreFlags: { type: SupportPostIgnoreFlagsSchema, required: false },
     flags: { type: SupportPostFlags, required: false },
+    users: { type: [String], default: [] },
+    helped: { type: [String], default: [] },
     lastActivity: { type: Date, default: new Date() },
   },
   { timestamps: true }
