@@ -129,7 +129,7 @@ export default {
         }),
       ],
       flags:
-        ctx.channelId === process.env.CHANNEL_BOT_COMMANDS ? 64 : undefined,
+        ctx.channelId !== process.env.CHANNEL_BOT_COMMANDS ? 64 : undefined,
     });
 
     if (ctx.channelId === process.env.CHANNEL_BOT_COMMANDS) {
