@@ -81,10 +81,7 @@ export default {
       helped: { $in: [targetUser.id] },
     });
 
-    if (
-      !dbUser ||
-      (!supportPosts && !helpfulCount && !featureRequests.length)
-    ) {
+    if (!supportPosts && !helpfulCount && !featureRequests.length) {
       await ctx.reply({
         content: `${
           targetUser.id === ctx.user.id
