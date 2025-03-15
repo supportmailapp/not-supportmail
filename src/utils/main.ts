@@ -112,7 +112,10 @@ export async function updateDBUsername(
   if (checkForExistence) {
     const userExists = await DBUser.exists({ id: user.id });
     if (!userExists) {
-      await DBUser.create(updateQuery);
+      await DBUser.create({
+        id: user.id,
+        ...updateQuery,
+      });
       return;
     }
   }
