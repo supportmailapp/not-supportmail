@@ -33,19 +33,6 @@ export default {
 
     let targetUser = ctx.options.getUser("user") ?? ctx.user;
 
-    const dbUser = await DBUser.findOne({ id: targetUser.id });
-    if (!dbUser) {
-      await ctx.reply({
-        content: `${
-          targetUser.id === ctx.user.id
-            ? "You haven't"
-            : `${targetUser.username} hasn't`
-        } contributed yet!`,
-        flags: 64,
-      });
-      return;
-    }
-
     const cacheValue = cache.get(`${ctx.user.id}-${targetUser.id}`) as
       | string
       | undefined;
@@ -59,7 +46,15 @@ export default {
       return;
     }
 
+    let dbUser = await DBUser.findOne({ id: targetUser.id });
     const targetMember = await ctx.guild.members.fetch(targetUser.id);
+    if (!dbUser) {
+      dbUser = await DBUser.create({
+        id: targetUser.id,
+        username: targetUser.username,
+        displayName: targetMember.displayName || targetUser.username,
+      });
+    }
 
     // Get feature request stats
     const featureRequests = await FeatureRequest.find({
@@ -85,6 +80,21 @@ export default {
     const helpfulCount = await SupportPost.countDocuments({
       helped: { $in: [targetUser.id] },
     });
+
+    if (
+      !dbUser ||
+      (!supportPosts && !helpfulCount && !featureRequests.length)
+    ) {
+      await ctx.reply({
+        content: `${
+          targetUser.id === ctx.user.id
+            ? "You haven't"
+            : `${targetUser.username} hasn't`
+        } contributed yet!`,
+        flags: 64,
+      });
+      return;
+    }
 
     await ctx.reply({
       embeds: [
