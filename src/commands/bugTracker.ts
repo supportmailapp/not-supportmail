@@ -1,6 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { DBUser } from "../models/user.js";
 
+const BUG_TRACKER_THRESHOLD = 5;
+
 export default {
   data: new SlashCommandBuilder()
     .setName("bug-tracker")
@@ -32,7 +34,8 @@ export default {
   async run(ctx: ChatInputCommandInteraction) {
     if (!ctx.inCachedGuild()) return; // TS bullshit
     const subcommand = ctx.options.getSubcommand(true);
-    let targetUser = ctx.options.getUser("user", true);
+    const targetUser = ctx.options.getUser("user", true);
+    const member = await ctx.guild.members.fetch(ctx.user.id);
 
     if (!ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER!)) {
       await ctx.reply({
@@ -52,22 +55,49 @@ export default {
     }
 
     if (subcommand === "add") {
-      await dbUser!.updateOne({
+      await dbUser.updateOne({
         $inc: { "stats.bugsReported": 1 },
       });
+      const newCount = dbUser.stats.bugsReported + 1;
+
+      let roleAdded = false;
+      if (
+        newCount >= BUG_TRACKER_THRESHOLD &&
+        !member.roles.cache.has(process.env.ROLE_BUG_HUNTER!)
+      ) {
+        await member.roles.add(process.env.ROLE_BUG_HUNTER!);
+        roleAdded = true;
+      }
 
       await ctx.reply({
-        content: `Bug count incremented for ${targetUser.username}! Total bugs reported: ${dbUser.stats.bugsReported}`,
+        content:
+          `Bug count incremented for ${targetUser.username}! Total bugs reported: ${dbUser.stats.bugsReported}` +
+          (roleAdded
+            ? "\n\nUser has also been awarded the Bug Hunter role!"
+            : ""),
         flags: 64,
       });
       return;
     } else if (subcommand === "remove") {
       await dbUser!.updateOne({
-        $inc: { "stats.bugsReported": -1 },
+        $set: {
+          "stats.bugsReported": Math.max(0, dbUser.stats.bugsReported - 1),
+        },
       });
 
+      let roleRemoved = false;
+      if (
+        dbUser.stats.bugsReported < BUG_TRACKER_THRESHOLD &&
+        member.roles.cache.has(process.env.ROLE_BUG_HUNTER!)
+      ) {
+        await member.roles.remove(process.env.ROLE_BUG_HUNTER!);
+        roleRemoved = true;
+      }
+
       await ctx.reply({
-        content: `Bug count decremented for ${targetUser.username}! Total bugs reported: ${dbUser.stats.bugsReported}`,
+        content:
+          `Bug count decremented for ${targetUser.username}! Total bugs reported: ${dbUser.stats.bugsReported}` +
+          (roleRemoved ? "\n\nUser has also lost the Bug Hunter role!" : ""),
         flags: 64,
       });
       return;
