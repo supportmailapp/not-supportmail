@@ -17,11 +17,16 @@ export default async function adjustPostTags(message: Message) {
     const supportPost = await SupportPost.findOne({
       postId: message.channel.id,
     });
-    if (
-      !supportPost ||
-      !!supportPost.closedAt ||
-      message.author.id == supportPost.author
-    ) {
+    if (!supportPost || !!supportPost.closedAt) {
+      return;
+    }
+
+    if (message.author.id == supportPost.author) {
+      let updateQuery = { $set: { lastActivity: new Date() } } as any;
+      if (supportPost.remindedAt) {
+        updateQuery["$set"]["remindedAt"] = null;
+      }
+      await supportPost.updateOne(updateQuery);
       return;
     }
 
@@ -34,16 +39,10 @@ export default async function adjustPostTags(message: Message) {
       ]);
     }
 
-    if (supportPost.remindedAt) {
-      await supportPost.updateOne({ remindedAt: null });
-    }
-
-    let updateQuery = { lastActivityAt: new Date() } as any;
     if (!supportPost.users.includes(message.author.id)) {
-      updateQuery["$push"] = { users: message.author.id };
+      await supportPost.updateOne({ $push: { users: message.author.id } });
     }
 
-    await supportPost.updateOne(updateQuery);
     await updateDBUsername({
       id: message.author.id,
       username: message.author.username,
