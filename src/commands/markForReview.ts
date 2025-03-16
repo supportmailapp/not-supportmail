@@ -39,7 +39,8 @@ export default {
       });
     } else if (supportPost.closedAt) {
       return await ctx.reply({
-        content: "This post has already been closed. Open it before marking it for review",
+        content:
+          "This post has already been closed. Open it before marking it for review",
         flags: 64,
       });
     }
@@ -71,7 +72,11 @@ export default {
       content:
         "### ✅ Post Marked for Review\n" +
         ">>> This post has been marked for review by a developer. Please be patient while we review your issue.\n" +
-        "Make sure to keep an eye on this post for any updates!",
+        "Make sure to keep an eye on this post for any updates!" +
+        (process.env.ROLE_DEVELOPER
+          ? `\n-# <@&${process.env.ROLE_DEVELOPER}>`
+          : ""),
+      allowedMentions: { parse: ["roles"] },
     });
   },
 };
