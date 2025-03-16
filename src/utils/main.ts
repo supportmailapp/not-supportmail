@@ -1,10 +1,11 @@
 import {
   ActionRowBuilder,
+  APIEmbed,
   GuildMember,
   StringSelectMenuBuilder,
 } from "discord.js";
-import { DBUser, IUser } from "../models/user.js";
-import { HydratedDocument } from "mongoose";
+import { DBUser } from "../models/user.js";
+import { getThreadMembers } from "../caches/helpfulUsers.js";
 
 type ParsedCustomId = {
   compPath: string[];
@@ -124,26 +125,31 @@ export async function updateDBUsername(
   return;
 }
 
-export function buildHelpfulResponse(users: HydratedDocument<IUser>[]) {
+export function buildHelpfulResponse(postId: string) {
+  const postMembers = getThreadMembers(postId);
+  const embed = {
+    author: { name: "Optional" },
+    title: "Select the user(s) who helped you the most.",
+    description: "-# This will help us to reward the most helpful users.",
+    color: 0x2b2d31,
+  } as APIEmbed;
+  if (postMembers.length > 25) {
+    embed["footer"] = {
+      text: "Showing the first 25 users. More users can not be shown right now.",
+    };
+  }
+  const chunkedMembers = postMembers.slice(0, 25);
   return {
-    embeds: [
-      {
-        author: { name: "Optional" },
-        title: "Select the user(s) who helped you the most.",
-        description: "-# This will help us to reward the most helpful users.",
-        color: 0x2b2d31,
-      },
-    ],
+    embeds: [embed],
     components: [
       new ActionRowBuilder<StringSelectMenuBuilder>({
         components: [
           new StringSelectMenuBuilder({
-            customId: "helpful",
+            customId: "helpful?" + postId,
           }).setOptions(
-            users.map((user) => ({
-              label: user.displayName ?? user.username,
-              value: user.id,
-              description: user.username,
+            chunkedMembers.map((members) => ({
+              label: members.displayName,
+              value: members.id,
             }))
           ),
         ],

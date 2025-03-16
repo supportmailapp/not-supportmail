@@ -10,7 +10,7 @@ import {
 import { SupportPost } from "../models/supportPost.js";
 import config from "../config.js";
 import { buildHelpfulResponse, canUpdateSupportPost } from "../utils/main.js";
-import { DBUser } from "../models/user.js";
+import * as UsersCache from "../caches/helpfulUsers.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -76,7 +76,7 @@ export default {
 
     await ctx.channel.send({
       content:
-        "### ✅ This post has been resolved!\n-# It will be automatically archived in 24 hours.",
+        "### ✅ Post marked as solved, thanks everyone!\n-# It will be automatically archived in 24 hours.",
       embeds: [
         {
           author: {
@@ -98,16 +98,28 @@ export default {
       return;
     }
 
-    const users = await DBUser.find(
-      {
-        id: { $in: supportPost.users },
-      },
-      null,
-      {
-        limit: 25, // just in case
-      }
+    const allMembers = await ctx.channel.members.fetch({
+      withMember: true,
+      cache: true,
+    });
+    // Filter out the bot + the author
+    const eligibleMembers = allMembers.filter(
+      (member) =>
+        member.id !== ctx.client.user.id && supportPost.author !== member.id
     );
 
-    await ctx.editReply(buildHelpfulResponse(users));
+    if (eligibleMembers.size > 0) {
+      const partialMembers = eligibleMembers.map(
+        ({ id, guildMember: member }) => ({
+          id: id,
+          displayName: member.displayName ?? member.user.displayName,
+        })
+      );
+      UsersCache.setThreadMembers(ctx.channelId, partialMembers);
+
+      await ctx.editReply(buildHelpfulResponse(supportPost.postId));
+    } else {
+      await ctx.deleteReply();
+    }
   },
 };
