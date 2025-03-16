@@ -1,11 +1,11 @@
 // Cronjob!
 
-import { MongoClient } from "mongodb";
 import * as Sentry from "@sentry/node";
-import { ISupportPost } from "../models/supportPost.js";
 import dayjs from "dayjs";
 import { DiscordAPIError, REST, Routes } from "discord.js";
+import { MongoClient } from "mongodb";
 import config from "../config.js";
+import { ISupportPost } from "../models/supportPost.js";
 
 // Constants
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
@@ -35,33 +35,19 @@ async function updateMongoDBWithRetry(retries = 0) {
     const db = client.db();
     const collection = db.collection<ISupportPost>("supportPosts");
 
-    // 1. Find all posts that are older than 24 hours, not closed
-    const result = await collection
+    // 1. Find all posts that need reminders (inactive for 24h, not reminded yet, not closed, no reminder ignore)
+    const postsToRemind = await collection
       .find({
         $and: [
           { lastActivity: { $lte: dayjs().subtract(1, "day").toDate() } },
-          { closedAt: { $exists: false } },
+          { remindedAt: null },
+          { closedAt: null },
+          { "ignoreFlags.reminder": { $ne: true } },
         ],
       })
       .toArray();
 
-    // 2. Filter the posts that have not been reminded yet
-    const postsToRemind = result.filter(
-      (post) => post.remindedAt == null && post.ignoreFlags?.reminder != true
-    );
-    const remindIds = postsToRemind.map((p) => p.postId);
-
-    // 3. Filter out the posts that have been reminded
-    const postsToClose = result
-      .filter((p) => !remindIds.includes(p.postId)) // Just to be sure we don't close posts that have just been reminded (Fail-safe)
-      .filter(
-        (post) =>
-          post.remindedAt != null &&
-          post.ignoreFlags?.close != true &&
-          post.flags?.noArchive != true
-      );
-
-    // 4. Send reminders
+    // 2. Send reminders to these posts
     for (const post of postsToRemind) {
       await rest
         .post(Routes.channelMessages(post.postId), {
@@ -85,7 +71,19 @@ async function updateMongoDBWithRetry(retries = 0) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
-    // 5. Close other posts
+    // 3. Find all posts to close (reminded > 24h ago, not closed, no close ignore, no noArchive flag)
+    const postsToClose = await collection
+      .find({
+        $and: [
+          { remindedAt: { $lte: dayjs().subtract(1, "day").toDate() } },
+          { closedAt: null },
+          { "ignoreFlags.close": { $ne: true } },
+          { "flags.noArchive": { $ne: true } },
+        ],
+      })
+      .toArray();
+
+    // 4. Close these posts
     for (const post of postsToClose) {
       await rest
         .patch(Routes.channel(post.postId), {
