@@ -1,5 +1,6 @@
 #!/bin/bash
 # cron-wrapper.sh
+echo $path
 cd /home/helper/bot
 npm run cron:support-questions
 npm run cron:sync-votes
