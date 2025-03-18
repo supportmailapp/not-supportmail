@@ -104,6 +104,7 @@ dist
 # Misc
 .idea/
 src/commands/utils/adminTest.ts
+src/utils/cron-wrapper.sh
 
 # Temp
 suggestPostClosure.ts
