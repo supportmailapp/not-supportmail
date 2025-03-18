@@ -104,3 +104,6 @@ dist
 # Misc
 .idea/
 src/commands/utils/adminTest.ts
+
+# Temp
+suggestPostClosure.ts

@@ -1,6 +1,9 @@
 import { REST, Routes } from "discord.js";
 import { MongoClient } from "mongodb";
 import type { IBotVote } from "supportmail-types";
+// import dotenv from 'dotenv';
+// const _dirname = new URL('.', import.meta.url).pathname;
+// dotenv.config({ path: `${_dirname}/.env.production` });
 
 const client = new MongoClient(process.env.MONGO_URI_MAIN!);
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
