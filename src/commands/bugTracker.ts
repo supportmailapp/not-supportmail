@@ -5,7 +5,7 @@ const BUG_TRACKER_THRESHOLD = 5;
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("bug-tracker")
+    .setName("bugs")
     .setContexts(0)
     .setDescription("Bug hunter commands")
     .addSubcommand((sub) =>
