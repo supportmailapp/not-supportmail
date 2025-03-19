@@ -4,6 +4,9 @@ The source code of the helper bot for the SupportMail support server.
 
 If you want to use this code, you can do so by forking this repository and modifying the code to fit your needs.
 
+> [!WARNING]
+> The scripts that are being executed via cron have critical errors. Please do not use them!
+
 ## Current Features
 
 - Auto Publishing of messages (with optional validation)
