@@ -146,6 +146,7 @@ export function buildHelpfulResponse(postId: string) {
         components: [
           new StringSelectMenuBuilder({
             customId: "helpful?" + postId,
+            maxValues: chunkedMembers.length,
           }).setOptions(
             chunkedMembers.map((members) => ({
               label: members.displayName,
