@@ -25,7 +25,7 @@ function responseHandler(
   }
 
   if (ctx.isStringSelectMenu()) {
-    return ctx.editReply(options);
+    return ctx.editReply(options as InteractionEditReplyOptions);
   } else {
     return ctx.reply(options as InteractionReplyOptions);
   }
