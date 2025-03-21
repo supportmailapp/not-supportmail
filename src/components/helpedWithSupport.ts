@@ -10,6 +10,10 @@ import { buildHelpfulResponse } from "../utils/main.js";
 const NoMoreMembersResponse =
   "No more members left. Thank you for commending your fellow members!";
 
+function responseHandler(ctx: StringSelectMenuInteraction | ButtonInteraction) {
+  return ctx.isStringSelectMenu() ? ctx.editReply : ctx.reply;
+}
+
 export default {
   prefix: "helpful",
 
@@ -29,26 +33,22 @@ export default {
       );
     }
 
-    const responseHandler = ctx.isStringSelectMenu()
-      ? ctx.editReply
-      : ctx.reply;
-
     // Fetch post and support post data
     const post = await ctx.client.channels.fetch(postId);
     if (!post || post.type !== ChannelType.PublicThread) {
-      await responseHandler("The post was not found.");
+      await responseHandler(ctx)("The post was not found.");
       return;
     }
 
     const supportPost = await SupportPost.findOne({ postId });
     if (!supportPost) {
-      await responseHandler("The support post data was not found.");
+      await responseHandler(ctx)("The support post data was not found.");
       return;
     } else if (supportPost.author !== ctx.user.id) {
-      await responseHandler("You are not the author of this post.");
+      await responseHandler(ctx)("You are not the author of this post.");
       return;
     } else if (!supportPost.closedAt) {
-      await responseHandler("This post is currently not solved.");
+      await responseHandler(ctx)("This post is currently not solved.");
       return;
     }
 
@@ -65,7 +65,7 @@ export default {
 
     // Reply/Edit with helpful response
     if (members.length) {
-      await responseHandler(buildHelpfulResponse(postId));
+      await responseHandler(ctx)(buildHelpfulResponse(postId));
       return;
     }
 
