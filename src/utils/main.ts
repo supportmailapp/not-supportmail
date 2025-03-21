@@ -5,7 +5,7 @@ import {
   StringSelectMenuBuilder,
 } from "discord.js";
 import { DBUser } from "../models/user.js";
-import { getThreadMembers } from "../caches/helpfulUsers.js";
+import type { PartialMember } from "../caches/helpfulUsers.js";
 
 type ParsedCustomId = {
   compPath: string[];
@@ -125,20 +125,19 @@ export async function updateDBUsername(
   return;
 }
 
-export function buildHelpfulResponse(postId: string) {
-  const postMembers = getThreadMembers(postId);
+export function buildHelpfulResponse(postId: string, members: PartialMember[]) {
   const embed = {
     author: { name: "Optional" },
     title: "Select the user(s) who helped you the most.",
     description: "-# This will help us to reward the most helpful users.",
     color: 0x2b2d31,
   } as APIEmbed;
-  if (postMembers.length > 25) {
+  if (members.length > 25) {
     embed["footer"] = {
       text: "Showing the first 25 users. More users can not be shown right now.",
     };
   }
-  const chunkedMembers = postMembers.slice(0, 25);
+  const chunkedMembers = members.slice(0, 25);
   return {
     embeds: [embed],
     components: [
