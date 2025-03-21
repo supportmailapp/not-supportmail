@@ -112,7 +112,7 @@ export default {
             footer:
               ctx.user.id == supportPost.author
                 ? {
-                    text: "You can select the most helpful users below.",
+                    text: "You can commend the most helpful users below.",
                   }
                 : undefined,
           },
@@ -121,7 +121,7 @@ export default {
           new ActionRowBuilder<ButtonBuilder>().setComponents(
             new ButtonBuilder({
               customId: "helpful",
-              label: "Select helpful users",
+              label: "Select users",
               style: 1,
               emoji: {
                 name: "🙌",
@@ -134,7 +134,8 @@ export default {
       await UsersCache.fetchAndCacheThreadMembers(
         ctx.channel,
         supportPost.author,
-        ctx.client.user.id
+        ctx.client.user.id,
+        supportPost.helped
       );
     } else if (subcommand == "reopen") {
       const tags = ctx.channel.appliedTags;
@@ -150,6 +151,7 @@ export default {
         closedAt: null,
         remindedAt: null,
         lastActivity: dayjs().toDate(),
+        helped: [],
         $unset: {
           ignoreFlags: "",
           flags: "",
