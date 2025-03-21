@@ -35,7 +35,7 @@ export default async function (message: Message) {
 
   const reply = `-# Is your question solved? If so, you can use </question solve:${
     message.client.application.commands.cache.find(
-      (command) => command.name === "solve"
+      (command) => command.name === "question"
     )?.id
   }> to close this post.`;
 
