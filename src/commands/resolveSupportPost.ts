@@ -74,7 +74,7 @@ export default {
 
     if (subcommands == "solve) {
       await ctx.channel.edit({
-        appliedTags: [config.tags.solved],
+        appliedTags: [config.tags.solved], // TODO: Filter out non-management tags so other tags can work.
         autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
       });
 
@@ -82,16 +82,13 @@ export default {
         closedAt: dayjs().toDate(),
       });
 
-      await ctx.deferReply({ flags: 64 });
-
-    await ctx.channel.send({
+    // TODO: Make reply-params Universal and one reply after all; Add button to select helpful members instead in instant reply
+    await ctx.reply({
       content: "### ✅ Post marked as solved, thanks everyone!\n-# It will be automatically archived in 24 hours.",
-      embeds: [
+      // @ts-ignore | this works
+      embeds: ctx.options.getString("reason")
+        ? [
         {
-          author: {
-            name: ctx.user.username,
-            icon_url: ctx.user.displayAvatarURL() ?? ctx.user.defaultAvatarURL,
-          },
           footer: ctx.options.getString("reason")
             ? {
                 text: "Reason: " + ctx.options.getString("reason", true),
@@ -111,7 +108,6 @@ export default {
       withMember: true,
       cache: true,
     });
-    // Filter out the bot + the author
     const eligibleMembers = allMembers.filter(
       (member) =>
         member.id !== ctx.client.user.id && supportPost.author !== member.id
@@ -132,7 +128,40 @@ export default {
     }
 
     } else if (subcommand == "reopen") {
-       
+      const tags = ctx.channel.appliedTags;
+    await ctx.channel.edit({
+      appliedTags: [
+        ...tags.filter((tid) => !Object.values(config.tags).includes(tid)),
+        config.tags.unanswered,
+      ],
+      autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+    });
+
+    await supportPost.updateOne({
+      closedAt: null,
+      remindedAt: null,
+      lastActivity: dayjs().toDate(),
+      $unset: {
+        ignoreFlags: "",
+        flags: "",
+      },
+    });
+
+    await ctx.reply({
+      content: "### ✅ This Post has been reopened!",
+      // @ts-ignore | This works.
+      embeds: ctx.options.getString("reason")
+        ? [
+            {
+              author: {
+                name: "Reason",
+              },
+              description: ctx.options.getString("reason"),
+              color: 0x2b2d31,
+            },
+          ]
+        : undefined,
+    });
     }
   },
 };
