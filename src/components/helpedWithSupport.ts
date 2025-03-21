@@ -70,9 +70,9 @@ export default {
     }
 
     // Get or fetch thread members
-    let members = UsersCache.getThreadMembers(postId);
-    if (!members.length) {
-      members = await UsersCache.fetchAndCacheThreadMembers(
+    let cachedMembers = UsersCache.getThreadMembers(postId);
+    if (!cachedMembers.length) {
+      cachedMembers = await UsersCache.fetchAndCacheThreadMembers(
         post,
         supportPost.author,
         ctx.client.user.id,
@@ -80,8 +80,16 @@ export default {
       );
     }
 
+    // Match the cached users against the values + already in database users
+    const allCommendedUserIds = [...supportPost.helped];
+    if (ctx.isStringSelectMenu()) allCommendedUserIds.push(...ctx.values);
+
+    const commendedUsers = cachedMembers.filter((member) =>
+      allCommendedUserIds.includes(member.id)
+    );
+
     // Reply/Edit with helpful response
-    if (members.length) {
+    if (commendedUsers.length) {
       await responseHandler(ctx, buildHelpfulResponse(postId));
       return;
     }
