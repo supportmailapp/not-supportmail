@@ -8,7 +8,7 @@ import { SupportPost } from "../models/supportPost.js";
 import { buildHelpfulResponse } from "../utils/main.js";
 
 const NoMoreMembersResponse =
-  "No more members to award. Thank you for commending fellow members!";
+  "No more members left. Thank you for commending your fellow members!";
 
 export default {
   prefix: "helpful",
