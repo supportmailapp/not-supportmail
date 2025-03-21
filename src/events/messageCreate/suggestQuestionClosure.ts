@@ -36,8 +36,8 @@ export default async function (message: Message) {
   const solvedCommand = message.client.application.commands.cache.find(
     (command) => command.name === "question"
   );
-  console.log(solvedCommand);
-  const reply = `-# Is your question solved? If so, you can use </question solve:${solvedCommand?.id}> to close this post.`;
+  // * You can change this emoji to a custom one if you want
+  const reply = `-# :grey_question: Is your question solved? If so, you can use </question solve:${solvedCommand?.id}> to close this post.`;
 
   await message.reply({
     content: reply,
