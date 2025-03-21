@@ -7,6 +7,7 @@
     "build": "npx tsc",
     "dev": "npx tsc && node --env-file=.env.dev ./dist/index.js",
     "start": "npx tsc && node --env-file=.env.production ./dist/index.js",
+    "prepare": "npm install",
     "cron:support-questions": "node --env-file=.env.production ./dist/cron/supportQuestions.js",
     "cron:sync-votes": "node --env-file=.env.production ./dist/cron/syncVotes.js"
   },
