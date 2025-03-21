@@ -33,11 +33,11 @@ export default async function (message: Message) {
 
   if (message.author.id !== authorId) return;
 
-  const reply = `-# Is your question solved? If so, you can use </question solve:${
-    message.client.application.commands.cache.find(
-      (command) => command.name === "question"
-    )?.id
-  }> to close this post.`;
+  const solvedCommand = message.client.application.commands.cache.find(
+    (command) => command.name === "question"
+  );
+  console.log(solvedCommand);
+  const reply = `-# Is your question solved? If so, you can use </question solve:${solvedCommand?.id}> to close this post.`;
 
   await message.reply({
     content: reply,

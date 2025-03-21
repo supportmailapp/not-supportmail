@@ -30,7 +30,7 @@ export default async function (thread: AnyThreadChannel) {
     .fetch(thread.ownerId)
     .catch(() => null);
 
-  if (owner && owner)
+  if (owner) {
     await updateDBUsername(
       {
         id: owner.id,
@@ -39,4 +39,8 @@ export default async function (thread: AnyThreadChannel) {
       },
       true
     );
+  }
+
+  // Pin the starter message (has the same ID as the thread)
+  await thread.messages.pin(thread.id);
 }
