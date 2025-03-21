@@ -244,6 +244,8 @@ client.on("ready", async (client) => {
     appId: client.application.id,
     appToken: client.token,
   });
+  if (!client.application.commands.cache.size)
+    await client.application.commands.fetch({ withLocalizations: true });
 });
 
 process
