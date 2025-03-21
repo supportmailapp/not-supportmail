@@ -1,8 +1,8 @@
 import {
   ButtonInteraction,
   ChannelType,
-  InteractionReplyOptions,
-  MessagePayload,
+  type InteractionEditReplyOptions,
+  type InteractionReplyOptions,
   type StringSelectMenuInteraction,
 } from "discord.js";
 import * as UsersCache from "../caches/helpfulUsers.js";
@@ -14,12 +14,21 @@ const NoMoreMembersResponse =
 
 function responseHandler(
   ctx: StringSelectMenuInteraction | ButtonInteraction,
-  options: string | MessagePayload | InteractionReplyOptions
-) {
-  if (ctx.isButton() && typeof options === "string") {
-    options = { content: options, flags: 64 };
+  options: string | InteractionEditReplyOptions | InteractionReplyOptions
+): Promise<any> {
+  if (typeof options === "string") {
+    if (ctx.isStringSelectMenu()) {
+      return ctx.editReply({ content: options });
+    } else {
+      return ctx.reply({ content: options, flags: 64 });
+    }
   }
-  return ctx.isStringSelectMenu() ? ctx.editReply(options) : ctx.reply(options);
+
+  if (ctx.isStringSelectMenu()) {
+    return ctx.editReply(options);
+  } else {
+    return ctx.reply(options as InteractionReplyOptions);
+  }
 }
 
 export default {
