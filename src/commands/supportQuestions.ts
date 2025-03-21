@@ -5,7 +5,6 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   type GuildMember,
-  type InteractionReplyOptions,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
@@ -88,7 +87,8 @@ export default {
 
     await ctx.deferReply();
 
-    let replyOptions: string | InteractionReplyOptions = "undefined";
+    // Typescript is being a pain, so we have to do this
+    let replyOptions: any = "undefined";
     if (subcommand == "solve") {
       const tags = ctx.channel.appliedTags;
       await ctx.channel.edit({
