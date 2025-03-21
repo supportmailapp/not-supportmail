@@ -27,7 +27,7 @@ function responseHandler(
   if (ctx.isStringSelectMenu()) {
     return ctx.editReply(options as InteractionEditReplyOptions);
   } else {
-    return ctx.reply(options as InteractionReplyOptions);
+    return ctx.reply({ ...options, flags: 64 } as InteractionReplyOptions);
   }
 }
 
