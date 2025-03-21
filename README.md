@@ -14,7 +14,7 @@ If you want to use this code, you can do so by forking this repository and modif
 - **Support Post Tracking**: Monitors and manages support forum threads
 - **Automatic Tag Management**: Dynamically changes tags from unanswered to unsolved when someone responds
 - **Intelligent Post Closure**: Detects when users express gratitude and suggests marking posts as solved
-- **Helper Recognition System**: Allows post authors to recognize users who helped them
+- **Helper Recognition System**: Allows post authors to commend users who helped them
 - **Review Flagging**: Mark posts for review by developers with `/mark-for-review`
 - **Anti-Archive Protection**: Prevents posts from being automatically archived if needed
 
