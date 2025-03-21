@@ -90,41 +90,41 @@ export default {
       return;
     }
 
+    const statsEmbed = new EmbedBuilder()
+      .setAuthor({ name: "User Statistics" })
+      .setTitle(targetMember.displayName || targetUser.username)
+      .setThumbnail(targetUser.avatarURL() || targetUser.defaultAvatarURL)
+      .setColor(0xff5733)
+      .addFields([
+        {
+          name: "__Bugs Reported__",
+          value: `- \`${dbUser.stats.bugsReported}\``,
+          inline: false,
+        },
+        {
+          name: "__Support Posts__",
+          value: [
+            `- Created: \`${supportPosts}\` posts`,
+            `- Commendations: \`${helpfulCount}\``,
+          ].join("\n"),
+          inline: false,
+        },
+        {
+          name: "__Feature Requests__",
+          value: [
+            `- All: \`${frStats.all}\``,
+            `- Implemented: \`${frStats.implemented}\``,
+            `- Pending: \`${frStats.pending}\``,
+            `- Accepted: \`${frStats.accepted}\``,
+            `- Denied: \`${frStats.denied}\``,
+          ].join("\n"),
+          inline: false,
+        },
+      ])
+      .setTimestamp();
+
     await ctx.reply({
-      embeds: [
-        new EmbedBuilder({
-          author: { name: "User Statistics" },
-          title: `${targetMember.displayName || targetUser.username}`,
-          thumbnail: {
-            url: targetUser.avatarURL() || targetUser.defaultAvatarURL,
-          },
-          color: 0xff5733,
-          fields: [
-            {
-              name: "__Bugs Reported__",
-              value: `- \`${dbUser.stats.bugsReported}\``,
-              inline: false,
-            },
-            {
-              name: "__Support Posts__",
-              value: `- Created: \`${supportPosts}\`\n- Helped in: \`${helpfulCount}\``,
-              inline: false,
-            },
-            {
-              name: "__Feature Requests__",
-              value: [
-                "- All: `" + frStats.all + "`",
-                "- Implemented: `" + frStats.implemented + "`",
-                "- Pending: `" + frStats.pending + "`",
-                "- Accepted: `" + frStats.accepted + "`",
-                "- Denied: `" + frStats.denied + "`",
-              ].join("\n"),
-              inline: false,
-            },
-          ],
-          timestamp: new Date().toISOString(),
-        }),
-      ],
+      embeds: [statsEmbed],
       flags: responseFlags,
     });
 
