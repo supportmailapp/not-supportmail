@@ -7,7 +7,7 @@ const cache = new NodeCache({
   errorOnMissing: false,
 });
 
-type PartialMember = {
+export type PartialMember = {
   id: string;
   displayName: string;
 };
