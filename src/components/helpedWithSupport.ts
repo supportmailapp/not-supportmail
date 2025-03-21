@@ -128,25 +128,24 @@ export default {
         );
       }
 
-      // Match the cached users against the values + already in database users
+      // Match the cached users against the values + already in database users to result in one array with not commended users
       const allCommendedUserIds = [...supportPost.helped];
       if (ctx.isStringSelectMenu()) allCommendedUserIds.push(...ctx.values);
+      console.log(`[DEBUG] All commended user IDs: ${allCommendedUserIds}`);
 
+      const freeUsers = cachedMembers.filter(
+        (member) => !allCommendedUserIds.includes(member.id)
+      );
       console.log(
-        `[DEBUG] All commended user IDs: ${JSON.stringify(allCommendedUserIds)}`
+        `[DEBUG] Found ${freeUsers.length} users who are not commended yet`
       );
-
-      const commendedUsers = cachedMembers.filter((member) =>
-        allCommendedUserIds.includes(member.id)
-      );
-      console.log(`[DEBUG] Found ${commendedUsers.length} commended users`);
 
       // Reply/Edit with helpful response
-      if (commendedUsers.length) {
+      if (freeUsers.length) {
         console.log(
-          `[DEBUG] Building helpful response for ${commendedUsers.length} users`
+          `[DEBUG] Building helpful response for ${freeUsers.length} users`
         );
-        await responseHandler(ctx, buildHelpfulResponse(postId));
+        await responseHandler(ctx, buildHelpfulResponse(postId, freeUsers));
         return;
       }
 
