@@ -245,6 +245,7 @@ client.on("ready", async (client) => {
     appToken: client.token,
   });
   await client.application.commands.fetch();
+  console.log("Commands deployed & fetched");
 });
 
 process
