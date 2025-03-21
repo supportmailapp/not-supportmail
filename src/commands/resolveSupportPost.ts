@@ -14,8 +14,8 @@ import * as UsersCache from "../caches/helpfulUsers.js";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("resolve")
-    .setDescription("Resolve a support question.")
+    .setName("question")
+    .setDescription("Manage support questions")
     .setContexts(0)
     .addStringOption((op) =>
       op
@@ -49,34 +49,43 @@ export default {
         content: "This post is not a support question.",
         flags: 64,
       });
-    } else if (supportPost.closedAt) {
-      return await ctx.reply({
-        content: "This post has already been resolved.",
-        flags: 64,
-      });
     }
+
+    const subcommands = cry.options.getSubcommand(true);
 
     if (!canUpdateSupportPost(ctx.member as GuildMember, supportPost.author)) {
       return await ctx.reply({
-        content: `### :x: You are not authorized.\nIt can only be resolved by the author or a staff member.`,
+        content: `### :x: You are not authorized.\nIt can only be managed by the author or a staff member.`,
         flags: 64,
       });
     }
 
-    await ctx.channel.edit({
-      appliedTags: [config.tags.solved],
-      autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
-    });
+    if (subcommand == "solve" && supportPost.closedAt) {
+        return await ctx.reply({
+          content: "This post has already been resolved.",
+          flags: 64,
+        });
+    } else if (subcommand != "solve" && !supportPost.closedAt) {
+      return await ctx.reply({
+        content: "This post has not been resolved yet.",
+        flags: 64,
+      });
+    }
 
-    await supportPost.updateOne({
-      closedAt: dayjs().toDate(),
-    });
+    if (subcommands == "solve) {
+      await ctx.channel.edit({
+        appliedTags: [config.tags.solved],
+        autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+      });
 
-    await ctx.deferReply({ flags: 64 });
+      await supportPost.updateOne({
+        closedAt: dayjs().toDate(),
+      });
+
+      await ctx.deferReply({ flags: 64 });
 
     await ctx.channel.send({
-      content:
-        "### ✅ Post marked as solved, thanks everyone!\n-# It will be automatically archived in 24 hours.",
+      content: "### ✅ Post marked as solved, thanks everyone!\n-# It will be automatically archived in 24 hours.",
       embeds: [
         {
           author: {
@@ -93,10 +102,10 @@ export default {
       ],
     });
 
-    if (ctx.user.id !== supportPost.author) {
-      await ctx.deleteReply();
-      return;
-    }
+      if (ctx.user.id !== supportPost.author) {
+        await ctx.deleteReply();
+        return;
+      }
 
     const allMembers = await ctx.channel.members.fetch({
       withMember: true,
@@ -120,6 +129,10 @@ export default {
       await ctx.editReply(buildHelpfulResponse(supportPost.postId));
     } else {
       await ctx.deleteReply();
+    }
+
+    } else if (subcommand == "reopen") {
+       
     }
   },
 };
