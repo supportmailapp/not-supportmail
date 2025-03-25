@@ -109,12 +109,9 @@ export default {
             description:
               "### ✅ This Post has been marked as solved, thanks everyone!",
             color: 0x2b2d31,
-            footer:
-              ctx.user.id == supportPost.author
-                ? {
-                    text: "You can commend the most helpful users below.",
-                  }
-                : undefined,
+            footer: {
+              text: "You can commend the most helpful users below.",
+            },
           },
         ],
         components: [
@@ -166,6 +163,16 @@ export default {
           },
         ],
       };
+    }
+
+    const reason = ctx.options.getString("reason");
+    if (reason) {
+      replyOptions.embeds[0].fields = [
+        {
+          name: "Reason",
+          value: reason,
+        },
+      ];
     }
 
     await ctx.editReply(replyOptions);
