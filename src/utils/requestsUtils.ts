@@ -51,3 +51,16 @@ export function sendRequestSticky(channel: TextChannel) {
     ],
   });
 }
+
+// builds the page with 10 feature requests
+export async function buildSelectorPage(page: number, status: FeatureRequestStatus) {
+  const requests = await FeatureRequest.find(
+    { status: status },
+    null,
+    {
+      sort: { createdAt: -1 },
+      limit: 20,
+      skip: (page - 1) * 20
+    }
+  );
+}
