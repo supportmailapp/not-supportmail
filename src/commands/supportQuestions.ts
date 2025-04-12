@@ -1,10 +1,12 @@
 import dayjs from "dayjs";
 import {
   ActionRowBuilder,
+  APIEmbed,
   ButtonBuilder,
   ChannelType,
   ChatInputCommandInteraction,
   type GuildMember,
+  InteractionEditReplyOptions,
   SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from "discord.js";
@@ -88,7 +90,8 @@ export default {
     await ctx.deferReply();
 
     // Typescript is being a pain, so we have to do this
-    let replyOptions: any = "undefined";
+    let replyOptions: InteractionEditReplyOptions & { embeds?: APIEmbed[] } =
+      {};
     if (subcommand == "solve") {
       const tags = ctx.channel.appliedTags;
       await ctx.channel.edit({
@@ -167,12 +170,19 @@ export default {
 
     const reason = ctx.options.getString("reason");
     if (reason) {
-      replyOptions.embeds[0].fields = [
+      replyOptions.embeds![0].fields = [
         {
-          name: "Reason",
+          name: "__Reason__",
           value: reason,
         },
       ];
+    }
+
+    if (ctx.user.id !== supportPost.author) {
+      replyOptions.content = `-# <@${ctx.user.id}>`;
+      replyOptions.allowedMentions = {
+        parse: ["users"],
+      };
     }
 
     await ctx.editReply(replyOptions);
