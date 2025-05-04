@@ -80,15 +80,16 @@ function formatIncident(
 
   for (let i = 0; i < statusUpdates.length; i++) {
     const update = statusUpdates[i];
-    container
-      .addTextDisplayComponents((text) =>
-        text.setContent(
-          `### [ <t:${~~(update.updatedAt.getTime() / 1000)}:R> ] ${
-            IncidentStatus[update.status]
-          }\n` + update.content
-        )
+    container.addTextDisplayComponents((text) =>
+      text.setContent(
+        `### [ <t:${~~(update.updatedAt.getTime() / 1000)}:R> ] ${
+          IncidentStatus[update.status]
+        }\n` + update.content
       )
-      .addSeparatorComponents((sep) => sep);
+    );
+    if (i < statusUpdates.length - 1) {
+      container.addSeparatorComponents((sep) => sep);
+    }
   }
 
   components.push(container);
