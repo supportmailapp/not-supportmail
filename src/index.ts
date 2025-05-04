@@ -172,14 +172,23 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.replied || interaction.deferred) {
         await interaction
           .editReply({
-            content: "There was an error while executing this command!",
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+              new TextDisplayBuilder().setContent(
+                "There was an error while executing this command!"
+              ),
+            ],
           })
           .catch((e) => console.error(e));
       } else {
         await interaction
           .reply({
-            content: "There was an error while executing this command!",
-            flags: 64,
+            flags: MessageFlags.IsComponentsV2 | 64,
+            components: [
+              new TextDisplayBuilder().setContent(
+                "There was an error while executing this command!"
+              ),
+            ],
           })
           .catch((e) => console.error(e));
       }
