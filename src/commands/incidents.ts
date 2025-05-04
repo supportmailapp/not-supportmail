@@ -142,11 +142,13 @@ async function createIncident(
     components: [
       new ContainerBuilder()
         .setAccentColor(Colors.Green)
-        .addTextDisplayComponents((text) => text.setContent("Incident created"))
+        .addTextDisplayComponents((text) =>
+          text.setContent("### Incident created")
+        )
         .addSectionComponents((sec) =>
           sec
             .addTextDisplayComponents((text) =>
-              text.setContent(`Incident ID: ${incident.id}`)
+              text.setContent(`> Incident ID: ${incident.id}`)
             )
             .setButtonAccessory((btn) =>
               btn.setLabel("View").setURL(message.url).setStyle(5)
@@ -249,7 +251,7 @@ async function updateIncident(
         .addSectionComponents((sec) =>
           sec
             .addTextDisplayComponents((text) =>
-              text.setContent(`Incident ID: ${incident.id}`)
+              text.setContent(`> Incident ID: ${incident.id}`)
             )
             .setButtonAccessory((btn) =>
               btn.setLabel("View").setURL(incident.messageId!).setStyle(5)
