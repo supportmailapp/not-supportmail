@@ -75,8 +75,7 @@ export default {
     await ctx.deferReply({ flags: MessageFlags.IsComponentsV2 | 64 });
 
     const options = {
-      targetUserId:
-        ctx.options.getUser("target-user")?.id ?? ctx.client.user.id,
+      targetUserId: ctx.options.getUser("target-user")?.id ?? undefined,
       channelId: ctx.options.getChannel("channel")?.id ?? ctx.channelId,
       maxUses: ctx.options.getInteger("max-uses") ?? 0,
       maxAge: ctx.options.getInteger("max-age") ?? 0,
