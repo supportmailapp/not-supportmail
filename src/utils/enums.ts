@@ -5,6 +5,17 @@ export enum IncidentStatus {
   Investigating = 1,
   Identified = 2,
   Monitoring = 3,
+  /**
+   * Scheduled maintenance or downtime.
+   */
+  Maintenance = 4,
+  /**
+   * Update on an incident without a new status.\
+   * This is used for updates that do not change the status of the incident.
+   *
+   * For example, if the incident is still being investigated, but there is a new update on the investigation.
+   */
+  Update = 5,
 }
 
 export const IncidentStatusColors = {
@@ -12,6 +23,8 @@ export const IncidentStatusColors = {
   [IncidentStatus.Investigating]: Colors.Yellow,
   [IncidentStatus.Identified]: Colors.Aqua,
   [IncidentStatus.Monitoring]: Colors.Blurple,
+  [IncidentStatus.Maintenance]: Colors.DarkVividPink,
+  [IncidentStatus.Update]: Colors.DarkGold,
 };
 
 export enum FeatureRequestCategory {
