@@ -54,7 +54,7 @@ function formatIncident(
   const container = new ContainerBuilder().setAccentColor(
     IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
   );
-  let content = `### > __${incident.title}__`;
+  let content = `## __${incident.title}__`;
 
   if (statusUpdates.length > 1) {
     if (
