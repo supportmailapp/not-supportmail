@@ -6,9 +6,11 @@ import {
   Client,
   Collection,
   IntentsBitField,
+  MessageFlags,
   Options,
   Partials,
   SlashCommandBuilder,
+  TextDisplayBuilder,
 } from "discord.js";
 // @ts-ignore | Ignore because if we don't need it TS goes crazy
 import { deployCommands } from "djs-command-helper";
@@ -211,21 +213,34 @@ client.on("interactionCreate", async (interaction) => {
       ) {
         await interaction
           .editReply({
-            content: "There was an error while executing this component!",
+            flags: MessageFlags.IsComponentsV2,
+            components: [
+              new TextDisplayBuilder().setContent(
+                "There was an error while executing this component!"
+              ),
+            ],
           })
           .catch((e) => console.error(e));
       } else if (interaction.isModalSubmit()) {
         await interaction
           .reply({
-            content: "There was an error while executing this component!",
-            flags: 64,
+            flags: MessageFlags.IsComponentsV2 | 64,
+            components: [
+              new TextDisplayBuilder().setContent(
+                "There was an error while executing this component!"
+              ),
+            ],
           })
           .catch((e) => console.error(e));
       } else {
         await interaction
           .reply({
-            content: "There was an error while executing this component!",
-            flags: 64,
+            flags: MessageFlags.IsComponentsV2 | 64,
+            components: [
+              new TextDisplayBuilder().setContent(
+                "There was an error while executing this component!"
+              ),
+            ],
           })
           .catch((e) => console.error(e));
       }
