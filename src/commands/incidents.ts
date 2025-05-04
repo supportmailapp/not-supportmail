@@ -53,13 +53,13 @@ function formatIncident(
   const container = new ContainerBuilder().setAccentColor(
     IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
   );
-  let content = `### ${incident.title}`;
+  let content = `### > __${incident.title}__`;
 
   if (statusUpdates.length > 1) {
     if (
       statusUpdates[statusUpdates.length - 1].status === IncidentStatus.Resolved
     ) {
-      content += `Lasted: ${humanizeDuration(
+      content += `\n-# Lasted: ${humanizeDuration(
         dayjs().diff(incident.createdAt, "ms"),
         {
           round: true,
