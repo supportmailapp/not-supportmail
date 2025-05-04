@@ -1,4 +1,5 @@
 import {
+  ButtonBuilder,
   ChannelType,
   ChatInputCommandInteraction,
   ContainerBuilder,
@@ -113,44 +114,46 @@ export default {
     await ctx.editReply({
       flags: MessageFlags.IsComponentsV2 | 64,
       components: [
-        new ContainerBuilder().addSectionComponents((sec) =>
-          sec
-            .addTextDisplayComponents((text) =>
-              text.setContent("## Invite generated!")
-            )
-            .addTextDisplayComponents((text) =>
-              text.setContent(
-                [
-                  "### Details:",
-                  `- **Code:** \`${invite.code}\``,
-                  `- **URL:** <https://discord.gg/${invite.code}>`,
-                  `- **Channel:** <#${channel.id}>`,
-                  `- **Max Uses:** \`${
-                    options.maxUses > 0 ? options.maxUses : "unlimited"
-                  }\``,
-                  `- **Max Age:** \`${
-                    options.maxAge > 0
-                      ? humanizeDuration(options.maxAge * 1000, {
-                          maxDecimalPoints: 2,
-                          units: ["d", "h", "m", "s"],
-                        })
-                      : "never expires"
-                  }\``,
-                  `- **Temporary:** \`${options.temporary}\``,
-                  `- **Unique:** \`${options.unique}\``,
-                ].join("\n")
+        new ContainerBuilder()
+          .addSectionComponents((sec) =>
+            sec
+              .addTextDisplayComponents((text) =>
+                text.setContent("## Invite generated!")
               )
+              .addTextDisplayComponents((text) =>
+                text.setContent(
+                  [
+                    "### Details:",
+                    `- **Code:** \`${invite.code}\``,
+                    `- **URL:** <https://discord.gg/${invite.code}>`,
+                    `- **Channel:** <#${channel.id}>`,
+                    `- **Max Uses:** \`${
+                      options.maxUses > 0 ? options.maxUses : "unlimited"
+                    }\``,
+                    `- **Max Age:** \`${
+                      options.maxAge > 0
+                        ? humanizeDuration(options.maxAge * 1000, {
+                            maxDecimalPoints: 2,
+                            units: ["d", "h", "m", "s"],
+                          })
+                        : "never expires"
+                    }\``,
+                    `- **Temporary:** \`${options.temporary}\``,
+                    `- **Unique:** \`${options.unique}\``,
+                  ].join("\n")
+                )
+              )
+          )
+          .addActionRowComponents((row) =>
+            row.addComponents(
+              new ButtonBuilder({
+                style: 5,
+                label: "Use Invite",
+                emoji: { name: "🔗" },
+                url: `https://discord.gg/${invite.code}`,
+              })
             )
-            .setButtonAccessory((btn) =>
-              btn
-                .setStyle(5)
-                .setLabel("Use Invite")
-                .setEmoji({
-                  name: "🔗",
-                })
-                .setURL(`https://discord.gg/${invite.code}`)
-            )
-        ),
+          ),
       ],
     });
   },
