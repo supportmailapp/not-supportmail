@@ -27,8 +27,8 @@ const StatusUpdateSchema: Schema = new Schema<IStatusUpdate>(
     status: { type: Number, required: true },
     incidentId: {
       type: Schema.Types.ObjectId,
-      ref: "Incident",
       required: true,
+      ref: "Incident",
     },
   },
   { timestamps: true }
