@@ -8,6 +8,7 @@ import {
   ContainerBuilder,
   type MessageEditOptions,
   MessageFlags,
+  SeparatorSpacingSize,
   SlashCommandBuilder,
   TextChannel,
   TextDisplayBuilder,
@@ -73,7 +74,9 @@ function formatIncident(
   }
 
   container.addTextDisplayComponents((text) => text.setContent(content));
-  container.addSeparatorComponents((sep) => sep);
+  container.addSeparatorComponents((sep) =>
+    sep.setSpacing(SeparatorSpacingSize.Large)
+  );
 
   for (let i = 0; i < statusUpdates.length; i++) {
     const update = statusUpdates[i];
