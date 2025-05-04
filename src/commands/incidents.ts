@@ -240,7 +240,10 @@ async function updateIncident(
     process.env.CHANNEL_STATUS!
   )) as TextChannel;
 
-  await channel.messages.edit(incident.messageId!, incidentMessage);
+  const message = await channel.messages.edit(
+    incident.messageId!,
+    incidentMessage
+  );
 
   await ctx.editReply({
     components: [
@@ -255,7 +258,7 @@ async function updateIncident(
               text.setContent(`> Incident ID: ${incident.id}`)
             )
             .setButtonAccessory((btn) =>
-              btn.setLabel("View").setURL(incident.messageId!).setStyle(5)
+              btn.setLabel("View").setURL(message.url).setStyle(5)
             )
         ),
     ],
