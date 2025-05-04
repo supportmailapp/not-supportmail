@@ -134,8 +134,11 @@ async function createIncident(
 
   await delay(1000); // Might fix an issue with status update not existing yet
 
+  await Incident.findByIdAndUpdate(statusU.incidentId, {
+    messageId: message.id,
+  });
+
   await ctx.editReply({
-    flags: MessageFlags.IsComponentsV2,
     components: [
       new ContainerBuilder()
         .setAccentColor(Colors.Green)
@@ -146,14 +149,10 @@ async function createIncident(
               text.setContent(`Incident ID: ${incident.id}`)
             )
             .setButtonAccessory((btn) =>
-              btn.setLabel("View").setURL(message.url)
+              btn.setLabel("View").setURL(message.url).setStyle(5)
             )
         ),
     ],
-  });
-
-  await Incident.findByIdAndUpdate(statusU.incidentId, {
-    messageId: message.id,
   });
 }
 
