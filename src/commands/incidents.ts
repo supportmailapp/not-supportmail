@@ -1,78 +1,97 @@
 import dayjs from "dayjs";
 import {
   APIApplicationCommandOptionChoice,
-  APIEmbed,
+  APIMessageTopLevelComponent,
   AutocompleteInteraction,
   ChatInputCommandInteraction,
   Colors,
+  ContainerBuilder,
+  type MessageEditOptions,
+  MessageFlags,
   SlashCommandBuilder,
   TextChannel,
+  TextDisplayBuilder,
 } from "discord.js";
 import { HydratedDocument } from "mongoose";
 import {
-  IIncident,
+  type IIncident,
+  type IStatusUpdate,
   Incident,
-  IStatusUpdate,
   StatusUpdate,
 } from "../models/incident.js";
+import humanizeDuration from "humanize-duration";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
 import { delay } from "../utils/main.js";
 
 function run(ctx: ChatInputCommandInteraction) {
   const subcommand = ctx.options.getSubcommand(true);
 
+  const parsedStatus = parseInt(ctx.options.getString("status", true));
+  const content = ctx.options.getString("content", true);
+
   switch (subcommand) {
     case "create":
-      return createIncident(ctx);
+      return createIncident(ctx, parsedStatus, content);
     case "update":
-      return updateIncident(ctx);
+      return updateIncident(ctx, parsedStatus, content);
   }
 }
-
-const DEFAULT_STATUS_CONTENTS = {
-  [IncidentStatus.Resolved]: "The issue has been resolved.",
-  [IncidentStatus.Investigating]: "We are currently investigating this issue.",
-  [IncidentStatus.Identified]:
-    "The issue was identified and we are working on a fix.",
-  [IncidentStatus.Monitoring]:
-    "A fix was deployed and we are monitoring the situation.",
-};
 
 function formatIncident(
   incident: HydratedDocument<IIncident>,
   statusUpdates: HydratedDocument<IStatusUpdate>[]
-): APIEmbed {
-  const startedAtTs = ~~(incident.createdAt.getTime() / 1000);
+): APIMessageTopLevelComponent[] {
+  const components: APIMessageTopLevelComponent[] = [];
 
-  return {
-    title: incident.title,
-    description:
-      statusUpdates.length > 1
-        ? `Started: <t:${startedAtTs}> (<t:${startedAtTs}:R>)`
-        : "",
-    color: IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status],
-    timestamp: dayjs(incident.updatedAt).toISOString(),
-    fields: statusUpdates.map((update) => ({
-      name: `[ <t:${~~(update.updatedAt.getTime() / 1000)}:R> ] ${
-        IncidentStatus[update.status]
-      }`,
-      value: update.content,
-      inline: false,
-    })),
-    footer: {
-      text: incident.id,
-    },
-  };
+  const container = new ContainerBuilder().setAccentColor(
+    IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
+  );
+  if (statusUpdates.length > 1) {
+    let content = `### ${incident.title}`;
+    if (
+      statusUpdates[statusUpdates.length - 1].status === IncidentStatus.Resolved
+    ) {
+      content += `Lasted: ${humanizeDuration(
+        dayjs().diff(incident.createdAt, "ms"),
+        {
+          round: true,
+          largest: 3,
+          units: ["d", "h", "m"],
+          language: "en",
+          maxDecimalPoints: 2,
+        }
+      )}`;
+    }
+    container.addTextDisplayComponents((text) => text.setContent(content));
+    container.addSeparatorComponents((sep) => sep);
+  }
+
+  for (let i = 0; i < statusUpdates.length; i++) {
+    const update = statusUpdates[i];
+    container
+      .addTextDisplayComponents((text) =>
+        text.setContent(
+          `[ <t:${~~(update.updatedAt.getTime() / 1000)}:R> ] ${
+            IncidentStatus[update.status]
+          }`
+        )
+      )
+      .addSeparatorComponents((sep) => sep);
+  }
+
+  components.push(container.toJSON());
+  components.push(
+    new TextDisplayBuilder().setContent(`ID: ${incident.id}`).toJSON()
+  );
+  return components;
 }
 
-async function createIncident(ctx: ChatInputCommandInteraction) {
+async function createIncident(
+  ctx: ChatInputCommandInteraction,
+  status: number,
+  content: string
+) {
   const title = ctx.options.getString("title", true);
-  const status =
-    parseInt(ctx.options.getString("status", true)) ||
-    IncidentStatus.Investigating;
-  const content =
-    ctx.options.getString("content", false) ||
-    DEFAULT_STATUS_CONTENTS[String(status) as unknown as IncidentStatus];
   const ping = ctx.options.getBoolean("ping", false);
 
   const incident = await Incident.create({
@@ -86,14 +105,8 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
   });
 
   await ctx.reply({
-    embeds: [
-      {
-        title: "Incident Created",
-        description: "_Waiting for sending..._",
-        color: Colors.DarkAqua,
-      },
-    ],
-    flags: 64,
+    flags: MessageFlags.IsComponentsV2 | 64,
+    components: [new TextDisplayBuilder().setContent("Creating incident...")],
   });
 
   const channel = (await ctx.guild!.channels.fetch(
@@ -103,18 +116,27 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
   // Send the incident to the status channel
   const message = await channel.send({
     content: ping ? `<@&${process.env.ROLE_STATUS_PING}>` : "",
-    embeds: [formatIncident(incident, [statusU])],
+    flags: MessageFlags.IsComponentsV2,
+    components: formatIncident(incident, [statusU]),
   });
 
   await delay(1000); // Might fix an issue with status update not existing yet
 
   await ctx.editReply({
-    embeds: [
-      {
-        title: "Incident Created",
-        description: `Incident created with ID \`${incident.id}\``,
-        color: Colors.Green,
-      },
+    flags: MessageFlags.IsComponentsV2,
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.Green)
+        .addTextDisplayComponents((text) => text.setContent("Incident created"))
+        .addSectionComponents((sec) =>
+          sec
+            .addTextDisplayComponents((text) =>
+              text.setContent(`Incident ID: ${incident.id}`)
+            )
+            .setButtonAccessory((btn) =>
+              btn.setLabel("View").setURL(message.url)
+            )
+        ),
     ],
   });
 
@@ -123,19 +145,42 @@ async function createIncident(ctx: ChatInputCommandInteraction) {
   });
 }
 
-async function updateIncident(ctx: ChatInputCommandInteraction) {
+async function updateIncident(
+  ctx: ChatInputCommandInteraction,
+  status: number,
+  content: string
+) {
   await ctx.deferReply({ flags: 64 });
 
   const id = ctx.options.getString("id", true);
-  const status = parseInt(ctx.options.getString("status", true));
-  const content = ctx.options.getString("content", false);
 
-  if (id === "%") return await ctx.editReply("No incident found.");
+  if (id === "%") {
+    return await ctx.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [
+        new TextDisplayBuilder().setContent("No active incidents found."),
+      ],
+    });
+  }
 
   const incident = await Incident.findById(id);
-  if (!incident) return await ctx.editReply("Invalid incident ID.");
-  else if (incident.resolvedAt)
-    return await ctx.editReply("This incident is already resolved.");
+  if (!incident) {
+    return await ctx.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [
+        new TextDisplayBuilder().setContent("This incident does not exist."),
+      ],
+    });
+  } else if (incident.resolvedAt) {
+    return await ctx.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [
+        new TextDisplayBuilder().setContent(
+          "This incident has already been resolved."
+        ),
+      ],
+    });
+  }
 
   await StatusUpdate.create({
     incidentId: id,
@@ -154,17 +199,22 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
   );
 
   await ctx.editReply({
-    embeds: [
-      {
-        title: "Incident Updated",
-        description: "_Waiting for sending..._",
-        color: Colors.DarkAqua,
-      },
+    flags: MessageFlags.IsComponentsV2,
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.DarkAqua)
+        .addTextDisplayComponents((text) =>
+          text.setContent("### Incident Updated")
+        )
+        .addTextDisplayComponents((text) =>
+          text.setContent("Updating incident...")
+        ),
     ],
   });
 
-  const incidentMessage = {
-    embeds: [formatIncident(incident, allStatuses)],
+  const incidentMessage: MessageEditOptions = {
+    components: formatIncident(incident, allStatuses),
+    flags: MessageFlags.IsComponentsV2,
   };
 
   await delay(1000);
@@ -179,12 +229,21 @@ async function updateIncident(ctx: ChatInputCommandInteraction) {
   await channel.messages.edit(incident.messageId!, incidentMessage);
 
   await ctx.editReply({
-    embeds: [
-      {
-        title: "Incident Updated",
-        description: `Incident updated with ID \`${incident.id}\``,
-        color: Colors.Green,
-      },
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.Green)
+        .addTextDisplayComponents((text) =>
+          text.setContent("### Incident Updated")
+        )
+        .addSectionComponents((sec) =>
+          sec
+            .addTextDisplayComponents((text) =>
+              text.setContent(`Incident ID: ${incident.id}`)
+            )
+            .setButtonAccessory((btn) =>
+              btn.setLabel("View").setURL(incident.messageId!)
+            )
+        ),
     ],
   });
 }
@@ -201,6 +260,14 @@ const BASE_STATUS_CHOICES: APIApplicationCommandOptionChoice<string>[] = [
   {
     name: "Monitoring",
     value: String(IncidentStatus.Monitoring),
+  },
+  {
+    name: "Maintenance",
+    value: String(IncidentStatus.Maintenance),
+  },
+  {
+    name: "Update",
+    value: String(IncidentStatus.Update),
   },
 ];
 
@@ -230,10 +297,8 @@ export default {
         .addStringOption((op) =>
           op
             .setName("content")
-            .setDescription(
-              "The content of the inital status |Inherited from the status by default"
-            )
-            .setRequired(false)
+            .setDescription("The content of the initial status")
+            .setRequired(true)
             .setMaxLength(1024)
         )
         .addBooleanOption((op) =>
@@ -293,7 +358,7 @@ export default {
     const idInput = interaction.options.getString("id", false) || "";
     return await interaction.respond(
       incidents
-        .filter((i) => i.id.startsWith(idInput))
+        .filter((i) => (i.id as string).includes(idInput))
         .map((i) => ({ name: i.id, value: i.id }))
     );
   },
