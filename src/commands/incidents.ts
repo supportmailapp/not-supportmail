@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import {
   APIApplicationCommandOptionChoice,
-  APIMessageTopLevelComponent,
   AutocompleteInteraction,
   ChatInputCommandInteraction,
   Colors,
+  ComponentBuilder,
   ContainerBuilder,
   type MessageEditOptions,
   MessageFlags,
@@ -39,15 +39,23 @@ function run(ctx: ChatInputCommandInteraction) {
 
 function formatIncident(
   incident: HydratedDocument<IIncident>,
-  statusUpdates: HydratedDocument<IStatusUpdate>[]
-): APIMessageTopLevelComponent[] {
-  const components: APIMessageTopLevelComponent[] = [];
+  statusUpdates: HydratedDocument<IStatusUpdate>[],
+  ping: boolean = false
+) {
+  const components: ComponentBuilder[] = [];
+
+  if (ping) {
+    components.push(
+      new TextDisplayBuilder().setContent(`<@&${process.env.ROLE_STATUS_PING}>`)
+    );
+  }
 
   const container = new ContainerBuilder().setAccentColor(
     IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
   );
+  let content = `### ${incident.title}`;
+
   if (statusUpdates.length > 1) {
-    let content = `### ${incident.title}`;
     if (
       statusUpdates[statusUpdates.length - 1].status === IncidentStatus.Resolved
     ) {
@@ -62,28 +70,27 @@ function formatIncident(
         }
       )}`;
     }
-    container.addTextDisplayComponents((text) => text.setContent(content));
-    container.addSeparatorComponents((sep) => sep);
   }
+
+  container.addTextDisplayComponents((text) => text.setContent(content));
+  container.addSeparatorComponents((sep) => sep);
 
   for (let i = 0; i < statusUpdates.length; i++) {
     const update = statusUpdates[i];
     container
       .addTextDisplayComponents((text) =>
         text.setContent(
-          `[ <t:${~~(update.updatedAt.getTime() / 1000)}:R> ] ${
+          `### [ <t:${~~(update.updatedAt.getTime() / 1000)}:R> ] ${
             IncidentStatus[update.status]
-          }`
+          }\n` + update.content
         )
       )
       .addSeparatorComponents((sep) => sep);
   }
 
-  components.push(container.toJSON());
-  components.push(
-    new TextDisplayBuilder().setContent(`ID: ${incident.id}`).toJSON()
-  );
-  return components;
+  components.push(container);
+  components.push(new TextDisplayBuilder().setContent(`-# ID: ${incident.id}`));
+  return components.map((c) => c.toJSON());
 }
 
 async function createIncident(
@@ -115,9 +122,11 @@ async function createIncident(
 
   // Send the incident to the status channel
   const message = await channel.send({
-    content: ping ? `<@&${process.env.ROLE_STATUS_PING}>` : "",
     flags: MessageFlags.IsComponentsV2,
-    components: formatIncident(incident, [statusU]),
+    components: formatIncident(incident, [statusU], !!ping),
+    allowedMentions: {
+      roles: [process.env.ROLE_STATUS_PING!],
+    },
   });
 
   await delay(1000); // Might fix an issue with status update not existing yet
@@ -241,7 +250,7 @@ async function updateIncident(
               text.setContent(`Incident ID: ${incident.id}`)
             )
             .setButtonAccessory((btn) =>
-              btn.setLabel("View").setURL(incident.messageId!)
+              btn.setLabel("View").setURL(incident.messageId!).setStyle(5)
             )
         ),
     ],
