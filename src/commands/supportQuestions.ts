@@ -181,7 +181,7 @@ export default {
     if (ctx.user.id !== supportPost.author) {
       replyOptions.content = `-# <@${supportPost.author}>`;
       replyOptions.allowedMentions = {
-        parse: ["users"],
+        users: [supportPost.author],
       };
     }
 
