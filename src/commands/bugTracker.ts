@@ -1,4 +1,10 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  SeparatorBuilder,
+  SlashCommandBuilder,
+  TextDisplayBuilder,
+} from "discord.js";
 import { DBUser } from "../models/user.js";
 
 const BUG_TRACKER_THRESHOLD = 5;
@@ -34,23 +40,43 @@ export default {
   async run(ctx: ChatInputCommandInteraction) {
     if (!ctx.inCachedGuild()) return; // TS bullshit
     const subcommand = ctx.options.getSubcommand(true);
-    const targetUser = ctx.options.getUser("user", true);
-    const member = await ctx.guild.members.fetch(ctx.user.id);
-
-    if (!ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER!)) {
+    let member = ctx.options.getMember("user");
+    if (!member) {
+      member = await ctx.guild.members
+        .fetch(ctx.options.getUser("user")!.id)
+        .catch(null);
+    }
+    if (!member) {
+      // Should really not happen, but just in case
       await ctx.reply({
-        content: "Nice try! Only developers can award bug-finding glory.",
-        flags: 64,
+        flags: MessageFlags.IsComponentsV2 | 64,
+        components: [
+          new TextDisplayBuilder({
+            content: "User not found!",
+          }),
+        ],
       });
       return;
     }
 
-    let dbUser = await DBUser.findOne({ id: targetUser.id });
+    if (!ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER!)) {
+      await ctx.reply({
+        flags: MessageFlags.IsComponentsV2 | 64,
+        components: [
+          new TextDisplayBuilder({
+            content: "Nice try! Only developers can award bug-finding glory.",
+          }),
+        ],
+      });
+      return;
+    }
+
+    let dbUser = await DBUser.findOne({ id: member.id });
     if (!dbUser) {
       dbUser = await DBUser.create({
-        id: targetUser!.id,
-        username: targetUser!.username,
-        displayName: targetUser.displayName || targetUser.username,
+        id: member!.id,
+        username: member.user.username,
+        displayName: member.displayName || member.user.username,
       });
     }
 
@@ -71,13 +97,23 @@ export default {
         roleAdded = true;
       }
 
+      const comps: any[] = [
+        new TextDisplayBuilder({
+          content: `Bug count incremented for ${member.user.displayName}! Total bugs reported: ${newCount}`,
+        }),
+      ];
+      if (roleAdded) {
+        comps.push(
+          new SeparatorBuilder(),
+          new TextDisplayBuilder({
+            content: "User has also been awarded the Bug Hunter role!",
+          })
+        );
+      }
+
       await ctx.reply({
-        content:
-          `Bug count incremented for ${targetUser.username}! Total bugs reported: ${newCount}` +
-          (roleAdded
-            ? "\n\nUser has also been awarded the Bug Hunter role!"
-            : ""),
-        flags: 64,
+        flags: MessageFlags.IsComponentsV2 | 64,
+        components: comps,
       });
       return;
     } else if (subcommand === "remove") {
@@ -97,11 +133,23 @@ export default {
         roleRemoved = true;
       }
 
+      const comps: any[] = [
+        new TextDisplayBuilder({
+          content: `Bug count decremented for ${member.user.displayName}! Total bugs reported: ${newCount}`,
+        }),
+      ];
+      if (roleRemoved) {
+        comps.push(
+          new SeparatorBuilder(),
+          new TextDisplayBuilder({
+            content: "User has also lost the Bug Hunter role!",
+          })
+        );
+      }
+
       await ctx.reply({
-        content:
-          `Bug count decremented for ${targetUser.username}! Total bugs reported: ${newCount}` +
-          (roleRemoved ? "\n\nUser has also lost the Bug Hunter role!" : ""),
-        flags: 64,
+        flags: MessageFlags.IsComponentsV2 | 64,
+        components: comps,
       });
       return;
     }
