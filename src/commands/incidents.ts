@@ -273,14 +273,7 @@ function formatIncident(
   }
 
   container.addSectionComponents((sec) =>
-    sec
-      .addTextDisplayComponents((text) => text.setContent(content))
-      .setButtonAccessory((btn) =>
-        btn
-          .setLabel("View on BetterStack")
-          .setURL(incidentURL(incident))
-          .setStyle(5)
-      )
+    sec.addTextDisplayComponents((text) => text.setContent(content))
   );
   container.addSeparatorComponents((sep) =>
     sep.setSpacing(SeparatorSpacingSize.Large)
@@ -301,6 +294,16 @@ function formatIncident(
   }
 
   components.push(container);
+  if (incident.typ !== "maintenance") {
+    components.push(
+      new ActionRowBuilder<ButtonBuilder>().setComponents(
+        new ButtonBuilder()
+          .setLabel("View on BetterStack")
+          .setURL(incidentURL(incident))
+          .setStyle(5)
+      )
+    );
+  }
   components.push(new TextDisplayBuilder().setContent(`-# ID: ${incident.id}`));
   return components.map((c) => c.toJSON());
 }
