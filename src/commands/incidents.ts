@@ -394,7 +394,11 @@ async function createIncident(
   if (parsedStatus !== IncidentStatus.Maintenance) {
     const report = await betterstackClient.createStatusReport({
       title: title,
-      message: message,
+      message: formatBetterstackUpdateMessage(
+        parsedStatus,
+        message,
+        parsedStatus === IncidentStatus.Resolved ? dayjs().toDate() : null
+      ),
       report_type: "manual",
       affected_resources: [
         {
@@ -559,18 +563,11 @@ async function updateIncident(
     const statusUpdate = await betterstackClient.createStatusUpdate(
       incident.betterstack.id,
       {
-        message:
-          message +
-          `\n\n- **Lasted:** ${humanizeDuration(
-            dayjs().diff(incident.createdAt, "ms"),
-            {
-              round: true,
-              largest: 3,
-              units: ["d", "h", "m"],
-              language: "en",
-              maxDecimalPoints: 2,
-            }
-          )}`,
+        message: formatBetterstackUpdateMessage(
+          parsedStatus,
+          message,
+          parsedStatus === IncidentStatus.Resolved ? dayjs().toDate() : null
+        ),
         affected_resources: [
           {
             status_page_resource_id: affectedResource,
@@ -658,4 +655,33 @@ async function updateIncident(
         ),
     ],
   });
+}
+
+/**
+ * Use this before sending the message to BetterStack.
+ *
+ * @param status The status of the current status update
+ * @param message The message to send to BetterStack
+ * @param createdAt The time when the incident was created
+ * (only supply, if status is Resolved, and you want to show the duration)
+ */
+function formatBetterstackUpdateMessage(
+  status: IncidentStatus,
+  message: string,
+  createdAt: Date | null = null
+) {
+  let msg = `**Status:** ${IncidentStatus[status]}\n\n**Message:** ${message}`;
+  if (status === IncidentStatus.Resolved && createdAt) {
+    msg += `\n\n- **Lasted:** ${humanizeDuration(
+      dayjs().diff(createdAt, "ms"),
+      {
+        round: true,
+        largest: 3,
+        units: ["d", "h", "m"],
+        language: "en",
+        maxDecimalPoints: 2,
+      }
+    )}`;
+  }
+  return msg;
 }
