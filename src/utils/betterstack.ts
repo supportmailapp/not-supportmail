@@ -11,14 +11,14 @@ export const StatuspageRoutes = {
    * @see https://betterstack.com/docs/uptime/api/list-existing-reports-on-a-status-page/
    * @see https://betterstack.com/docs/uptime/api/create-a-new-status-page-report/
    */
-  reports: (pageId: string) => `/${pageId}/status-reports` as const,
+  reports: (pageId: string) => `${pageId}/status-reports` as const,
   /**
    * - GET: Fetch all status page report updates of a report
    * - POST: Create a new status page report update
    */
   reportUpdates: (pageId: string, reportId: string) =>
-    `/${pageId}/status-reports/${reportId}/status-updates` as const,
-  pageResources: (pageId: string) => `/${pageId}/resources` as const,
+    `${pageId}/status-reports/${reportId}/status-updates` as const,
+  pageResources: (pageId: string) => `${pageId}/resources` as const,
 } as const;
 
 type ResourceStatus = "resolved" | "degraded" | "downtime" | "maintenance";
@@ -143,7 +143,7 @@ class BetterStackClient {
 
   constructor(config: BetterStackConfig) {
     const baseUrl =
-      config.baseUrl || "https://uptime.betterstack.com/api/v2/status-pages";
+      config.baseUrl || "https://uptime.betterstack.com/api/v2/status-pages/";
 
     if (!process.env.BTSTACK_STATUSPAGE_ID && !config.statusPageId) {
       throw new Error("Missing status page ID");
