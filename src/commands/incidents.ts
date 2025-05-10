@@ -240,12 +240,12 @@ function run(ctx: ChatInputCommandInteraction) {
 function formatIncident(
   incident: HydratedDocument<IIncident>,
   statusUpdates: HydratedDocument<IStatusUpdate>[],
-  ping: boolean = false
+  resources: Map<string, string>
 ) {
   const components: ComponentBuilder[] = [];
   const lastStatus = statusUpdates[statusUpdates.length - 1].status;
 
-  if (ping) {
+  if (incident.ping) {
     components.push(
       new TextDisplayBuilder().setContent(`<@&${process.env.ROLE_STATUS_PING}>`)
     );
@@ -254,13 +254,25 @@ function formatIncident(
   const container = new ContainerBuilder().setAccentColor(
     IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
   );
+
   // The title + capitalized type of the incident
-  let content = `## __${incident.title}__\n- **Type:** \`${
-    incident.typ[0].toUpperCase() + incident.typ.slice(1)
-  }\``;
+  let titleText = `__${incident.title}__`;
+
+  // Add hyperlink to title if it's not a maintenance incident
+  if (incident.betterstack.id) {
+    titleText = `[${titleText}](${incidentURL(incident)})`;
+  }
+
+  let content = [
+    `## ${titleText}`,
+    `- **Type:** \`${incident.typ[0].toUpperCase() + incident.typ.slice(1)}\``,
+    `- **Affected:** \`${
+      resources.get(incident.betterstack.id ?? "0") ?? "Unknown"
+    }\``,
+  ].join("\n");
 
   if (statusUpdates.length > 1 && lastStatus === IncidentStatus.Resolved) {
-    content += ` - Lasted: ${humanizeDuration(
+    content += `\n-# Lasted: ${humanizeDuration(
       dayjs().diff(incident.createdAt, "ms"),
       {
         round: true,
@@ -292,16 +304,6 @@ function formatIncident(
   }
 
   components.push(container);
-  if (incident.typ !== "maintenance") {
-    components.push(
-      new ActionRowBuilder<ButtonBuilder>().setComponents(
-        new ButtonBuilder()
-          .setLabel("View on BetterStack")
-          .setURL(incidentURL(incident))
-          .setStyle(5)
-      )
-    );
-  }
   components.push(new TextDisplayBuilder().setContent(`-# ID: ${incident.id}`));
   return components.map((c) => c.toJSON());
 }
@@ -408,11 +410,13 @@ async function createIncident(
 
   const incident = await Incident.create({
     title: title,
+    ping: !!ping,
     typ:
       parsedStatus === IncidentStatus.Maintenance ? "maintenance" : "incident",
     aggregatedStatus: parsedStatus,
     betterstack: {
       id: reportId,
+      affectedServices: [affectedResource],
     },
   });
 
@@ -425,14 +429,29 @@ async function createIncident(
     },
   });
 
+  await modalCtx.editReply({
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.DarkAqua)
+        .addTextDisplayComponents((text) =>
+          text.setContent("### Incident Created")
+        )
+        .addTextDisplayComponents((text) =>
+          text.setContent("Sending message...")
+        ),
+    ],
+  });
+
   const channel = (await ctx.guild!.channels.fetch(
     process.env.CHANNEL_STATUS!
   )) as TextChannel;
 
+  const resources = await betterstackClient.getResources();
+
   // Send the incident to the status channel
   const incidentMsg = await channel.send({
     flags: MessageFlags.IsComponentsV2,
-    components: formatIncident(incident, [statusU], !!ping),
+    components: formatIncident(incident, [statusU], resources),
     allowedMentions: {
       roles: [process.env.ROLE_STATUS_PING!],
     },
@@ -540,7 +559,18 @@ async function updateIncident(
     const statusUpdate = await betterstackClient.createStatusUpdate(
       incident.betterstack.id,
       {
-        message: message,
+        message:
+          message +
+          `\n\n- **Lasted:** ${humanizeDuration(
+            dayjs().diff(incident.createdAt, "ms"),
+            {
+              round: true,
+              largest: 3,
+              units: ["d", "h", "m"],
+              language: "en",
+              maxDecimalPoints: 2,
+            }
+          )}`,
         affected_resources: [
           {
             status_page_resource_id: affectedResource,
@@ -586,8 +616,10 @@ async function updateIncident(
     ],
   });
 
+  const resources = await betterstackClient.getResources();
+
   const incidentMessage: MessageEditOptions = {
-    components: formatIncident(incident, allStatuses),
+    components: formatIncident(incident, allStatuses, resources),
     flags: MessageFlags.IsComponentsV2,
   };
 
