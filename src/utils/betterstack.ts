@@ -286,6 +286,12 @@ class BetterStackClient {
     }
     return null;
   }
+
+  public async findResourceName(id: string) {
+    const resources = await this.getResources();
+    const resName = resources.get(id);
+    return resName ?? null;
+  }
 }
 
 // Factory function to create client
