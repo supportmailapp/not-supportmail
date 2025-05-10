@@ -156,7 +156,7 @@ class BetterStackClient {
       config.statusPageId)!; // Non-null assertion operator because we checked above but TS doesn't know that
 
     this.client = ky.create({
-      prefixUrl: baseUrl,
+      prefixUrl: new URL(baseUrl),
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
