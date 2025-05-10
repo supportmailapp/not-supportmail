@@ -251,7 +251,7 @@ function formatIncident(
     IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
   );
   // The title + capitalized type of the incident
-  let content = `## __${incident.title}__\n-**Type:** \`${
+  let content = `## __${incident.title}__\n- **Type:** \`${
     incident.typ[0].toUpperCase() + incident.typ.slice(1)
   }\``;
 
@@ -364,6 +364,7 @@ async function createIncident(
 
   // TODO: Add a way to input `ends_at` field for maintenance
   let reportId: string | null = null;
+  let statusUpdateId: string | null = null;
   if (incident.typ !== "maintenance") {
     const report = await betterstackClient.createStatusReport({
       title: title,
@@ -377,8 +378,8 @@ async function createIncident(
       ],
       published_at: dayjs().toISOString(),
     });
-    reportId =
-      report.included[0].type == "status_update" ? report.included[0].id : null;
+    reportId = report.data.id;
+    statusUpdateId = report.data.relationships.status_updates.data[0].id;
   }
 
   const statusU = await StatusUpdate.create({
