@@ -355,17 +355,10 @@ async function createIncident(
   const title = modalCtx.fields.getTextInputValue("title");
   const message = modalCtx.fields.getTextInputValue("message");
 
-  const incident = await Incident.create({
-    title: title,
-    typ:
-      parsedStatus === IncidentStatus.Maintenance ? "maintenance" : "incident",
-    aggregatedStatus: parsedStatus,
-  });
-
   // TODO: Add a way to input `ends_at` field for maintenance
   let reportId: string | null = null;
   let statusUpdateId: string | null = null;
-  if (incident.typ !== "maintenance") {
+  if (parsedStatus !== IncidentStatus.Maintenance) {
     const report = await betterstackClient.createStatusReport({
       title: title,
       message: message,
@@ -382,12 +375,22 @@ async function createIncident(
     statusUpdateId = report.data.relationships.status_updates.data[0].id;
   }
 
+  const incident = await Incident.create({
+    title: title,
+    typ:
+      parsedStatus === IncidentStatus.Maintenance ? "maintenance" : "incident",
+    aggregatedStatus: parsedStatus,
+    betterstack: {
+      id: reportId,
+    },
+  });
+
   const statusU = await StatusUpdate.create({
     incidentId: incident.id,
     status: parsedStatus,
     content: message,
     betterstack: {
-      id: reportId,
+      id: statusUpdateId,
     },
   });
 
