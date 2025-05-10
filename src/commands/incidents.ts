@@ -147,15 +147,6 @@ export default {
         )
         .addStringOption((op) =>
           op
-            .setName("affected")
-            .setDescription(
-              "The affected resource (Currently, only one - maybe more in the future)"
-            )
-            .setRequired(true)
-            .setAutocomplete(true)
-        )
-        .addStringOption((op) =>
-          op
             .setName("resource-status")
             .setDescription("The status of the affected resource (BetterStack)")
             .setRequired(true)
@@ -609,7 +600,9 @@ async function updateIncident(
     ],
   });
 
-  const affectedName = betterstackClient.getResourceName(affectedResource);
+  const affectedName = betterstackClient.getResourceName(
+    incident.betterstack.affectedServices![0]
+  );
 
   const incidentMessage: MessageEditOptions = {
     components: formatIncident(incident, allStatuses, affectedName),
