@@ -1,7 +1,7 @@
 import ky from "ky";
 
 export const DEFAULT_BASE_URL =
-  "https://uptime.betterstack.com/api/v2/status-pages";
+  "https://uptime.betterstack.com/api/v2/status-pages/";
 
 export const StatuspageRoutes = {
   /**
@@ -209,6 +209,7 @@ class BetterStackClient {
       const name = resource.attributes.public_name;
       this.resources.set(id, name);
     }
+    console.log(`Loaded ${this.resources.size} resources from BetterStack API`);
   }
 
   private async get<T>(endpoint: string, options = {}): Promise<T> {
