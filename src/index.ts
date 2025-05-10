@@ -17,6 +17,7 @@ import { deployCommands } from "djs-command-helper";
 
 import mongoose from "mongoose";
 import { parseCustomId } from "./utils/main.js";
+import { betterstackClient } from "./utils/incidents.js";
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
@@ -289,5 +290,7 @@ process
 
     client.login(process.env.BOT_TOKEN);
     console.info("Bot started");
+
+    await betterstackClient.start();
   });
 })();
