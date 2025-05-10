@@ -1,7 +1,7 @@
 {
   "name": "not-supportmail",
   "private": true,
-  "version": "1.14.3-beta",
+  "version": "1.14.4-beta",
   "description": "SupportMail Management Bot",
   "main": "./dist/index.js",
   "scripts": {

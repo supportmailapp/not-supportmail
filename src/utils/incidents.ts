@@ -10,8 +10,8 @@ export { betterstackClient };
 
 export function incidentURL(incident: HydratedDocument<IIncident>): string {
   if (incident.typ === "maintenance") {
-    return `https://betterstack.com/status/maintenance/${incident.betterstack.id}`;
+    return `https://status.supportmail.dev/maintenance/${incident.betterstack.id}`;
   } else {
-    return `https://betterstack.com/status/incident/${incident.betterstack.id}`;
+    return `https://status.supportmail.dev/incident/${incident.betterstack.id}`;
   }
 }
