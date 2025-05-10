@@ -664,6 +664,8 @@ function formatBetterstackUpdateMessage(
         maxDecimalPoints: 2,
       }
     )}`;
+    msg +=
+      "As always, if you encounter any issues, please create a post in our [help forum](https://discord.com/channels/1064594649668395128/1303817714615455774)!";
   }
   return msg;
 }
