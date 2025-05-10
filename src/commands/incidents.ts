@@ -26,7 +26,11 @@ import {
   StatusUpdate,
 } from "../models/incident.js";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
-import { betterstackClient, incidentURL } from "../utils/incidents.js";
+import {
+  betterstackClient,
+  incidentURL,
+  statusIsEqual,
+} from "../utils/incidents.js";
 import { delay } from "../utils/main.js";
 import type { ResourceStatus } from "../utils/betterstack.js";
 
@@ -307,6 +311,32 @@ async function createIncident(
   parsedStatus: Exclude<IncidentStatus, IncidentStatus.Update>,
   resourceStatus: ResourceStatus
 ) {
+  if (!statusIsEqual(parsedStatus, resourceStatus)) {
+    await ctx.reply({
+      flags: MessageFlags.IsComponentsV2 | 64,
+      components: [
+        new TextDisplayBuilder().setContent(
+          "The status of the incident and the resource do not match."
+        ),
+      ],
+    });
+    return;
+  }
+
+  const resourceId = await betterstackClient.findResourceId(
+    affectedResource,
+    true
+  );
+  if (!resourceId) {
+    await ctx.reply({
+      flags: MessageFlags.IsComponentsV2 | 64,
+      components: [
+        new TextDisplayBuilder().setContent("The resource ID is invalid."),
+      ],
+    });
+    return;
+  }
+
   const ping = ctx.options.getBoolean("ping", false);
 
   await ctx.showModal(
