@@ -292,6 +292,11 @@ class BetterStackClient {
     const resName = resources.get(id);
     return resName ?? null;
   }
+
+  public getResourceName(id: string) {
+    const resName = this.resources.get(id);
+    return resName ?? null;
+  }
 }
 
 // Factory function to create client
