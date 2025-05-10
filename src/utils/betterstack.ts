@@ -142,8 +142,7 @@ class BetterStackClient {
   private readonly resources = new Map<string, string>();
 
   constructor(config: BetterStackConfig) {
-    const baseUrl =
-      config.baseUrl || "https://uptime.betterstack.com/api/v2/status-pages/";
+    const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
 
     if (!process.env.BTSTACK_STATUSPAGE_ID && !config.statusPageId) {
       throw new Error("Missing status page ID");
