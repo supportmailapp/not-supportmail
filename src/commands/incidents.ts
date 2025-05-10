@@ -272,9 +272,7 @@ function formatIncident(
     )}`;
   }
 
-  container.addSectionComponents((sec) =>
-    sec.addTextDisplayComponents((text) => text.setContent(content))
-  );
+  container.addTextDisplayComponents((text) => text.setContent(content));
   container.addSeparatorComponents((sep) =>
     sep.setSpacing(SeparatorSpacingSize.Large)
   );
