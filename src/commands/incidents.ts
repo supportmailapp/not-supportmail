@@ -191,8 +191,10 @@ export default {
           .map((i) => ({ name: i.id, value: i.id }))
       );
     } else if (option.name === "affected") {
+      console.log("Autocomplete affected");
       const resources = await betterstackClient.getResources();
-      return Array.from(resources).map(([id, name]) => {
+      console.log("Resources", resources);
+      return Array.from(resources.entries()).map(([id, name]) => {
         return {
           name: name,
           value: id,
