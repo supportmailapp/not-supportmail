@@ -194,12 +194,11 @@ export default {
       console.log("Autocomplete affected");
       const resources = await betterstackClient.getResources();
       console.log("Resources", resources);
-      return Array.from(resources.entries()).map(([id, name]) => {
-        return {
-          name: name,
-          value: id,
-        };
-      });
+      const choices = Array.from(resources.entries()).map(([id, name]) => ({
+        name: name,
+        value: id,
+      }));
+      return await interaction.respond(choices);
     } else {
       return;
     }
