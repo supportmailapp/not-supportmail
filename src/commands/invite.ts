@@ -2,6 +2,7 @@ import {
   ButtonBuilder,
   ChannelType,
   ChatInputCommandInteraction,
+  Colors,
   ContainerBuilder,
   Invite,
   MessageFlags,
@@ -115,34 +116,32 @@ export default {
       flags: MessageFlags.IsComponentsV2 | 64,
       components: [
         new ContainerBuilder()
-          .addSectionComponents((sec) =>
-            sec
-              .addTextDisplayComponents((text) =>
-                text.setContent("## Invite generated!")
-              )
-              .addTextDisplayComponents((text) =>
-                text.setContent(
-                  [
-                    "### Details:",
-                    `- **Code:** \`${invite.code}\``,
-                    `- **URL:** <https://discord.gg/${invite.code}>`,
-                    `- **Channel:** <#${channel.id}>`,
-                    `- **Max Uses:** \`${
-                      options.maxUses > 0 ? options.maxUses : "unlimited"
-                    }\``,
-                    `- **Max Age:** \`${
-                      options.maxAge > 0
-                        ? humanizeDuration(options.maxAge * 1000, {
-                            maxDecimalPoints: 2,
-                            units: ["d", "h", "m", "s"],
-                          })
-                        : "never expires"
-                    }\``,
-                    `- **Temporary:** \`${options.temporary}\``,
-                    `- **Unique:** \`${options.unique}\``,
-                  ].join("\n")
-                )
-              )
+          .setAccentColor(Colors.Yellow)
+          .addTextDisplayComponents((text) =>
+            text.setContent("## Invite generated!")
+          )
+          .addTextDisplayComponents((text) =>
+            text.setContent(
+              [
+                "### Details:",
+                `- **Code:** \`${invite.code}\``,
+                `- **URL:** <https://discord.gg/${invite.code}>`,
+                `- **Channel:** <#${channel.id}>`,
+                `- **Max Uses:** \`${
+                  options.maxUses > 0 ? options.maxUses : "unlimited"
+                }\``,
+                `- **Max Age:** \`${
+                  options.maxAge > 0
+                    ? humanizeDuration(options.maxAge * 1000, {
+                        maxDecimalPoints: 2,
+                        units: ["d", "h", "m", "s"],
+                      })
+                    : "never expires"
+                }\``,
+                `- **Temporary:** \`${options.temporary}\``,
+                `- **Unique:** \`${options.unique}\``,
+              ].join("\n")
+            )
           )
           .addActionRowComponents((row) =>
             row.addComponents(
