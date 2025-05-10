@@ -1,5 +1,6 @@
 # TODO
 
+- Add a way to input `ends_at` on `/incident create` field for maintenance
 - think about removing subscription stuff as this seems very specific to my setup
 - General note on "run these two scripts regularly via cron so that ... happens"
   - AI added: this is a bit of a cop-out. It would be better to have a systemd service that runs these scripts on a schedule. This is more robust and more in line with modern Linux practices.
