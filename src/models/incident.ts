@@ -9,12 +9,17 @@ export interface BetterstackReportData {
    * Can be null if the report is not created on BetterStack.
    */
   id: string | null;
+  /**
+   * An array of affected service IDs.
+   */
+  affectedServices?: string[];
 }
 
 export type IncidentType = "incident" | "maintenance";
 
 export interface IIncident {
   title: string;
+  ping: boolean;
   typ: IncidentType;
   /**
    * The current status of the incident.
@@ -32,6 +37,7 @@ export interface IIncident {
 const BetterstackReportDataSchema = new Schema<BetterstackReportData>(
   {
     id: { type: String, default: null },
+    affectedServices: { type: [String], default: [] },
   },
   { _id: false }
 );
@@ -39,6 +45,7 @@ const BetterstackReportDataSchema = new Schema<BetterstackReportData>(
 const IncidentSchema: Schema = new Schema<IIncident>(
   {
     title: { type: String, required: true },
+    ping: { type: Boolean, default: false },
     typ: {
       type: String,
       required: true,
