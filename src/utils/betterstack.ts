@@ -256,6 +256,36 @@ class BetterStackClient {
     );
     return response;
   }
+
+  /**
+   * Checks if the given input matches any resource ID or name.
+   *
+   * @param input - The input string to search for.
+   * @param fullMatch - If true, only exact matches will be considered. Also only checks if it's a resource ID.
+   * @returns The resource ID if found, otherwise null.
+   */
+  public async findResourceId(
+    input: string,
+    fullMatch = false
+  ): Promise<string | null> {
+    const resources = await this.getResources();
+    if (fullMatch) {
+      const resId = resources.get(input);
+      if (resId) return resId;
+      return null;
+    }
+    const resIds = Array.from(resources.keys());
+    const resNames = Array.from(resources.values());
+
+    let resId = resIds.find((id) => id.includes(input));
+    if (resId) return resId;
+    const resName = resNames.find((name) => name.includes(input));
+    if (resName) {
+      resId = resIds[resNames.indexOf(resName)];
+      return resId;
+    }
+    return null;
+  }
 }
 
 // Factory function to create client
