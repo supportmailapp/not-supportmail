@@ -12,7 +12,7 @@ export interface BetterstackReportData {
   /**
    * An array of affected service IDs.
    */
-  affectedServices?: string[];
+  affectedServices: string[];
 }
 
 export type IncidentType = "incident" | "maintenance";

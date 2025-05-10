@@ -201,7 +201,6 @@ export default {
 function run(ctx: ChatInputCommandInteraction) {
   const subcommand = ctx.options.getSubcommand(true);
 
-  const affectedResource = ctx.options.getString("affected", true);
   const parsedStatus = parseInt(ctx.options.getString("status", true));
   const resourceStatus = ctx.options.getString(
     "resource-status",
@@ -212,17 +211,12 @@ function run(ctx: ChatInputCommandInteraction) {
     case "create":
       return createIncident(
         ctx,
-        affectedResource,
+        ctx.options.getString("affected", true),
         parsedStatus,
         resourceStatus
       );
     case "update":
-      return updateIncident(
-        ctx,
-        affectedResource,
-        parsedStatus,
-        resourceStatus
-      );
+      return updateIncident(ctx, parsedStatus, resourceStatus);
   }
 }
 
@@ -479,7 +473,6 @@ async function createIncident(
 
 async function updateIncident(
   ctx: ChatInputCommandInteraction,
-  affectedResource: string,
   parsedStatus: IncidentStatus,
   resourceStatus: ResourceStatus
 ) {
@@ -557,7 +550,7 @@ async function updateIncident(
         ),
         affected_resources: [
           {
-            status_page_resource_id: affectedResource,
+            status_page_resource_id: incident.betterstack.affectedServices[0],
             status: resourceStatus,
           },
         ],
@@ -601,7 +594,7 @@ async function updateIncident(
   });
 
   const affectedName = betterstackClient.getResourceName(
-    incident.betterstack.affectedServices![0]
+    incident.betterstack.affectedServices[0]
   );
 
   const incidentMessage: MessageEditOptions = {
