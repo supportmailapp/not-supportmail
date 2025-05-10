@@ -195,9 +195,7 @@ export default {
           .map((i) => ({ name: i.id, value: i.id }))
       );
     } else if (option.name === "affected") {
-      console.log("Autocomplete affected");
       const resources = await betterstackClient.getResources();
-      console.log("Resources", resources);
       const choices = Array.from(resources.entries()).map(([id, name]) => ({
         name: name,
         value: id,
@@ -240,7 +238,7 @@ function run(ctx: ChatInputCommandInteraction) {
 function formatIncident(
   incident: HydratedDocument<IIncident>,
   statusUpdates: HydratedDocument<IStatusUpdate>[],
-  resources: Map<string, string>
+  affectedService: string | null
 ) {
   const components: ComponentBuilder[] = [];
   const lastStatus = statusUpdates[statusUpdates.length - 1].status;
@@ -266,9 +264,7 @@ function formatIncident(
   let content = [
     `## ${titleText}`,
     `- **Type:** \`${incident.typ[0].toUpperCase() + incident.typ.slice(1)}\``,
-    `- **Affected:** \`${
-      resources.get(incident.betterstack.id ?? "0") ?? "Unknown"
-    }\``,
+    `- **Affected:** \`${affectedService ?? "Unknown"}\``,
   ].join("\n");
 
   if (statusUpdates.length > 1 && lastStatus === IncidentStatus.Resolved) {
@@ -450,12 +446,12 @@ async function createIncident(
     process.env.CHANNEL_STATUS!
   )) as TextChannel;
 
-  const resources = await betterstackClient.getResources();
+  const affectedName = betterstackClient.getResourceName(affectedResource);
 
   // Send the incident to the status channel
   const incidentMsg = await channel.send({
     flags: MessageFlags.IsComponentsV2,
-    components: formatIncident(incident, [statusU], resources),
+    components: formatIncident(incident, [statusU], affectedName),
     allowedMentions: {
       roles: [process.env.ROLE_STATUS_PING!],
     },
@@ -613,10 +609,10 @@ async function updateIncident(
     ],
   });
 
-  const resources = await betterstackClient.getResources();
+  const affectedName = betterstackClient.getResourceName(affectedResource);
 
   const incidentMessage: MessageEditOptions = {
-    components: formatIncident(incident, allStatuses, resources),
+    components: formatIncident(incident, allStatuses, affectedName),
     flags: MessageFlags.IsComponentsV2,
   };
 
@@ -670,7 +666,7 @@ function formatBetterstackUpdateMessage(
   message: string,
   createdAt: Date | null = null
 ) {
-  let msg = `**Status:** ${IncidentStatus[status]}\n\n**Message:** ${message}`;
+  let msg = `**Status:** ${IncidentStatus[status]}\n\n${message}`;
   if (status === IncidentStatus.Resolved && createdAt) {
     msg += `\n\n- **Lasted:** ${humanizeDuration(
       dayjs().diff(createdAt, "ms"),
