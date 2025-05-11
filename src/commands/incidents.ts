@@ -111,12 +111,6 @@ export default {
             )
             .setRequired(true)
             .setChoices(...STATUS_CHOICES(false))
-        )
-        .addBooleanOption((op) =>
-          op
-            .setName("ping")
-            .setDescription("Whether to ping the role")
-            .setRequired(false)
         );
 
       if (isBetterStackEnabled()) {
@@ -141,6 +135,12 @@ export default {
           );
       }
 
+      sub.addBooleanOption((op) =>
+        op
+          .setName("ping")
+          .setDescription("Whether to ping the role")
+          .setRequired(false)
+      );
       return sub;
     })
     .addSubcommand((sub) => {
