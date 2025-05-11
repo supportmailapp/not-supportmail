@@ -37,6 +37,8 @@ If you want to use this code, you can do so by forking this repository and modif
 - **Incident Tracking**: Create and manage service incidents
 - **Status Updates**: Update incident status (Investigating, Identified, Monitoring, Resolved)
 - **Notification System**: Optional role pinging for status changes
+- **Betterstack Integration**: Integrates with Betterstack for incident management (optional)
+  - Note, that this feature might not fully work, as this couldn't be really tested yet. Open an issue if you have issues with it.
 
 ### Administration & Metrics
 

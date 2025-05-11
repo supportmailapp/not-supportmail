@@ -131,8 +131,7 @@ type JSONStatuspageStatusUpdateResponse = {
 
 interface BetterStackConfig {
   apiKey: string | undefined; // undefined because if the user uses process.env..., then it might be undefined
-  baseUrl?: string;
-  statusPageId?: string;
+  statusPageId: string;
 }
 
 // BetterStack API client
@@ -142,9 +141,7 @@ class BetterStackClient {
   private readonly resources = new Map<string, string>();
 
   constructor(config: BetterStackConfig) {
-    const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
-
-    if (!process.env.BTSTACK_STATUSPAGE_ID && !config.statusPageId) {
+    if (!config.statusPageId) {
       throw new Error("Missing status page ID");
     }
     if (typeof config.apiKey !== "string") {
@@ -152,10 +149,10 @@ class BetterStackClient {
     }
 
     this.STATUSPAGE_ID = (process.env.BTSTACK_STATUSPAGE_ID ||
-      config.statusPageId)!; // Non-null assertion operator because we checked above but TS doesn't know that
+      config.statusPageId)!;
 
     this.client = ky.create({
-      prefixUrl: new URL(baseUrl),
+      prefixUrl: new URL(DEFAULT_BASE_URL),
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
@@ -301,9 +298,20 @@ class BetterStackClient {
 
 // Factory function to create client
 const createBetterStackClient = (
-  config: BetterStackConfig
-): BetterStackClient => {
-  return new BetterStackClient(config);
+  config: Partial<BetterStackConfig>
+): BetterStackClient | null => {
+  try {
+    if (!config.apiKey || !config.statusPageId) {
+      console.warn(
+        "BetterStack integration disabled: Missing API key or status page ID"
+      );
+      return null;
+    }
+    return new BetterStackClient(config as BetterStackConfig);
+  } catch (error) {
+    console.error("Failed to initialize BetterStack client:", error);
+    return null;
+  }
 };
 
 export {

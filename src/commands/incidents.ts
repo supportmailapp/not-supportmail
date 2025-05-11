@@ -25,14 +25,15 @@ import {
   IStatusUpdate,
   StatusUpdate,
 } from "../models/incident.js";
+import type { ResourceStatus } from "../utils/betterstack.js";
 import { IncidentStatus, IncidentStatusColors } from "../utils/enums.js";
 import {
   betterstackClient,
   incidentURL,
+  isBetterStackEnabled,
   statusIsEqual,
 } from "../utils/incidents.js";
 import { delay } from "../utils/main.js";
-import type { ResourceStatus } from "../utils/betterstack.js";
 
 /**
  *
@@ -98,19 +99,10 @@ export default {
     .setName("incident")
     .setDescription("Incident management commands")
     .setDefaultMemberPermissions(32)
-    .addSubcommand((sub) =>
+    .addSubcommand((sub) => {
       sub
         .setName("create")
         .setDescription("Create a new incident")
-        .addStringOption((op) =>
-          op
-            .setName("affected")
-            .setDescription(
-              "The affected resource (Currently, only one - maybe more in the future)"
-            )
-            .setRequired(true)
-            .setAutocomplete(true)
-        )
         .addStringOption((op) =>
           op
             .setName("status")
@@ -120,21 +112,38 @@ export default {
             .setRequired(true)
             .setChoices(...STATUS_CHOICES(false))
         )
-        .addStringOption((op) =>
-          op
-            .setName("resource-status")
-            .setDescription("The status of the affected resource (BetterStack)")
-            .setRequired(true)
-            .setChoices(...BETTERSTACK_STATUS_CHOICES)
-        )
         .addBooleanOption((op) =>
           op
             .setName("ping")
             .setDescription("Whether to ping the role")
             .setRequired(false)
-        )
-    )
-    .addSubcommand((sub) =>
+        );
+
+      if (isBetterStackEnabled()) {
+        sub
+          .addStringOption((op) =>
+            op
+              .setName("affected")
+              .setDescription(
+                "The affected resource (Currently, only one - maybe more in the future)"
+              )
+              .setRequired(true)
+              .setAutocomplete(true)
+          )
+          .addStringOption((op) =>
+            op
+              .setName("resource-status")
+              .setDescription(
+                "The status of the affected resource (BetterStack)"
+              )
+              .setRequired(true)
+              .setChoices(...BETTERSTACK_STATUS_CHOICES)
+          );
+      }
+
+      return sub;
+    })
+    .addSubcommand((sub) => {
       sub
         .setName("update")
         .setDescription("Update an incident")
@@ -147,24 +156,28 @@ export default {
         )
         .addStringOption((op) =>
           op
-            .setName("resource-status")
-            .setDescription("The status of the affected resource (BetterStack)")
-            .setRequired(true)
-            .setChoices(...BETTERSTACK_STATUS_CHOICES)
-        )
-        .addStringOption((op) =>
-          op
             .setName("status")
             .setDescription("The status of the status update")
             .setRequired(true)
             .setChoices(...STATUS_CHOICES())
-        )
-    ),
+        );
+
+      if (isBetterStackEnabled()) {
+        sub.addStringOption((op) =>
+          op
+            .setName("resource-status")
+            .setDescription("The status of the affected resource (BetterStack)")
+            .setRequired(true)
+            .setChoices(...BETTERSTACK_STATUS_CHOICES)
+        );
+      }
+
+      return sub;
+    }),
 
   run,
 
   async autocomplete(interaction: AutocompleteInteraction) {
-    // Send back all active incidents, where the ID partially matches the input (oldest first)
     const option = interaction.options.getFocused(true);
     if (option.name === "id") {
       const incidents = await Incident.find({ resolvedAt: null }, null, {
@@ -186,12 +199,31 @@ export default {
           .map((i) => ({ name: i.id, value: i.id }))
       );
     } else if (option.name === "affected") {
-      const resources = await betterstackClient.getResources();
-      const choices = Array.from(resources.entries()).map(([id, name]) => ({
-        name: name,
-        value: id,
-      }));
-      return await interaction.respond(choices);
+      // Only try to get resources if BetterStack is enabled
+      if (isBetterStackEnabled() && betterstackClient) {
+        try {
+          const resources = await betterstackClient.getResources();
+          const choices = Array.from(resources.entries()).map(([id, name]) => ({
+            name: name,
+            value: id,
+          }));
+          return await interaction.respond(choices);
+        } catch (error) {
+          console.error("Failed to get BetterStack resources:", error);
+          return await interaction.respond([
+            {
+              name: "Error fetching resources",
+              value: "error",
+            },
+          ]);
+        }
+      }
+      return await interaction.respond([
+        {
+          name: "BetterStack is not enabled",
+          value: "%",
+        },
+      ]);
     } else {
       return;
     }
@@ -204,8 +236,8 @@ function run(ctx: ChatInputCommandInteraction) {
   const parsedStatus = parseInt(ctx.options.getString("status", true));
   const resourceStatus = ctx.options.getString(
     "resource-status",
-    true
-  ) as ResourceStatus;
+    false
+  ) as ResourceStatus | null;
 
   switch (subcommand) {
     case "create":
@@ -220,6 +252,13 @@ function run(ctx: ChatInputCommandInteraction) {
   }
 }
 
+/**
+ * Formats the incident message for Discord.
+ * @param incident The incident document
+ * @param statusUpdates The status updates for the incident
+ * @param affectedService The affected service for the incident | **Only if BetterStack is enabled!**
+ * @returns An array of components for the incident message
+ */
 function formatIncident(
   incident: HydratedDocument<IIncident>,
   statusUpdates: HydratedDocument<IStatusUpdate>[],
@@ -238,19 +277,23 @@ function formatIncident(
     IncidentStatusColors[statusUpdates[statusUpdates.length - 1].status]
   );
 
-  // The title + capitalized type of the incident
   let titleText = `__${incident.title}__`;
+  const btstackUrl = incidentURL(incident);
 
   // Add hyperlink to title if it's not a maintenance incident
-  if (incident.betterstack.id) {
-    titleText = `[${titleText}](${incidentURL(incident)})`;
+  // (maintenance incidents are not synched with betterstack as of now)
+  if (incident.betterstack.id && btstackUrl) {
+    titleText = `[${titleText}](${btstackUrl})`;
   }
 
   let content = [
     `## ${titleText}`,
     `- **Type:** \`${incident.typ[0].toUpperCase() + incident.typ.slice(1)}\``,
-    `- **Affected:** \`${affectedService ?? "Unknown"}\``,
   ].join("\n");
+
+  if (affectedService) {
+    content += `\n- **Affected Service:** \`${affectedService}\``;
+  }
 
   if (statusUpdates.length > 1 && lastStatus === IncidentStatus.Resolved) {
     content += `\n-# Lasted: ${humanizeDuration(
@@ -291,34 +334,53 @@ function formatIncident(
 
 async function createIncident(
   ctx: ChatInputCommandInteraction,
-  affectedResource: string,
+  affectedResource: string | null,
   parsedStatus: Exclude<IncidentStatus, IncidentStatus.Update>,
-  resourceStatus: ResourceStatus
+  resourceStatus: ResourceStatus | null
 ) {
-  if (!statusIsEqual(parsedStatus, resourceStatus)) {
-    await ctx.reply({
-      flags: MessageFlags.IsComponentsV2 | 64,
-      components: [
-        new TextDisplayBuilder().setContent(
-          "The status of the incident and the resource do not match."
-        ),
-      ],
-    });
-    return;
-  }
+  const betterStackEnabled = isBetterStackEnabled();
 
-  const resourceId = await betterstackClient.findResourceId(
-    affectedResource,
-    true
-  );
-  if (!resourceId) {
-    await ctx.reply({
-      flags: MessageFlags.IsComponentsV2 | 64,
-      components: [
-        new TextDisplayBuilder().setContent("The resource ID is invalid."),
-      ],
-    });
-    return;
+  if (betterStackEnabled) {
+    if (!resourceStatus) {
+      await ctx.reply({
+        flags: MessageFlags.IsComponentsV2 | 64,
+        components: [
+          new TextDisplayBuilder().setContent(
+            "Resource status is required when BetterStack is enabled."
+          ),
+        ],
+      });
+      return;
+    }
+
+    if (!statusIsEqual(parsedStatus, resourceStatus)) {
+      await ctx.reply({
+        flags: MessageFlags.IsComponentsV2 | 64,
+        components: [
+          new TextDisplayBuilder().setContent(
+            "The status of the incident and the resource do not match."
+          ),
+        ],
+      });
+      return;
+    }
+
+    if (affectedResource) {
+      const resourceId = await betterstackClient?.findResourceId(
+        affectedResource,
+        true
+      );
+      if (!resourceId) {
+        await ctx.reply({
+          flags: MessageFlags.IsComponentsV2 | 64,
+          components: [
+            new TextDisplayBuilder().setContent("The resource ID is invalid."),
+          ],
+        });
+        return;
+      }
+      affectedResource = resourceId;
+    }
   }
 
   const ping = ctx.options.getBoolean("ping", false);
@@ -372,25 +434,38 @@ async function createIncident(
   // TODO: Add a way to input `ends_at` field for maintenance
   let reportId: string | null = null;
   let statusUpdateId: string | null = null;
-  if (parsedStatus !== IncidentStatus.Maintenance) {
-    const report = await betterstackClient.createStatusReport({
-      title: title,
-      message: formatBetterstackUpdateMessage(
-        parsedStatus,
-        message,
-        parsedStatus === IncidentStatus.Resolved ? dayjs().toDate() : null
-      ),
-      report_type: "manual",
-      affected_resources: [
-        {
-          status_page_resource_id: affectedResource,
-          status: resourceStatus,
-        },
-      ],
-      published_at: dayjs().toISOString(),
-    });
-    reportId = report.data.id;
-    statusUpdateId = report.data.relationships.status_updates.data[0].id;
+
+  if (
+    betterStackEnabled &&
+    betterstackClient &&
+    affectedResource &&
+    resourceStatus
+  ) {
+    if (parsedStatus !== IncidentStatus.Maintenance) {
+      try {
+        const report = await betterstackClient.createStatusReport({
+          title: title,
+          message: formatBetterstackUpdateMessage(
+            parsedStatus,
+            message,
+            parsedStatus === IncidentStatus.Resolved ? dayjs().toDate() : null
+          ),
+          report_type: "manual",
+          affected_resources: [
+            {
+              status_page_resource_id: affectedResource,
+              status: resourceStatus,
+            },
+          ],
+          published_at: dayjs().toISOString(),
+        });
+        reportId = report.data.id;
+        statusUpdateId = report.data.relationships.status_updates.data[0].id;
+      } catch (error) {
+        console.error("Failed to create BetterStack report:", error);
+        // Continue without BetterStack integration
+      }
+    }
   }
 
   const incident = await Incident.create({
@@ -401,7 +476,7 @@ async function createIncident(
     aggregatedStatus: parsedStatus,
     betterstack: {
       id: reportId,
-      affectedServices: [affectedResource],
+      affectedServices: affectedResource ? [affectedResource] : [],
     },
   });
 
@@ -431,7 +506,10 @@ async function createIncident(
     process.env.CHANNEL_STATUS!
   )) as TextChannel;
 
-  const affectedName = betterstackClient.getResourceName(affectedResource);
+  let affectedName = null;
+  if (isBetterStackEnabled() && affectedResource) {
+    affectedName = betterstackClient!.getResourceName(affectedResource);
+  }
 
   // Send the incident to the status channel
   const incidentMsg = await channel.send({
@@ -455,18 +533,24 @@ async function createIncident(
         .addTextDisplayComponents((text) =>
           text.setContent(`### Incident created\n> Incident ID: ${incident.id}`)
         )
-        .addActionRowComponents<ButtonBuilder>((row) =>
+        .addActionRowComponents<ButtonBuilder>((row) => {
           row.setComponents(
             new ButtonBuilder()
               .setLabel("View Discord Message")
               .setURL(incidentMsg.url)
-              .setStyle(5),
-            new ButtonBuilder()
-              .setLabel("View BetterStack Incident")
-              .setURL(incidentURL(incident))
               .setStyle(5)
-          )
-        ),
+          );
+          const url = incidentURL(incident);
+          if (url) {
+            row.addComponents(
+              new ButtonBuilder()
+                .setLabel("BetterStack Details")
+                .setURL(url)
+                .setStyle(5)
+            );
+          }
+          return row;
+        }),
     ],
   });
 }
@@ -474,7 +558,7 @@ async function createIncident(
 async function updateIncident(
   ctx: ChatInputCommandInteraction,
   parsedStatus: IncidentStatus,
-  resourceStatus: ResourceStatus
+  resourceStatus: ResourceStatus | null
 ) {
   const id = ctx.options.getString("id", true);
 
@@ -539,8 +623,12 @@ async function updateIncident(
   const message = modalCtx.fields.getTextInputValue("message");
 
   let betterstackUpdateId: string | null = null;
-  if (incident.betterstack.id) {
-    const statusUpdate = await betterstackClient.createStatusUpdate(
+  if (
+    incident.betterstack.id &&
+    isBetterStackEnabled() &&
+    resourceStatus !== null
+  ) {
+    const statusUpdate = await betterstackClient!.createStatusUpdate(
       incident.betterstack.id,
       {
         message: formatBetterstackUpdateMessage(
@@ -593,9 +681,12 @@ async function updateIncident(
     ],
   });
 
-  const affectedName = betterstackClient.getResourceName(
-    incident.betterstack.affectedServices[0]
-  );
+  let affectedName = null;
+  if (isBetterStackEnabled()) {
+    affectedName = betterstackClient!.getResourceName(
+      incident.betterstack.affectedServices[0]
+    );
+  }
 
   const incidentMessage: MessageEditOptions = {
     components: formatIncident(incident, allStatuses, affectedName),
@@ -623,18 +714,24 @@ async function updateIncident(
         .addTextDisplayComponents((text) =>
           text.setContent(`### Incident updated\n> Incident ID: ${incident.id}`)
         )
-        .addActionRowComponents<ButtonBuilder>((row) =>
+        .addActionRowComponents<ButtonBuilder>((row) => {
           row.setComponents(
             new ButtonBuilder()
               .setLabel("View Discord Message")
               .setURL(incidentMsg.url)
-              .setStyle(5),
-            new ButtonBuilder()
-              .setLabel("View BetterStack Incident")
-              .setURL(incidentURL(incident))
               .setStyle(5)
-          )
-        ),
+          );
+          const url = incidentURL(incident);
+          if (url) {
+            row.addComponents(
+              new ButtonBuilder()
+                .setLabel("BetterStack Details")
+                .setURL(url)
+                .setStyle(5)
+            );
+          }
+          return row;
+        }),
     ],
   });
 }

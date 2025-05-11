@@ -3,18 +3,28 @@ import * as BetterStack from "./betterstack.js";
 import { IIncident } from "../models/incident.js";
 import { IncidentStatus } from "./enums.js";
 
-const betterstackClient = BetterStack.createBetterStackClient({
+export const betterstackClient = BetterStack.createBetterStackClient({
   apiKey: process.env.BTSTACK_API_KEY,
+  statusPageId: process.env.BTSTACK_STATUSPAGE_ID,
 });
 
-export { betterstackClient };
+const statuspageOrigin = process.env.STATUSPAGE_ORIGIN;
 
-export function incidentURL(incident: HydratedDocument<IIncident>): string {
-  if (incident.typ === "maintenance") {
-    return `https://status.supportmail.dev/maintenance/${incident.betterstack.id}`;
-  } else {
-    return `https://status.supportmail.dev/incident/${incident.betterstack.id}`;
+export function isBetterStackEnabled(): boolean {
+  return betterstackClient !== null;
+}
+
+export function incidentURL(
+  incident: HydratedDocument<IIncident>
+): string | null {
+  if (statuspageOrigin) {
+    if (incident.typ === "maintenance") {
+      return `${statuspageOrigin}/maintenance/${incident.betterstack.id}`;
+    } else {
+      return `${statuspageOrigin}/incident/${incident.betterstack.id}`;
+    }
   }
+  return null;
 }
 
 export function statusIsEqual(
