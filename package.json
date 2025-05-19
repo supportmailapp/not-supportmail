@@ -21,7 +21,7 @@
     "discord.js": "^14.19.3",
     "djs-command-helper": "^4.1.2",
     "dotenv": "^16.4.7",
-    "humanize-duration": "^3.32.1",
+    "humanize-duration": "^3.32.2",
     "ky": "^1.8.1",
     "mongodb": "^6.13.1",
     "mongoose": "^8.10.0",
