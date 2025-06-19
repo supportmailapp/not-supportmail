@@ -1,4 +1,4 @@
-import { Colors } from "discord.js";
+import { Colors, MessageFlags } from "discord.js";
 
 export enum IncidentStatus {
   Resolved = 0,
@@ -76,3 +76,8 @@ export const FeatureRequestStatusEmojis = {
   3: "🔁",
   4: "🏆",
 };
+
+// Helper flags for message flags
+export const EphemeralFlags = MessageFlags.Ephemeral;
+export const ComponentsV2Flags = MessageFlags.IsComponentsV2;
+export const EphemeralComponentsV2Flags = EphemeralFlags | ComponentsV2Flags;
