@@ -78,6 +78,6 @@ export const FeatureRequestStatusEmojis = {
 };
 
 // Helper flags for message flags
-export const EphemeralFlags = MessageFlags.Ephemeral;
-export const ComponentsV2Flags = MessageFlags.IsComponentsV2;
+export const EphemeralFlags = MessageFlags.Ephemeral as const;
+export const ComponentsV2Flags = MessageFlags.IsComponentsV2 as const;
 export const EphemeralComponentsV2Flags = EphemeralFlags | ComponentsV2Flags;
