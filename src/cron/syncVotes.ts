@@ -10,6 +10,7 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 
 export async function startVoteSyncCron() {
   schedule.scheduleJob("0 * * * *", syncVotes);
+  Sentry.logger.info("Vote sync cron started");
 }
 
 export async function syncVotes() {
@@ -76,9 +77,13 @@ export async function syncVotes() {
       if (votesToRemove.length < BATCH_SIZE) break;
     }
 
-    console.log(`Processed ${processedCount} votes`);
+    Sentry.logger.debug(`Processed votes`, {
+      processedCount,
+    });
   } catch (error) {
-    console.error("Error syncing votes:", error);
-    Sentry.captureException(error);
+    console.error("Error processing support posts:", error);
+    Sentry.captureException(error, {
+      level: "error",
+    });
   }
 }

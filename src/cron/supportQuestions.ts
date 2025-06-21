@@ -25,6 +25,7 @@ function getRandomReminder(uid: string) {
 
 export async function startSupportPostSyncCron() {
   schedule.scheduleJob("*/5 * * * *", processSupportPostsWithRetry);
+  Sentry.logger.info("Support post sync cron started");
 }
 
 export async function processSupportPostsWithRetry(): Promise<void> {
@@ -127,8 +128,12 @@ export async function processSupportPostsWithRetry(): Promise<void> {
       if (postsToClose.length < BATCH_SIZE) break;
     }
 
-    console.log(
-      `Processed ${reminderProcessedCount} reminders and ${closeProcessedCount} closures`
+    Sentry.logger.debug(
+      `Processed reminders and closures`,
+      {
+        reminderProcessedCount,
+        closeProcessedCount,
+      }
     );
   } catch (error) {
     console.error("Error processing support posts:", error);
