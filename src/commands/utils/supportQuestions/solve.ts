@@ -67,7 +67,10 @@ export async function handler(
 
   const container = new ContainerBuilder().addTextDisplayComponents((t) =>
     t.setContent(
-      `### ✅ Support Post has been marked as solved by <@${ctx.user.id}>, thanks everyone!`
+      `### ✅ Support Post has been marked as solved by <@${ctx.user.id}>, thanks everyone!` +
+        (post.author !== ctx.user.id
+          ? `\n-# <${post.author}> You can commend the most helpful users below.`
+          : "")
     )
   );
   const reason = ctx.options.getString("reason", false) ?? null;
@@ -97,6 +100,9 @@ export async function handler(
   await ctx.editReply({
     flags: ComponentsV2Flags,
     components: [container],
+    allowedMentions: {
+      users: [post.author],
+    },
   });
 
   await UsersCache.fetchAndCacheThreadMembers(
