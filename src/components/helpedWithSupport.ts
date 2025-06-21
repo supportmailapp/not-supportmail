@@ -108,21 +108,19 @@ export default {
         return;
       }
 
-      // Match the cached users against the values + already in database users to result in one array with not commended users
       const allCommendedUserIds = [...supportPost.helped];
       if (ctx.isStringSelectMenu()) allCommendedUserIds.push(...ctx.values);
+      const commendedUserIdsSet = new Set(allCommendedUserIds);
 
       const freeUsers = eligibleMembers.filter(
-        (member) => !allCommendedUserIds.includes(member.id)
+        (member) => !commendedUserIdsSet.has(member.id)
       );
 
-      // Reply/Edit with helpful response
       if (freeUsers.length) {
         await responseHandler(ctx, buildHelpfulResponse(postId, freeUsers));
         return;
       }
 
-      // Remove the button and show "thank you"-response if there are no more members to help
       if (ctx.isButton()) {
         await ctx.update({
           components: [],
