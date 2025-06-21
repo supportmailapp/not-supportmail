@@ -107,3 +107,6 @@ src/utils/cron-wrapper.sh
 
 # Temp
 suggestPostClosure.ts
+
+# Sentry Config File
+.sentryclirc
