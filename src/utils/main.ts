@@ -218,7 +218,10 @@ export async function setPostPriority(
   await SupportPost.updateOne({ id: post.id }, { priority: priority });
 
   if (channel) {
-    const tags = [tagId];
+    const tags = [
+      ...filterExternalPostTags(channel.appliedTags, "priority"),
+      tagId,
+    ];
     await channel.edit({
       appliedTags: tags,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
@@ -254,4 +257,41 @@ export async function getCommandMention(commandName: string, client: Client) {
   }
 
   return cmd ? `</${commandName}:${cmd.id}>` : `\`/${commandName}\``;
+}
+
+/**
+ * List of internal tag IDs that are used by the system.
+ */
+export const InternalTags = Object.values(config.tags).concat(
+  Object.values(config.priorityTags)
+);
+
+/**
+ * Filters out internal tags from an array of applied tags based on the specified type.
+ *
+ * @param appliedTags - Array of tag strings to filter
+ * @param type - Type of filtering to apply:
+ *   - "priority": Filters out priority tags from `config.priorityTags`
+ *   - "support": Filters out support tags from `config.tags`
+ *   - "all": Filters out all internal tags from `InternalTags` array
+ * @returns Filtered array of tags with internal tags removed
+ *
+ * @remarks
+ * This function is useful for ensuring that external tags are preserved while internal tags are removed.
+ */
+export function filterExternalPostTags(
+  appliedTags: string[],
+  type: "support" | "priority" | "all" = "all"
+) {
+  if (type === "priority") {
+    return appliedTags.filter(
+      (tag) => !Object.values(config.priorityTags).includes(tag)
+    );
+  } else if (type === "support") {
+    return appliedTags.filter(
+      (tag) => !Object.values(config.tags).includes(tag)
+    );
+  } else {
+    return appliedTags.filter((tag) => !InternalTags.includes(tag));
+  }
 }
