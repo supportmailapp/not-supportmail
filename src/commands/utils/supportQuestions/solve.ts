@@ -40,7 +40,7 @@ export async function handler(
       components: [
         new TextDisplayBuilder().setContent(
           "### :x: This support question is already marked as solved.\n" +
-            `-# If you want to unsolve it, use the ${getCommandMention(
+            `-# If you want to unsolve it, use the ${await getCommandMention(
               "question unsolve",
               ctx.client
             )} command.`
