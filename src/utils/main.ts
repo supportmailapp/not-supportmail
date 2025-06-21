@@ -196,24 +196,13 @@ export const PriorityOption = (required = false) => {
     );
 };
 
-export async function setPostPriority(
-  post: HydratedDocument<ISupportPost>,
-  priority: PriorityLevel,
-  channel?: undefined
-): Promise<string>;
-export async function setPostPriority(
-  post: HydratedDocument<ISupportPost>,
-  priority: PriorityLevel,
-  channel: PublicThreadChannel
-): Promise<null>;
-
 /**
  * Sets the priority level for a support post and optionally updates the associated Discord channel.
  *
  * @param post - The hydrated support post document to update
  * @param priority - The priority level to set for the support post
  * @param channel - Optional Discord thread channel to update with priority tags
- * @returns Promise that resolves to the tag ID if no channel provided, otherwise null
+ * @returns Promise that resolves to the tag ID for the set priority level
  * @throws {Error} When an invalid priority level is provided or updating the channel fails
  */
 export async function setPostPriority(
@@ -234,7 +223,7 @@ export async function setPostPriority(
       appliedTags: tags,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
     });
-    return null;
+    return tagId;
   }
   return tagId;
 }
