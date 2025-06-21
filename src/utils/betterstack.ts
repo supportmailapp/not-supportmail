@@ -1,4 +1,5 @@
 import ky from "ky";
+import * as Sentry from "@sentry/node";
 
 export const DEFAULT_BASE_URL =
   "https://uptime.betterstack.com/api/v2/status-pages/";
@@ -184,6 +185,7 @@ class BetterStackClient {
 
   public async start() {
     await this.loadResources();
+    Sentry.logger.info("BetterStack client started");
     return this;
   }
 
