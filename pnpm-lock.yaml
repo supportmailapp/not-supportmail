@@ -27,8 +27,8 @@ importers:
         specifier: ^16.4.7
         version: 16.4.7
       humanize-duration:
-        specifier: ^3.32.1
-        version: 3.32.1
+        specifier: ^3.33.0
+        version: 3.33.0
       ky:
         specifier: ^1.8.1
         version: 1.8.1
@@ -458,8 +458,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  humanize-duration@3.32.1:
-    resolution: {integrity: sha512-inh5wue5XdfObhu/IGEMiA1nUXigSGcaKNemcbLRKa7jXYGDZXr3LoT9pTIzq2hPEbld7w/qv9h+ikWGz8fL1g==}
+  humanize-duration@3.33.0:
+    resolution: {integrity: sha512-vYJX7BSzn7EQ4SaP2lPYVy+icHDppB6k7myNeI3wrSRfwMS5+BHyGgzpHR0ptqJ2AQ6UuIKrclSg5ve6Ci4IAQ==}
 
   import-in-the-middle@1.13.0:
     resolution: {integrity: sha512-YG86SYDtrL/Yu8JgfWb7kjQ0myLeT1whw6fs/ZHFkXFcbk9zJU9lOCsSJHpvaPumU11nN3US7NW6x1YTk+HrUA==}
@@ -1188,7 +1188,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  humanize-duration@3.32.1: {}
+  humanize-duration@3.33.0: {}
 
   import-in-the-middle@1.13.0:
     dependencies:
