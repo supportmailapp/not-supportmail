@@ -51,6 +51,18 @@ export async function handler(
     return;
   }
 
+  if (channel.appliedTags.includes(config.tags.review)) {
+    await ctx.reply({
+      flags: EphemeralComponentsV2Flags,
+      components: [
+        new TextDisplayBuilder().setContent(
+          "### :x: This post is already marked for review."
+        ),
+      ],
+    });
+    return;
+  }
+
   await SupportPost.updateOne(
     {
       postId: post.postId,
