@@ -101,7 +101,7 @@ export async function handler(
   ];
   if (priority) {
     let priorityTag = await setPostPriority(post, priority);
-    if (priorityTag) {
+    if (priorityTag && !newTags.includes(priorityTag)) {
       newTags.push(priorityTag);
     }
   }
