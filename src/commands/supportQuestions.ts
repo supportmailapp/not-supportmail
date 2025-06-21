@@ -28,11 +28,12 @@ export default {
       !ctx.channel || // TS BS
       ctx.channel.type !== ChannelType.PublicThread ||
       ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
-    )
+    ) {
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
         flags: 64,
       });
+    }
 
     if (!ctx.inCachedGuild()) await ctx.guild!.fetch();
 
@@ -47,7 +48,6 @@ export default {
       });
     }
 
-    // TODO: Add subcommand handlers here
     const subcommand = ctx.options.getSubcommand();
 
     // Check if the user can update the support post
@@ -78,10 +78,10 @@ export default {
 
     switch (subcommand) {
       case "solve":
-        // Handle solve subcommand
+        await SolveSubcommand.handler(ctx, ctx.channel, supportPost);
         break;
       case "unsolve":
-        // Handle unsolve subcommand
+        await UnsolveSubcommand.handler(ctx, ctx.channel, supportPost);
         break;
       case "dev":
         await DevSubcommand.handler(ctx, ctx.channel, supportPost);
