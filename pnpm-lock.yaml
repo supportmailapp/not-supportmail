@@ -32,9 +32,6 @@ importers:
       ky:
         specifier: ^1.8.1
         version: 1.8.1
-      mongodb:
-        specifier: ^6.13.1
-        version: 6.13.1
       mongoose:
         specifier: ^8.10.0
         version: 8.10.0

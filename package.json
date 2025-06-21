@@ -8,9 +8,7 @@
     "preinstall": "npx only-allow pnpm",
     "build": "npx tsc",
     "dev": "npx tsc && node --env-file=.env.dev ./dist/index.js",
-    "start": "npx tsc && node --env-file=.env.production ./dist/index.js",
-    "cron:support-questions": "node --env-file=.env.production ./dist/cron/supportQuestions.js",
-    "cron:sync-votes": "node --env-file=.env.production ./dist/cron/syncVotes.js"
+    "start": "npx tsc && node --env-file=.env.production ./dist/index.js"
   },
   "author": "The-LukeZ",
   "license": "ISC",
@@ -24,7 +22,6 @@
     "dotenv": "^16.4.7",
     "humanize-duration": "^3.32.1",
     "ky": "^1.8.1",
-    "mongodb": "^6.13.1",
     "mongoose": "^8.10.0",
     "node-cache": "^5.1.2",
     "node-schedule": "^2.1.1",
