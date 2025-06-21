@@ -1,6 +1,6 @@
 import {
-  ButtonInteraction,
   ChannelType,
+  type ButtonInteraction,
   type InteractionEditReplyOptions,
   type InteractionReplyOptions,
   type StringSelectMenuInteraction,
@@ -84,7 +84,7 @@ export default {
       // Get or fetch thread members
       let cachedMembers = UsersCache.getThreadMembers(postId);
 
-      if (!cachedMembers.length) {
+      if (cachedMembers.length === 0) {
         cachedMembers = await UsersCache.fetchAndCacheThreadMembers(
           post,
           supportPost.author,
@@ -92,12 +92,26 @@ export default {
           ctx.isStringSelectMenu() ? ctx.values : []
         );
       }
+      const eligibleMembers = cachedMembers.filter(
+        (member) =>
+          member.id !== supportPost.author &&
+          member.id !== ctx.client.user.id &&
+          !member.bot
+      );
+
+      if (eligibleMembers.length === 0) {
+        await responseHandler(
+          ctx,
+          "No members found in this thread. Please ensure the thread has members."
+        );
+        return;
+      }
 
       // Match the cached users against the values + already in database users to result in one array with not commended users
       const allCommendedUserIds = [...supportPost.helped];
       if (ctx.isStringSelectMenu()) allCommendedUserIds.push(...ctx.values);
 
-      const freeUsers = cachedMembers.filter(
+      const freeUsers = eligibleMembers.filter(
         (member) => !allCommendedUserIds.includes(member.id)
       );
 
@@ -133,9 +147,7 @@ export default {
       await responseHandler(
         ctx,
         "An error occurred while processing your request."
-      ).catch(() => {
-        // Error handled silently
-      });
+      ).catch(() => {});
     }
   },
 };
