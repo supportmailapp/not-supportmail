@@ -10,6 +10,7 @@ const cache = new NodeCache({
 export type PartialMember = {
   id: string;
   displayName: string;
+  bot: boolean;
 };
 
 export function setThreadMembers(
@@ -50,6 +51,7 @@ export async function fetchAndCacheThreadMembers(
       ({ id, guildMember: member }) => ({
         id: id,
         displayName: member.displayName ?? member.user.displayName,
+        bot: member.user.bot,
       })
     );
     setThreadMembers(threadChannel.id, partialMembers);
