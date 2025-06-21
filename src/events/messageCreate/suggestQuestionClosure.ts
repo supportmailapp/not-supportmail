@@ -24,6 +24,7 @@ export default async function (message: Message) {
   if (!authorId) {
     const supportPost = await SupportPost.findOne({
       postId: message.channelId,
+      closedAt: null,
     });
     if (!supportPost) return;
 
