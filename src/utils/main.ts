@@ -229,7 +229,7 @@ export async function setPostPriority(
   await SupportPost.updateOne({ id: post.id }, { priority: priority });
 
   if (channel) {
-    const tags = [config.tags.review, tagId];
+    const tags = [tagId];
     await channel.edit({
       appliedTags: tags,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
