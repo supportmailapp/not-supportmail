@@ -24,7 +24,7 @@ function getRandomReminder(uid: string) {
 }
 
 export async function startSupportPostSyncCron() {
-  schedule.scheduleJob("0 * * * *", processSupportPostsWithRetry);
+  schedule.scheduleJob("*/5 * * * *", processSupportPostsWithRetry);
 }
 
 export async function processSupportPostsWithRetry(): Promise<void> {
