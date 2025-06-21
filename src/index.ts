@@ -14,8 +14,8 @@ import {
 } from "discord.js";
 // @ts-ignore | Ignore because if we don't need it TS goes crazy
 import { deployCommands } from "djs-command-helper";
-
 import mongoose from "mongoose";
+import * as Sentry from "@sentry/node";
 import { parseCustomId } from "./utils/main.js";
 import { betterstackClient, isBetterStackEnabled } from "./utils/incidents.js";
 import { startVoteSyncCron } from "./cron/syncVotes.js";
@@ -97,8 +97,11 @@ for (const file of commandFiles) {
   if (typeof command == "object" && "data" in command && "run" in command) {
     commands.set(command.data.name, command);
   } else {
-    console.error(
-      `[WARNING] The commandFile at ${filePath} is missing a required "data" or "run" property.`
+    Sentry.logger.warn(
+      `A commandFile is missing a required "data" or "run" property.`,
+      {
+        filePath,
+      }
     );
   }
 }
@@ -118,8 +121,11 @@ for (const file of componentFiles) {
   ) {
     components.set(comp.prefix, comp);
   } else {
-    console.error(
-      `[WARNING] The componentFile at ${filePath} is missing a required "prefix" or "run" property.`
+    Sentry.logger.error(
+      `The componentFile is missing a required "prefix" or "run" property.`,
+      {
+        filePath,
+      }
     );
   }
 }
@@ -150,7 +156,7 @@ client.on("interactionCreate", async (interaction) => {
     const command = commands.get(interaction.commandName);
 
     if (!command) {
-      return console.error(
+      return Sentry.logger.error(
         `No command matching '${interaction.commandName}' was found.`
       );
     }
@@ -159,17 +165,14 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.isAutocomplete() && command.autocomplete) {
         await command.autocomplete(interaction);
       } else if (interaction.isAutocomplete() && !command.autocomplete) {
-        console.error(
+        Sentry.logger.error(
           `No autocomplete function found for command '${interaction.commandName}'`
         );
       } else {
         await command.run(interaction);
       }
     } catch (error) {
-      console.error(
-        `Error while executing command (${interaction.commandName})`,
-        error
-      );
+      Sentry.captureException(error);
       if (interaction.isAutocomplete()) return;
 
       if (interaction.replied || interaction.deferred) {
@@ -182,7 +185,7 @@ client.on("interactionCreate", async (interaction) => {
               ),
             ],
           })
-          .catch((e) => console.error(e));
+          .catch(() => {});
       } else {
         await interaction
           .reply({
@@ -193,7 +196,7 @@ client.on("interactionCreate", async (interaction) => {
               ),
             ],
           })
-          .catch((e) => console.error(e));
+          .catch(() => {});
       }
     }
 
@@ -206,7 +209,7 @@ client.on("interactionCreate", async (interaction) => {
     const comp = components.get(parseCustomId(interaction.customId, true));
 
     if (!comp) {
-      console.error(
+      Sentry.logger.error(
         `No component matching '${interaction.customId}' was found.`
       );
       return;
@@ -215,10 +218,7 @@ client.on("interactionCreate", async (interaction) => {
     try {
       await comp.run(interaction);
     } catch (error) {
-      console.error(
-        `Error while executing component (${interaction.customId})`,
-        error
-      );
+      Sentry.captureException(error);
       if (
         interaction.replied ||
         (interaction.deferred && interaction.isMessageComponent())
@@ -232,7 +232,7 @@ client.on("interactionCreate", async (interaction) => {
               ),
             ],
           })
-          .catch((e) => console.error(e));
+          .catch(() => {});
       } else if (interaction.isModalSubmit()) {
         await interaction
           .reply({
@@ -243,7 +243,7 @@ client.on("interactionCreate", async (interaction) => {
               ),
             ],
           })
-          .catch((e) => console.error(e));
+          .catch(() => {});
       } else {
         await interaction
           .reply({
@@ -254,7 +254,7 @@ client.on("interactionCreate", async (interaction) => {
               ),
             ],
           })
-          .catch((e) => console.error(e));
+          .catch(() => {});
       }
     }
   }
@@ -266,32 +266,36 @@ client.on("ready", async (client) => {
       client.user.id
     }`
   );
+  Sentry.logger.info("Logged in", {
+    username: client.user.tag,
+    applicationId: client.application.id,
+  });
 
   await deployCommands(commandsPath, {
     appId: client.application.id,
     appToken: client.token,
   });
   await client.application.commands.fetch();
-  console.log("Commands deployed & fetched");
+  Sentry.logger.info("Commands deployed & fetched");
 });
 
 process
   .on("unhandledRejection", (error) => {
-    console.error("Unhandled promise rejection:", error);
+    Sentry.captureException(error);
   })
   .on("uncaughtException", (error) => {
-    console.error("Uncaught exception:", error);
+    Sentry.captureException(error);
   })
   .on("error", (error) => {
-    console.error("Error:", error);
+    Sentry.captureException(error);
   });
 
 (async function start() {
   mongoose.connect(process.env.MONGO_URI!).then(async () => {
-    console.info("Connected to DB");
+    Sentry.logger.info("Connected to DB");
 
     client.login(process.env.BOT_TOKEN);
-    console.info("Bot started");
+    Sentry.logger.info("Bot started");
 
     // Start cron jobs
     await startVoteSyncCron();
