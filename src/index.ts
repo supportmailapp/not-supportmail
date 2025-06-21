@@ -21,6 +21,8 @@ import { betterstackClient, isBetterStackEnabled } from "./utils/incidents.js";
 import { startVoteSyncCron } from "./cron/syncVotes.js";
 import { startSupportPostSyncCron } from "./cron/supportQuestions.js";
 
+import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
+
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
 
