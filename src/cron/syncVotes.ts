@@ -1,52 +1,84 @@
+import * as Sentry from "@sentry/node";
 import { REST, Routes } from "discord.js";
-import { MongoClient } from "mongodb";
 import type { IBotVote } from "supportmail-types";
+import schedule from "node-schedule";
+import { BotVote } from "../models/botVote.js";
 
-const client = new MongoClient(process.env.MONGO_URI_MAIN!);
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
 
-async function syncVotes() {
-  await client.connect();
-  const db = client.db();
-  const botVoteCollection = db.collection<IBotVote>("botVotes");
-  let votesToRemove = await botVoteCollection
-    .find({
-      $and: [
-        { hasRole: true },
-        { removeRoleBy: { $exists: true } },
-        { removeRoleBy: { $lte: new Date() } },
-      ],
-    })
-    .sort({ removeRoleBy: 1 })
-    .toArray();
+Sentry.init({ dsn: process.env.SENTRY_DSN });
 
-  if (votesToRemove.length == 0) return;
-
-  const uniqueVotes = votesToRemove.reduce((acc, vote) => {
-    if (!acc.find((v) => v.userId === vote.userId)) {
-      acc.push(vote);
-    }
-    return acc;
-  }, [] as IBotVote[]);
-
-  if (uniqueVotes.length == 0) return;
-
-  for (const vote of uniqueVotes) {
-    await rest
-      .delete(
-        Routes.guildMemberRole(
-          process.env.GUILD_ID!,
-          vote.userId,
-          process.env.ROLE_VOTER!
-        )
-      )
-      .catch(() => {});
-  }
-
-  await botVoteCollection.deleteMany({
-    userId: { $in: uniqueVotes.map((v) => v.userId) },
-  });
-  await client.close();
+export async function startVoteSyncCron() {
+  schedule.scheduleJob("0 * * * *", syncVotes);
 }
 
-await syncVotes();
+export async function syncVotes() {
+  try {
+    const BATCH_SIZE = 50;
+    let processedCount = 0;
+
+    while (true) {
+      // Process in batches to avoid loading all data into memory
+      const votesToRemove = await BotVote.find(
+        {
+          $and: [
+            { hasRole: true },
+            { removeRoleBy: { $exists: true } },
+            { removeRoleBy: { $lte: new Date() } },
+          ],
+        },
+        null,
+        {
+          limit: BATCH_SIZE,
+          sort: { removeRoleBy: 1 },
+        }
+      );
+
+      if (votesToRemove.length === 0) break;
+
+      // Get unique user IDs in this batch
+      const uniqueUserIds = votesToRemove.reduce(
+        (acc: string[], vote: IBotVote) => {
+          if (!acc.includes(vote.userId)) {
+            acc.push(vote.userId);
+          }
+          return acc;
+        },
+        [] as string[]
+      );
+
+      if (uniqueUserIds.length === 0) break;
+
+      // Remove roles with concurrency limit
+      const rolePromises = uniqueUserIds.map(
+        (userId) =>
+          rest
+            .delete(
+              Routes.guildMemberRole(
+                process.env.GUILD_ID!,
+                userId,
+                process.env.ROLE_VOTER!
+              )
+            )
+            .catch(() => {}) // Ignore errors
+      );
+
+      await Promise.allSettled(rolePromises);
+
+      // Delete processed votes
+      await BotVote.deleteMany({
+        userId: { $in: uniqueUserIds },
+      });
+
+      processedCount += uniqueUserIds.length;
+
+      // If we got fewer results than batch size, we're done
+      if (votesToRemove.length < BATCH_SIZE) break;
+    }
+
+    console.log(`Processed ${processedCount} votes`);
+  } catch (error) {
+    console.error("Error syncing votes:", error);
+    Sentry.captureException(error);
+  }
+}
