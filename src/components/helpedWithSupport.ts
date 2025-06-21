@@ -102,7 +102,8 @@ export default {
       if (eligibleMembers.length === 0) {
         await responseHandler(
           ctx,
-          "No members found in this thread. Please ensure the thread has members."
+          "No members found in this thread. Please ensure the thread has (valid) members.\n" +
+            "-# This means at least one member that is not you (the author) or a bot."
         );
         return;
       }
