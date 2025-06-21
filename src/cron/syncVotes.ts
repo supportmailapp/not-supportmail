@@ -75,9 +75,11 @@ export async function syncVotes() {
       if (votesToRemove.length < BATCH_SIZE) break;
     }
 
-    Sentry.logger.debug(`Processed votes`, {
-      processedCount,
-    });
+    if (processedCount > 0) {
+      Sentry.logger.debug(`Processed votes`, {
+        processedCount,
+      });
+    }
   } catch (error) {
     console.error("Error processing support posts:", error);
     Sentry.captureException(error, {

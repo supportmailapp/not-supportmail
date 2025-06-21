@@ -128,13 +128,12 @@ export async function processSupportPostsWithRetry(): Promise<void> {
       if (postsToClose.length < BATCH_SIZE) break;
     }
 
-    Sentry.logger.debug(
-      `Processed reminders and closures`,
-      {
+    if (reminderProcessedCount > 0 || closeProcessedCount > 0) {
+      Sentry.logger.debug(`Processed reminders and closures`, {
         reminderProcessedCount,
         closeProcessedCount,
-      }
-    );
+      });
+    }
   } catch (error) {
     console.error("Error processing support posts:", error);
     Sentry.captureException(error, {
