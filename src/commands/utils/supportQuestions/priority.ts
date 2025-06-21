@@ -7,7 +7,10 @@ import {
 import type { HydratedDocument } from "mongoose";
 import { type ISupportPost } from "../../../models/supportPost.js";
 import { PriorityOption, setPostPriority } from "../../../utils/main.js";
-import { ComponentsV2Flags } from "../../../utils/enums.js";
+import {
+  ComponentsV2Flags,
+  EphemeralComponentsV2Flags,
+} from "../../../utils/enums.js";
 import config from "../../../config.js";
 
 export const data = new SlashCommandSubcommandBuilder()
@@ -23,7 +26,7 @@ export async function handler(
   const priority = ctx.options.getString("priority", true) as PriorityLevel;
   if (channel.appliedTags.includes(config.priorityTags[priority])) {
     await ctx.reply({
-      flags: ComponentsV2Flags,
+      flags: EphemeralComponentsV2Flags,
       components: [
         new ContainerBuilder().addTextDisplayComponents((t) =>
           t.setContent(
