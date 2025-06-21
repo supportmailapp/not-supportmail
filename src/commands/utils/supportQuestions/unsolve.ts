@@ -13,7 +13,10 @@ import {
   ComponentsV2Flags,
   EphemeralComponentsV2Flags,
 } from "../../../utils/enums.js";
-import { getCommandMention } from "../../../utils/main.js";
+import {
+  filterExternalPostTags,
+  getCommandMention,
+} from "../../../utils/main.js";
 import config from "../../../config.js";
 import dayjs from "dayjs";
 
@@ -50,10 +53,9 @@ export async function handler(
 
   await ctx.deferReply();
 
-  const tags = channel.appliedTags;
   await channel.edit({
     appliedTags: [
-      ...tags.filter((tid) => !Object.values(config.tags).includes(tid)),
+      ...filterExternalPostTags(channel.appliedTags),
       config.tags.unanswered,
     ],
     autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,

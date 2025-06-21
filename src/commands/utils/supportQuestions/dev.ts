@@ -16,6 +16,7 @@ import {
 } from "../../../utils/enums.js";
 import {
   canUpdateSupportPost,
+  filterExternalPostTags,
   PriorityOption,
   setPostPriority,
 } from "../../../utils/main.js";
@@ -106,9 +107,7 @@ export async function handler(
 
   // Keep current priority tags, add the review tag
   const newTags = [
-    ...channel.appliedTags.filter(
-      (t) => !Object.values(config.priorityTags).includes(t)
-    ),
+    ...filterExternalPostTags(channel.appliedTags, "all"),
     config.tags.review,
   ];
   if (priority) {
