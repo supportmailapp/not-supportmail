@@ -221,7 +221,7 @@ export async function setPostPriority(
   priority: PriorityLevel,
   channel?: PublicThreadChannel
 ) {
-  const tagId = config.tags[`priority-${priority}`];
+  const tagId = config.priorityTags[priority];
   if (!tagId) {
     throw new Error(`Invalid priority level: ${priority} (HOW???)`);
   }
