@@ -6,8 +6,6 @@ import { BotVote } from "../models/botVote.js";
 
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
 
-Sentry.init({ dsn: process.env.SENTRY_DSN });
-
 export async function startVoteSyncCron() {
   schedule.scheduleJob("0 * * * *", syncVotes);
   Sentry.logger.info("Vote sync cron started");
