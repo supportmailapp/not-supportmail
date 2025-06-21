@@ -32,13 +32,13 @@ export async function handler(
   channel: PublicThreadChannel,
   post: HydratedDocument<ISupportPost>
 ): Promise<void> {
-  if (post.closedAt !== null) {
+  if (post.closedAt === null) {
     await ctx.reply({
       flags: EphemeralComponentsV2Flags,
       components: [
         new TextDisplayBuilder().setContent(
-          "### :x: This support question is already marked as solved.\n" +
-            `-# If you want to resolve it, use the ${getCommandMention(
+          "### :x: This support question is not marked as solved yet.\n" +
+            `-# If you want to resolve it, use the ${await getCommandMention(
               "question solve",
               ctx.client
             )} command.`
