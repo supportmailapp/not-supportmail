@@ -26,6 +26,7 @@ export interface ISupportPost {
   postId: string;
   remindedAt: Date | null;
   closedAt: Date | null;
+  priority?: PriorityLevel;
   ignoreFlags?: SupportPostIgnoreFlags;
   flags?: SupportPostFlags;
   lastActivity: Date | null;
@@ -63,6 +64,11 @@ const SupportPostSchema = new Schema<ISupportPost>(
     author: { type: String, required: true },
     closedAt: { type: Date, default: null },
     remindedAt: { type: Date, default: null },
+    priority: {
+      type: String,
+      enum: ["P0", "P1", "P2"],
+      required: false,
+    },
     ignoreFlags: { type: SupportPostIgnoreFlagsSchema, required: false },
     flags: { type: SupportPostFlags, required: false },
     users: { type: [String], default: [] },
