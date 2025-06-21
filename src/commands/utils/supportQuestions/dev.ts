@@ -92,7 +92,13 @@ export async function handler(
 
   const priority = ctx.options.getString("priority") as PriorityLevel;
 
-  const newTags = [config.tags.review];
+  // Keep current priority tags, add the review tag
+  const newTags = [
+    ...channel.appliedTags.filter(
+      (t) => !Object.values(config.priorityTags).includes(t)
+    ),
+    config.tags.review,
+  ];
   if (priority) {
     let priorityTag = await setPostPriority(post, priority);
     if (priorityTag) {
