@@ -71,7 +71,7 @@ export async function handler(
     t.setContent(
       `### ✅ Support Post has been marked as solved by <@${ctx.user.id}>, thanks everyone!` +
         (post.author !== ctx.user.id
-          ? `\n-# <${post.author}> You can commend the most helpful users below.`
+          ? `\n-# <@${post.author}> You can commend the most helpful users below.`
           : "")
     )
   );
