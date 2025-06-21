@@ -18,6 +18,8 @@ import { deployCommands } from "djs-command-helper";
 import mongoose from "mongoose";
 import { parseCustomId } from "./utils/main.js";
 import { betterstackClient, isBetterStackEnabled } from "./utils/incidents.js";
+import { startVoteSyncCron } from "./cron/syncVotes.js";
+import { startSupportPostSyncCron } from "./cron/supportQuestions.js";
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
@@ -290,6 +292,10 @@ process
 
     client.login(process.env.BOT_TOKEN);
     console.info("Bot started");
+
+    // Start cron jobs
+    await startVoteSyncCron();
+    await startSupportPostSyncCron();
 
     if (isBetterStackEnabled() && betterstackClient) {
       await betterstackClient.start();
