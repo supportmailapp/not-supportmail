@@ -24,8 +24,8 @@ importers:
         specifier: ^14.20.0
         version: 14.20.0
       djs-command-helper:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.2.2
+        version: 4.2.2
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
@@ -471,8 +471,8 @@ packages:
     resolution: {integrity: sha512-5fRTptK2vpuz+bTuAEUQLSo/3AgCSLHl6Mm9+/ofb+8cbbnjWllhtaqRBq7XcpzlBnfNEugKv8HvCwcOtIHpCg==}
     engines: {node: '>=18'}
 
-  djs-command-helper@4.2.1:
-    resolution: {integrity: sha512-/BEhUWzdGH2mUOJkrbJE3t9bW4bKgvVmdf/tkR/4jpcHAOGZfDdhPbntUu61zSq0AytJeqSCSMcYx8k4Xx27OA==}
+  djs-command-helper@4.2.2:
+    resolution: {integrity: sha512-y4HO+iK0b0BIf5qaFhZTqezMV0JhhLFOpa8hLQJi7B49CArxfbtYDcK7QIexg2qFLDxCGw5NdWqP6gf4wzIpxA==}
 
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
@@ -1264,7 +1264,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  djs-command-helper@4.2.1: {}
+  djs-command-helper@4.2.2: {}
 
   dotenv@16.5.0: {}
 
