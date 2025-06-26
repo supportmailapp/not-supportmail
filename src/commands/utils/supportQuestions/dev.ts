@@ -1,5 +1,6 @@
 import {
   ContainerBuilder,
+  SeparatorBuilder,
   SlashCommandSubcommandBuilder,
   TextDisplayBuilder,
   ThreadAutoArchiveDuration,
@@ -20,6 +21,7 @@ import {
   PriorityOption,
   setPostPriority,
 } from "../../../utils/main.js";
+import * as Sentry from "@sentry/node";
 
 export const data = new SlashCommandSubcommandBuilder()
   .setName("dev")
@@ -89,20 +91,6 @@ export async function handler(
     ),
   ];
 
-  if (ctx.options.getBoolean("ping")) {
-    if (!process.env.ROLE_DEVELOPER) {
-      console.warn(
-        "ROLE_DEVELOPER environment variable is not set. Cannot ping developers."
-      );
-    } else {
-      comps.push(
-        new TextDisplayBuilder().setContent(
-          `-# <@&${process.env.ROLE_DEVELOPER}>`
-        )
-      );
-    }
-  }
-
   const priority = ctx.options.getString("priority") as PriorityLevel;
 
   // Keep current priority tags, add the review tag
@@ -115,12 +103,33 @@ export async function handler(
     if (priorityTag && !newTags.includes(priorityTag)) {
       newTags.push(priorityTag);
     }
+    comps.push(
+      new TextDisplayBuilder().setContent(`-# Priority set to **${priority}**`)
+    );
   }
 
   await channel.edit({
     appliedTags: newTags,
     autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
   });
+
+  if (ctx.options.getBoolean("ping")) {
+    if (process.env.ROLE_DEVELOPER) {
+      comps.push(
+        new SeparatorBuilder({ divider: true, spacing: 1 }),
+        new TextDisplayBuilder().setContent(
+          `-# <@&${process.env.ROLE_DEVELOPER}>`
+        )
+      );
+    } else {
+      console.warn(
+        "ROLE_DEVELOPER environment variable is not set. Cannot ping developers."
+      );
+      Sentry.logger.warn(
+        "ROLE_DEVELOPER environment variable is not set. Cannot ping developers."
+      );
+    }
+  }
 
   await ctx.reply({
     flags: ComponentsV2Flags,
