@@ -21,15 +21,22 @@ export default async function adjustPostTags(message: Message) {
       return;
     }
 
-    if (message.author.id == supportPost.author) {
-      let updateQuery = { $set: { lastActivity: new Date() } } as any;
-      if (supportPost.remindedAt) {
-        updateQuery["$set"]["remindedAt"] = null;
-      }
-      await supportPost.updateOne(updateQuery);
+    // Always update lastActivity for any message in the thread
+    let updateQuery = { $set: { lastActivity: new Date() } } as any;
+    
+    // If this is the author responding after being reminded, clear the reminder
+    if (message.author.id === supportPost.author && supportPost.remindedAt) {
+      updateQuery["$set"]["remindedAt"] = null;
+    }
+
+    await supportPost.updateOne(updateQuery);
+
+    // If the message is from the author, we're done (no tag changes needed)
+    if (message.author.id === supportPost.author) {
       return;
     }
 
+    // Handle tag changes for non-author messages
     const tags = message.channel.appliedTags;
     if (tags.includes(process.env.TAG_UNANSWERED!)) {
       // Keep any other tags that are used for management and add the unsolved tag
