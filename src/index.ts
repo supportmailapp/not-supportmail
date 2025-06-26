@@ -18,7 +18,6 @@ import mongoose from "mongoose";
 import * as Sentry from "@sentry/node";
 import { parseCustomId } from "./utils/main.js";
 import { betterstackClient, isBetterStackEnabled } from "./utils/incidents.js";
-import { startVoteSyncCron } from "./cron/syncVotes.js";
 import { startSupportPostSyncCron } from "./cron/supportQuestions.js";
 
 import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
@@ -300,7 +299,6 @@ process
     Sentry.logger.info("Bot started");
 
     // Start cron jobs
-    await startVoteSyncCron();
     await startSupportPostSyncCron();
 
     if (isBetterStackEnabled() && betterstackClient) {

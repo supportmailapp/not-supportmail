@@ -4,7 +4,6 @@ import {
   TextDisplayBuilder,
 } from "discord.js";
 import adminSend from "./utils/adminSend.js";
-import { syncVotes } from "../cron/syncVotes.js";
 import { EphemeralComponentsV2Flags } from "../utils/enums.js";
 
 export default {
@@ -32,9 +31,6 @@ export default {
               }
             )
         )
-    )
-    .addSubcommand((sub) =>
-      sub.setName("sync-votes").setDescription("Sync votes and remove roles")
     ),
 
   async run(ctx: ChatInputCommandInteraction) {
@@ -44,17 +40,15 @@ export default {
       case "send":
         await adminSend(ctx);
         break;
-      case "sync-votes":
-        await syncVotes();
+      default:
         await ctx.reply({
           flags: EphemeralComponentsV2Flags,
           components: [
             new TextDisplayBuilder().setContent(
-              "Votes synced and roles removed successfully!"
+              "### :x: Invalid subcommand.\n" + "-# Please use `/admin send`."
             ),
           ],
         });
-        break;
     }
   },
 };
