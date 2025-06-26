@@ -339,6 +339,7 @@ async function createIncident(
   resourceStatus: ResourceStatus | null
 ) {
   const betterStackEnabled = isBetterStackEnabled();
+  let resolvedResourceId: string | null = affectedResource;
 
   if (betterStackEnabled) {
     if (!resourceStatus) {
@@ -379,7 +380,7 @@ async function createIncident(
         });
         return;
       }
-      affectedResource = resourceId;
+      resolvedResourceId = resourceId;
     }
   }
 
@@ -438,7 +439,7 @@ async function createIncident(
   if (
     betterStackEnabled &&
     betterstackClient &&
-    affectedResource &&
+    resolvedResourceId &&
     resourceStatus
   ) {
     if (parsedStatus !== IncidentStatus.Maintenance) {
@@ -453,7 +454,7 @@ async function createIncident(
           report_type: "manual",
           affected_resources: [
             {
-              status_page_resource_id: affectedResource,
+              status_page_resource_id: resolvedResourceId,
               status: resourceStatus,
             },
           ],
@@ -476,7 +477,7 @@ async function createIncident(
     aggregatedStatus: parsedStatus,
     betterstack: {
       id: reportId,
-      affectedServices: affectedResource ? [affectedResource] : [],
+      affectedServices: resolvedResourceId ? [resolvedResourceId] : [],
     },
   });
 
@@ -507,8 +508,8 @@ async function createIncident(
   )) as TextChannel;
 
   let affectedName = null;
-  if (isBetterStackEnabled() && affectedResource) {
-    affectedName = betterstackClient!.getResourceName(affectedResource);
+  if (isBetterStackEnabled() && resolvedResourceId) {
+    affectedName = betterstackClient!.getResourceName(resolvedResourceId);
   }
 
   // Send the incident to the status channel
