@@ -8,7 +8,7 @@
     "preinstall": "npx only-allow pnpm",
     "build": "npx tsc && pnpm sentry:sourcemaps",
     "dev": "npx tsc && node --env-file=.env.dev ./dist/index.js",
-    "start": "npx tsc && node --env-file=.env.production ./dist/index.js",
+    "start": "pnpm build && node --env-file=.env.production ./dist/index.js",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org lukez-dev --project not-supportmail ./dist && sentry-cli sourcemaps upload --org lukez-dev --project not-supportmail ./dist"
   },
   "author": "The-LukeZ",
