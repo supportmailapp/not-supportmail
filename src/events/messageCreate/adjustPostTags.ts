@@ -22,11 +22,14 @@ export default async function adjustPostTags(message: Message) {
     }
 
     // Always update lastActivity for any message in the thread
-    let updateQuery = { $set: { lastActivity: new Date() } } as any;
-    
+    const updateQuery = {} as any;
+
     // If this is the author responding after being reminded, clear the reminder
-    if (message.author.id === supportPost.author && supportPost.remindedAt) {
-      updateQuery["$set"]["remindedAt"] = null;
+    if (message.author.id === supportPost.author) {
+      updateQuery.$set = {
+        lastActivity: new Date(),
+        remindedAt: null,
+      };
     }
 
     await supportPost.updateOne(updateQuery);
