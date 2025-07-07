@@ -17,7 +17,7 @@
   "dependencies": {
     "@sapphire/snowflake": "^3.5.5",
     "@sentry/cli": "^2.46.0",
-    "@sentry/node": "^9.30.0",
+    "@sentry/node": "^9.35.0",
     "dayjs": "^1.11.13",
     "discord.js": "^14.20.0",
     "djs-command-helper": "^4.2.1",
