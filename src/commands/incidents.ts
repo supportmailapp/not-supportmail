@@ -34,6 +34,7 @@ import {
   statusIsEqual,
 } from "../utils/incidents.js";
 import { delay } from "../utils/main.js";
+import * as Sentry from "@sentry/node";
 
 /**
  *
@@ -209,7 +210,13 @@ export default {
           }));
           return await interaction.respond(choices);
         } catch (error) {
-          console.error("Failed to get BetterStack resources:", error);
+          Sentry.captureException(error, {
+            extra: {
+              interactionId: interaction.id,
+              userId: interaction.user.id,
+              message: "Error fetching BetterStack resources",
+            },
+          });
           return await interaction.respond([
             {
               name: "Error fetching resources",
@@ -432,9 +439,18 @@ async function createIncident(
   const title = modalCtx.fields.getTextInputValue("title");
   const message = modalCtx.fields.getTextInputValue("message");
 
-  // TODO: Add a way to input `ends_at` field for maintenance
   let reportId: string | null = null;
   let statusUpdateId: string | null = null;
+
+  // Debug logging
+  Sentry.logger.trace("BetterStack creation conditions:", {
+    betterStackEnabled,
+    hasBetterstackClient: !!betterstackClient,
+    resolvedResourceId,
+    resourceStatus,
+    parsedStatus,
+    isNotMaintenance: parsedStatus !== IncidentStatus.Maintenance,
+  });
 
   if (
     betterStackEnabled &&
@@ -443,15 +459,18 @@ async function createIncident(
     resourceStatus
   ) {
     if (parsedStatus !== IncidentStatus.Maintenance) {
+      Sentry.logger.debug(
+        "Attempting to create BetterStack report for non-maintenance incident..."
+      );
       try {
-        const report = await betterstackClient.createStatusReport({
+        const reportData = {
           title: title,
           message: formatBetterstackUpdateMessage(
             parsedStatus,
             message,
             parsedStatus === IncidentStatus.Resolved ? dayjs().toDate() : null
           ),
-          report_type: "manual",
+          report_type: "manual" as const,
           affected_resources: [
             {
               status_page_resource_id: resolvedResourceId,
@@ -459,14 +478,52 @@ async function createIncident(
             },
           ],
           published_at: dayjs().toISOString(),
-        });
+        };
+
+        Sentry.logger.debug(
+          "Creating BetterStack report with data:",
+          reportData
+        );
+
+        const report = await betterstackClient.createStatusReport(reportData);
         reportId = report.data.id;
         statusUpdateId = report.data.relationships.status_updates.data[0].id;
+
+        Sentry.logger.debug("Successfully created BetterStack report:", {
+          reportId,
+          statusUpdateId,
+        });
       } catch (error) {
-        console.error("Failed to create BetterStack report:", error);
-        // Continue without BetterStack integration
+        Sentry.captureException(error, {
+          extra: {
+            title,
+            message,
+            parsedStatus,
+            resolvedResourceId,
+            resourceStatus,
+          },
+        });
+        // Show user the error but continue with incident creation
+        await modalCtx.editReply({
+          components: [
+            new TextDisplayBuilder().setContent(
+              `⚠️ Warning: Failed to create BetterStack report: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }\n\nContinuing with incident creation...`
+            ),
+          ],
+        });
+        await delay(3000); // Give user time to read the warning
       }
+    } else {
+      Sentry.logger.debug(
+        "Skipping BetterStack report creation for maintenance incident"
+      );
     }
+  } else {
+    Sentry.logger.debug(
+      "Skipping BetterStack report creation due to missing conditions"
+    );
   }
 
   const incident = await Incident.create({

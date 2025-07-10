@@ -1,11 +1,19 @@
 import { HydratedDocument } from "mongoose";
-import * as BetterStack from "./betterstack.js";
 import { IIncident } from "../models/incident.js";
+import * as BetterStack from "./betterstack.js";
 import { IncidentStatus } from "./enums.js";
+import * as Sentry from "@sentry/node";
 
 export const betterstackClient = BetterStack.createBetterStackClient({
   apiKey: process.env.BTSTACK_API_KEY,
   statusPageId: process.env.BTSTACK_STATUSPAGE_ID,
+});
+
+// Add debugging for BetterStack client initialization
+Sentry.logger.trace("BetterStack client initialization:", {
+  hasApiKey: !!process.env.BTSTACK_API_KEY,
+  hasStatusPageId: !!process.env.BTSTACK_STATUSPAGE_ID,
+  clientCreated: !!betterstackClient,
 });
 
 const statuspageOrigin = process.env.STATUSPAGE_ORIGIN;
