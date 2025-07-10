@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/node";
 import dayjs from "dayjs";
-import { DiscordAPIError, REST, Routes } from "discord.js";
+import { APIGuildForumTag, DiscordAPIError, REST, Routes } from "discord.js";
 import config from "../config.js";
 import { SupportPost } from "../models/supportPost.js";
 import schedule from "node-schedule";
@@ -104,9 +104,13 @@ export async function processSupportPostsWithRetry(): Promise<void> {
       // Close posts with concurrency limit
       const closePromises = postsToClose.map((post) =>
         rest
-          .patch(Routes.channel(post.postId), {
+          .patch(Routes.guildChannels(post.postId), {
             body: {
-              available_tags: [config.tags.solved],
+              available_tags: [
+                {
+                  id: config.tags.solved,
+                },
+              ] as APIGuildForumTag[],
             },
           })
           .then(async () => {
@@ -116,6 +120,13 @@ export async function processSupportPostsWithRetry(): Promise<void> {
             );
           })
           .catch(async (e) => {
+            Sentry.captureException(e, {
+              level: "error",
+              extra: {
+                postId: post.postId,
+                questionId: post._id.toHexString(),
+              },
+            });
             if (e instanceof DiscordAPIError && e.status === 404) {
               await SupportPost.deleteOne({ postId: post.postId });
             }
