@@ -82,6 +82,20 @@ async function handleUserJoin(newState: VoiceState) {
 
   if (!tempChannel) return; // Only act on managed temp channels.
 
+  const tempChannelCount = await TempChannel.countDocuments({
+    guildId: newState.guild.id,
+    category: tempChannel.category._id,
+  });
+
+  // Check against the categories' max channel limit.
+  if (
+    tempChannel.category.maxChannels &&
+    tempChannelCount >= tempChannel.category.maxChannels
+  ) {
+    // If the category has a max limit and we reached it, do not create new channels.
+    return;
+  }
+
   // Count empty channels in the category.
   // If there are none, we need to create a new empty channel for future users.
   const emptyChannelsInCategory = await TempChannel.countDocuments({
