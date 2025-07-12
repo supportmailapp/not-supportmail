@@ -438,7 +438,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
       { new: true }
     );
 
-    if (category) {
+    if (category && (setParams.parentId || setParams.namingScheme)) {
       await deleteTempChannels(ctx.guild, category.id);
       const result = await createAndSaveTempChannel(
         ctx.guild,
@@ -601,26 +601,106 @@ async function listCategoryChannels(
 
 async function debugCategories(ctx: CachedCommandInteraction): Promise<void> {
   const categoryValue = ctx.options.getString("category", false);
-  if (categoryValue) {
-    await ctx.reply(
-      ErrorResponse("Debugging a specific category is not implemented yet.")
+
+  await ctx.deferReply({ flags: EphemeralFlags });
+
+  if (categoryValue && categoryValue !== "%none%") {
+    await debugSingleCategory(ctx, categoryValue);
+    return;
+  }
+
+  await debugAllCategories(ctx);
+}
+
+async function debugSingleCategory(
+  ctx: CachedCommandInteraction,
+  categoryId: string
+): Promise<void> {
+  const category = await TempChannelCategory.findById(categoryId);
+  if (!category) {
+    await ctx.editReply(
+      ErrorResponse("The specified category does not exist or is invalid.")
     );
     return;
   }
 
-  // Placeholder for debugging logic
-  await ctx.reply({
-    flags: EphemeralComponentsV2Flags,
-    components: [
-      new ContainerBuilder().addTextDisplayComponents((t) =>
-        t.setContent("Debugging temporary voice channels...")
-      ),
-    ],
+  const channels = await TempChannel.find({
+    guildId: ctx.guildId,
+    category: category._id,
   });
 
-  const categories = await TempChannelCategory.find({
-    guildId: ctx.guildId,
+  const errors: string[] = [];
+  const results: string[] = [];
+
+  // Fetch all channels at once to avoid rate limiting
+  const channelPromises = channels.map(async (channel) => {
+    try {
+      const dcChannel = await ctx.guild.channels.fetch(channel.channelId);
+      if (!dcChannel) {
+        return { channel, error: "Channel does not exist" };
+      }
+      if (dcChannel.type !== ChannelType.GuildVoice) {
+        return {
+          channel,
+          error: "Not a voice channel (HOW??? This should not happen)",
+        };
+      }
+      if (dcChannel.parentId !== category.parentId) {
+        return {
+          channel,
+          error: `Not in expected category ${category.parentId}`,
+        };
+      }
+      return { channel, success: true };
+    } catch (error) {
+      return { channel, error: `Error fetching: ${error}` };
+    }
   });
+
+  const channelResults = await Promise.all(channelPromises);
+
+  channelResults.forEach(({ channel, error, success }) => {
+    if (error) {
+      errors.push(`❌ | <#${channel.channelId}> (${channel.id}): ${error}`);
+    } else if (success) {
+      results.push(`✅ | <#${channel.channelId}> (${channel.id})`);
+    }
+  });
+
+  const container = new ContainerBuilder()
+    .addTextDisplayComponents(
+      (t) => t.setContent(`### Debug: \`${category.name}\``),
+      (t) => t.setContent(`**Channels found:** ${channels.length}`),
+      ...(results.length > 0
+        ? [
+            new TextDisplayBuilder().setContent(
+              `**Valid channels:**\n${results.join("\n")}`
+            ),
+          ]
+        : []),
+      ...(errors.length > 0
+        ? [
+            new TextDisplayBuilder().setContent(
+              `**Issues found:**\n${errors.join("\n")}`
+            ),
+          ]
+        : [])
+    )
+    .addSeparatorComponents((s) => s)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("✅ Debugging complete")
+    );
+
+  await ctx.editReply({
+    flags: EphemeralComponentsV2Flags,
+    components: [container],
+  });
+}
+
+async function debugAllCategories(
+  ctx: CachedCommandInteraction
+): Promise<void> {
+  const categories = await TempChannelCategory.find({ guildId: ctx.guildId });
 
   if (categories.length === 0) {
     await ctx.editReply(
@@ -629,7 +709,8 @@ async function debugCategories(ctx: CachedCommandInteraction): Promise<void> {
     return;
   }
 
-  const errors: string[] = [];
+  const allErrors: string[] = [];
+  const categoryResults: string[] = [];
 
   for (const category of categories) {
     const channels = await TempChannel.find({
@@ -637,62 +718,69 @@ async function debugCategories(ctx: CachedCommandInteraction): Promise<void> {
       category: category._id,
     });
 
-    const currentContainer = new ContainerBuilder().addTextDisplayComponents(
-      (t) =>
-        t.setContent(
-          `- Category: \`${category.name}\` (${category.id})\n` +
-            `- Channels: ${channels.length}`
-        )
+    let validChannels = 0;
+    let invalidChannels = 0;
+
+    // Check channels in batches to avoid overwhelming the API
+    await Promise.allSettled(
+      channels.map(async (channel) => {
+        try {
+          const dcChannel = await ctx.guild.channels.fetch(channel.channelId);
+          if (
+            !dcChannel ||
+            dcChannel.type !== ChannelType.GuildVoice ||
+            dcChannel.parentId !== category.parentId
+          ) {
+            invalidChannels++;
+            allErrors.push(
+              `❌ | \`${category.name}\`: <#${channel.channelId}>`
+            );
+          } else {
+            validChannels++;
+          }
+        } catch {
+          invalidChannels++;
+          allErrors.push(
+            `❌ | \`${category.name}\`: <#${channel.channelId}> (fetch error)`
+          );
+        } finally {
+          await delay(600); // Delay to avoid hitting rate limits
+        }
+      })
     );
 
-    await ctx.editReply({
-      flags: EphemeralComponentsV2Flags,
-      components: [currentContainer],
-    });
-
-    for (const channel of channels) {
-      await ctx.editReply({
-        flags: EphemeralComponentsV2Flags,
-        components: [
-          currentContainer.addTextDisplayComponents((t) =>
-            t.setContent(`- Channel: <#${channel.channelId}> (${channel.id})`)
-          ),
-        ],
-      });
-
-      try {
-        const dcChannel = await ctx.guild.channels.fetch(channel.channelId);
-        if (!dcChannel) {
-          errors.push(
-            `Channel <#${channel.channelId}> (${channel.id}) does not exist.`
-          );
-        } else if (dcChannel.type !== ChannelType.GuildVoice) {
-          errors.push(
-            `Channel <#${channel.channelId}> (${channel.id}) is not a voice channel. _(HOW??? This should not happen)_`
-          );
-        } else if (dcChannel.parentId !== category.id) {
-          errors.push(
-            `Channel <#${channel.channelId}> (${channel.id}) is not in the expected category <#${category.id}>.`
-          );
-        } else {
-          currentContainer.addTextDisplayComponents((t) =>
-            t.setContent(`✅ | <#${channel.channelId}> (${channel.id}).`)
-          );
-        }
-      } catch (error) {
-        errors.push(
-          `Error fetching channel <#${channel.channelId}> (${channel.id}): ${error}`
-        );
-      }
-
-      await ctx.editReply({
-        flags: EphemeralComponentsV2Flags,
-        components: [currentContainer],
-      });
-
-      await delay(600);
-    }
+    categoryResults.push(
+      `**${category.name}**: ${validChannels} ✅${
+        invalidChannels > 0 ? ` | ${invalidChannels} ❌` : ""
+      }`
+    );
   }
+
+  const container = new ContainerBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("### Debug Summary"),
+      new TextDisplayBuilder().setContent(categoryResults.join("\n")),
+      ...(allErrors.length > 0
+        ? [
+            new TextDisplayBuilder().setContent(
+              `**Issues found:**\n${allErrors.slice(0, 20).join("\n")}${
+                allErrors.length > 20
+                  ? `\n... and ${allErrors.length - 20} more`
+                  : ""
+              }`
+            ),
+          ]
+        : [])
+    )
+    .addSeparatorComponents((s) => s)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent("✅ Debugging complete")
+    );
+
+  await ctx.editReply({
+    flags: EphemeralComponentsV2Flags,
+    components: [container],
+  });
 }
 
 export default {
