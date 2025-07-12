@@ -22,21 +22,30 @@ async function handleUserLeave(oldState: VoiceState) {
   // If channel is now empty, check if we should delete it
   if (newUserCount <= 0) {
     // Count how many empty channels exist in this category
-    const emptyChannelsInCategory = await TempChannel.countDocuments({
-      guildId: oldState.guild.id,
-      category: tempChannel.category._id,
-      userCount: 0,
-    });
+    const emptyChannelsInCategory = await TempChannel.find(
+      {
+        guildId: oldState.guild.id,
+        category: tempChannel.category._id,
+        userCount: 0,
+      },
+      null,
+      { sort: { number: -1 } }
+    );
 
-    // If there are multiple empty channels, delete this one
-    if (emptyChannelsInCategory > 1) {
+    // Only delete if there are more than 1 empty channel (keep at least 1 empty)
+    if (emptyChannelsInCategory.length > 1) {
+      const toDeleteChannelId = emptyChannelsInCategory[0].channelId; // Get the most recently created empty channel
       try {
-        await oldState.channel.delete(
+        console.log(`tChannel to delete: ${toDeleteChannelId}`);
+        await oldState.guild.channels.delete(
+          toDeleteChannelId, // Delete the most recently created empty channel
           "Temporary channel cleanup - multiple empty channels"
         );
-        await tempChannel.deleteOne();
+        await TempChannel.deleteOne({
+          channelId: toDeleteChannelId,
+        });
         Sentry.logger.debug(
-          `Deleted empty temporary channel: ${oldState.channel.name}`
+          `Deleted empty temporary channel: ${oldState.channel?.name}`
         );
       } catch (error) {
         Sentry.captureException(error);
