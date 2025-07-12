@@ -22,6 +22,8 @@ import { parseCustomId, safeParseInt } from "../utils/main.js";
 import {
   buildCategoryInfo,
   buildCustomId,
+  createAndSaveTempChannel,
+  deleteTempChannels,
   ErrorResponse,
   SuccessContainer,
   type EditAction,
@@ -190,6 +192,20 @@ async function handleEditModalSubmit(
 
   await category.updateOne(updateQuery);
 
+  if (action === "namingScheme") {
+    await deleteTempChannels(ctx.guild!, category.id);
+    const result = await createAndSaveTempChannel(
+      ctx.guild!,
+      category,
+      category.parentId || null,
+      false
+    );
+    if (!result.success) {
+      await ctx.editReply(ErrorResponse(result.error));
+      return;
+    }
+  }
+
   await ctx.editReply({
     flags: EphemeralComponentsV2Flags,
     components: [buildCategoryInfo(category, true, Colors.Blue, true)],
@@ -248,6 +264,18 @@ async function changeCategory(
     return;
   }
 
+  await deleteTempChannels(btnCtx.guild!, category.id);
+  const result = await createAndSaveTempChannel(
+    btnCtx.guild!,
+    category,
+    category.parentId || null,
+    false
+  );
+  if (!result.success) {
+    await btnCtx.update(ErrorResponse(result.error));
+    return;
+  }
+
   await channelCtx.update({
     flags: EphemeralComponentsV2Flags,
     components: [
@@ -256,6 +284,7 @@ async function changeCategory(
       ),
     ],
   });
+
   await btnCtx.webhook.editMessage("@original", {
     flags: EphemeralComponentsV2Flags,
     components: [buildCategoryInfo(category, true, Colors.Blue, true)],

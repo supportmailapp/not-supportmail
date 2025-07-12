@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import {
   APIMessageTopLevelComponent,
   ChannelType,
@@ -12,7 +13,6 @@ import {
 } from "discord.js";
 import { HydratedDocument } from "mongoose";
 import { ITempChannelCategory, TempChannel } from "../models/tempChannel.js";
-import * as Sentry from "@sentry/node";
 import { EphemeralComponentsV2Flags } from "./enums.js";
 
 type LastChannelDataSuccess = {
@@ -114,14 +114,19 @@ export async function createAndSaveTempChannel(
   parentId: string | null = null,
   withOverwrites: boolean = false
 ): Promise<CreateAndSaveTempChannelSuccess | CreateAndSaveTempChannelError> {
-  let overwrites = null;
+  let lastChannelData: LastChannelDataSuccess | LastChannelDataError | null =
+    null;
   if (withOverwrites) {
-    overwrites = await fetchLastChannelData(guild);
-    if (!overwrites.success) {
-      Sentry.captureMessage(overwrites.error);
+    lastChannelData = await fetchLastChannelData(guild);
+    console.debug(
+      "Last channel position",
+      lastChannelData.success ? lastChannelData.position : "N/A"
+    );
+    if (!lastChannelData.success) {
+      Sentry.captureMessage(lastChannelData.error);
       return {
         success: false,
-        error: "Failed to fetch last channel data: " + overwrites.error,
+        error: "Failed to fetch last channel data: " + lastChannelData.error,
       };
     }
   }
@@ -137,8 +142,12 @@ export async function createAndSaveTempChannel(
       name: channelName,
       type: ChannelType.GuildVoice,
       parent: parentId,
-      position: overwrites?.position ?? undefined,
-      permissionOverwrites: overwrites?.overwrites ?? undefined,
+      position: lastChannelData?.success
+        ? lastChannelData.position + 1
+        : undefined,
+      permissionOverwrites: lastChannelData?.success
+        ? lastChannelData.overwrites
+        : undefined,
       userLimit: tCategory.maxUsersPerChannel || undefined, // '||' also covers the case where maxUsersPerChannel is 0 which means no limit
     })
     .catch((err) => {
@@ -270,7 +279,9 @@ export function buildCategoryInfo(
     }`,
     namingScheme: `- **Channel Naming Scheme:** \`${cat.namingScheme}\``,
     maxUsersPerChannel: `- **Max Users Per Channel:** ${
-      "`" + cat.maxUsersPerChannel + "`" || "No Limit"
+      Boolean(cat.maxUsersPerChannel)
+        ? "`" + cat.maxUsersPerChannel + "`"
+        : "No Limit"
     }`,
     maxTempChannels: `- **Max Temp Channels:** \`${cat.maxChannels}\``,
   };
@@ -329,4 +340,35 @@ export function buildCategoryInfo(
   } else {
     return textDisplays;
   }
+}
+/**
+ * Deletes temporary channels within a specified category in a guild and removes their records from the database.
+ *
+ * @param guild - The Discord guild where the temporary channels are located.
+ * @param categoryId - The ID of the category containing the temporary channels to be deleted.
+ * @returns A promise that resolves to the number of Discord Channels successfully deleted.
+ */
+export async function deleteTempChannels(
+  guild: Guild,
+  categoryId: string
+): Promise<number> {
+  const tempChannels = await TempChannel.find({
+    guildId: guild.id,
+    category: categoryId,
+  });
+
+  let deletedCount = 0;
+  for (const tChannel of tempChannels) {
+    await guild.channels
+      .delete(tChannel.channelId)
+      .then(() => deletedCount++)
+      .catch(() => {});
+  }
+
+  await TempChannel.deleteMany({
+    guildId: guild.id,
+    category: categoryId,
+  });
+
+  return deletedCount;
 }

@@ -4,7 +4,6 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   Colors,
-  Guild,
   SectionBuilder,
   SlashCommandBuilder,
   SlashCommandChannelOption,
@@ -21,6 +20,7 @@ import { EphemeralComponentsV2Flags, EphemeralFlags } from "../utils/enums.js";
 import {
   buildCategoryInfo,
   createAndSaveTempChannel,
+  deleteTempChannels,
   ErrorResponse,
   SuccessContainer,
 } from "../utils/tempChannels.js";
@@ -298,38 +298,6 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
       container,
     ],
   });
-}
-
-/**
- * Deletes temporary channels within a specified category in a guild and removes their records from the database.
- *
- * @param guild - The Discord guild where the temporary channels are located.
- * @param categoryId - The ID of the category containing the temporary channels to be deleted.
- * @returns A promise that resolves to the number of Discord Channels successfully deleted.
- */
-async function deleteTempChannels(
-  guild: Guild,
-  categoryId: string
-): Promise<number> {
-  const tempChannels = await TempChannel.find({
-    guildId: guild.id,
-    category: categoryId,
-  });
-
-  let deletedCount = 0;
-  for (const tChannel of tempChannels) {
-    await guild.channels
-      .delete(tChannel.channelId)
-      .then(() => deletedCount++)
-      .catch(() => {});
-  }
-
-  await TempChannel.deleteMany({
-    guildId: guild.id,
-    category: categoryId,
-  });
-
-  return deletedCount;
 }
 
 /**
