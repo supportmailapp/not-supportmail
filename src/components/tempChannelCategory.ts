@@ -183,7 +183,7 @@ async function handleEditModalSubmit(
       }
       break;
     case "maxTempChannels":
-      updateQuery["maxTempChannels"] = safeParseInt(value, 100, 1, 100);
+      updateQuery["maxChannels"] = safeParseInt(value, 100, 1, 100);
       break;
     default:
       await ctx.editReply(ErrorResponse("Invalid action."));
