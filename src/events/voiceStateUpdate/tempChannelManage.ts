@@ -11,7 +11,7 @@ async function updateUserCounts(
   ...voices: VoiceState["channel"][]
 ) {
   for (const voice of voices) {
-    if (!voice) continue;
+    if (!voice || !voice?.members) continue;
 
     await TempChannel.updateOne(
       {
