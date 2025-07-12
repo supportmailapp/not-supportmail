@@ -295,3 +295,45 @@ export function filterExternalPostTags(
     return appliedTags.filter((tag) => !InternalTags.includes(tag));
   }
 }
+
+/**
+ * Attempts to parse a string as an integer with validation and clamping.
+ *
+ * @param str - The string to parse as an integer
+ * @param _defaultValue - The value to return if parsing fails or validation fails
+ * @param max - The maximum allowed value (inclusive)
+ * @param min - The minimum allowed value (inclusive), defaults to 1
+ * @returns The parsed integer clamped to the range [min, max], or the default value if parsing fails
+ *
+ * @example
+ * ```typescript
+ * tryToParseInt("42", 0, 100, 1); // Returns 42
+ * tryToParseInt("150", 0, 100, 1); // Returns 100 (clamped to max)
+ * tryToParseInt("abc", 0, 100, 1); // Returns 0 (default value)
+ * tryToParseInt("0", 10, 100, 1); // Returns 1 (clamped to min)
+ * tryToParseInt("xyz", 2, 100, 1); // Returns 2 (default value, whitespace input)
+ * ```
+ */
+export function safeParseInt(
+  str: unknown,
+  _defaultValue: number,
+  min = 1,
+  max?: number
+): number {
+  try {
+    if (typeof str !== "string") {
+      return _defaultValue; // Return default value if input is not a string
+    }
+    const num = parseInt(str, 10); // Always specify radix
+
+    // Check if parsing failed or string wasn't purely numeric
+    if (isNaN(num) || !str.trim() || !/^\d+$/.test(str.trim())) {
+      return _defaultValue;
+    }
+
+    // Clamp the value to the range [min, max] (if max is provided)
+    return Math.max(min, max !== undefined ? Math.min(max, num) : num);
+  } catch {
+    return _defaultValue;
+  }
+}
