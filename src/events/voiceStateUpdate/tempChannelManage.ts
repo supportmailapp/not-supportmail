@@ -4,6 +4,8 @@ import { HydratedDocument } from "mongoose";
 import { createAndSaveTempChannel } from "../../utils/tempChannels.js";
 import * as Sentry from "@sentry/node";
 
+// Update user counts for channels after a voice state change.
+// This ensures our DB reflects the current member count for temp channels.
 async function updateUserCounts(
   guildId: string,
   ...voices: VoiceState["channel"][]
@@ -25,19 +27,19 @@ async function updateUserCounts(
 
 async function handleUserLeave(oldState: VoiceState) {
   if (!oldState.channel || !oldState.guild) return;
-  // Check if the channel is a temporary channel
+
   const tempChannel = await TempChannel.findOne({
     channelId: oldState.channel.id,
     guildId: oldState.guild.id,
   }).populate<{ category: HydratedDocument<ITempChannelCategory> }>("category");
 
-  if (!tempChannel) return;
+  if (!tempChannel) return; // Only act on managed temp channels.
 
   const newUserCount = tempChannel.userCount;
 
-  // If channel is now empty, check if we should delete it
+  // If the channel is now empty, check if there are multiple empty channels in the same category.
   if (newUserCount <= 0) {
-    // Count how many empty channels exist in this category
+    // Find all empty channels in the category, sorted by number descending.
     const emptyChannelsInCategory = await TempChannel.find(
       {
         guildId: oldState.guild.id,
@@ -48,12 +50,13 @@ async function handleUserLeave(oldState: VoiceState) {
       { sort: { number: -1 } }
     );
 
-    // Only delete if there are more than 1 empty channel (keep at least 1 empty)
+    // Only delete if there is more than one empty channel.
+    // This prevents deleting the last available empty channel, which is needed for new users.
     if (emptyChannelsInCategory.length > 1) {
-      const toDeleteChannelId = emptyChannelsInCategory[0].channelId; // Get the most recently created empty channel
+      const toDeleteChannelId = emptyChannelsInCategory[0].channelId;
       try {
         await oldState.guild.channels.delete(
-          toDeleteChannelId, // Delete the most recently created empty channel
+          toDeleteChannelId,
           "Temporary channel cleanup - multiple empty channels"
         );
         await TempChannel.deleteOne({
@@ -72,23 +75,23 @@ async function handleUserLeave(oldState: VoiceState) {
 async function handleUserJoin(newState: VoiceState) {
   if (!newState.channel || !newState.guild) return;
 
-  // Check if the channel is a temporary channel
   const tempChannel = await TempChannel.findOne({
     channelId: newState.channel.id,
     guildId: newState.guild.id,
   }).populate<{ category: HydratedDocument<ITempChannelCategory> }>("category");
 
-  if (!tempChannel) return;
+  if (!tempChannel) return; // Only act on managed temp channels.
 
-  // Check if we need to create a new empty channel
+  // Count empty channels in the category.
+  // If there are none, we need to create a new empty channel for future users.
   const emptyChannelsInCategory = await TempChannel.countDocuments({
     guildId: newState.guild.id,
     category: tempChannel.category._id,
     userCount: 0,
   });
 
-  // If there are no empty channels in this category, create a new one
   if (emptyChannelsInCategory === 0) {
+    // Always keep at least one empty channel available for new users.
     await createAndSaveTempChannel(
       newState.guild,
       tempChannel.category,
@@ -98,6 +101,8 @@ async function handleUserJoin(newState: VoiceState) {
   }
 }
 
+// Main event handler for voice state updates.
+// Handles both user joins and leaves, and updates user counts accordingly.
 export default async function (oldState: VoiceState, newState: VoiceState) {
   try {
     await updateUserCounts(
@@ -105,7 +110,7 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
       oldState.channel,
       newState.channel
     );
-    // Check if user left a channel (was in a channel and either left completely or moved to a different channel)
+    // User left a channel if they were in one and now are not, or moved to a different channel.
     if (
       oldState.channel &&
       (!newState.channel || oldState.channel.id !== newState.channel.id)
@@ -113,7 +118,7 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
       await handleUserLeave(oldState);
     }
 
-    // Check if user joined a channel (is now in a channel and either joined from nothing or moved from a different channel)
+    // User joined a channel if they are now in one and either came from nothing or moved from a different channel.
     if (
       newState.channel &&
       (!oldState.channel || oldState.channel.id !== newState.channel.id)
@@ -121,6 +126,7 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
       await handleUserJoin(newState);
     }
   } catch (error) {
+    // Always capture unexpected errors for monitoring.
     Sentry.captureException(error);
   }
 }
