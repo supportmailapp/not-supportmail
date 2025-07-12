@@ -158,6 +158,7 @@ export async function createAndSaveTempChannel(
     channelId: channel.id,
     category: tCategory._id,
     userCount: 0,
+    number: nextChannelNumber,
   });
 
   return {
