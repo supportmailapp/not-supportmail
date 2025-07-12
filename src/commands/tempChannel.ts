@@ -4,6 +4,7 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   Colors,
+  ContainerBuilder,
   SectionBuilder,
   SlashCommandBuilder,
   SlashCommandChannelOption,
@@ -24,6 +25,8 @@ import {
   ErrorResponse,
   SuccessContainer,
 } from "../utils/tempChannels.js";
+import type { HydratedDocument } from "mongoose";
+import { delay } from "../utils/main.js";
 
 type CachedCommandInteraction = ChatInputCommandInteraction<"cached">;
 
@@ -109,7 +112,7 @@ const data = new SlashCommandBuilder()
   .addSubcommand((sub) =>
     sub
       .setName("list")
-      .setDescription("List all temporary voice categories")
+      .setDescription("List all temporary voice categories with their channels")
       .addStringOption(
         categoryNameOption(
           "If provided, lists all channels for this category instead",
@@ -120,7 +123,9 @@ const data = new SlashCommandBuilder()
   .addSubcommand((sub) =>
     sub
       .setName("info")
-      .setDescription("Get information about a temporary voice category")
+      .setDescription(
+        "Get information about the channels of a temp voice category"
+      )
       .addStringOption(
         categoryNameOption("The category to get information about")
       )
@@ -142,6 +147,14 @@ const data = new SlashCommandBuilder()
       .addIntegerOption(maxChannelsOption(false))
       .addIntegerOption(maxMembersOption(false))
       .addChannelOption(parentCategoryOption())
+  )
+  .addSubcommand((sub) =>
+    sub
+      .setName("debug")
+      .setDescription("Debug the temporary voice channel system")
+      .addStringOption(
+        categoryNameOption("The category to debug | Default: None", false)
+      )
   );
 
 async function run(ctx: CachedCommandInteraction) {
@@ -163,8 +176,8 @@ async function run(ctx: CachedCommandInteraction) {
     case "info":
       await listCategoryChannels(ctx);
       break;
-    case "rename":
-      await listCategories(ctx);
+    case "debug":
+      await debugCategories(ctx);
       break;
     default:
       await ctx.reply({
@@ -283,7 +296,7 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
     return;
   }
 
-  const container = buildCategoryInfo(newCategory, true, Colors.Green, true);
+  const container = buildCategoryInfo(newCategory, true, Colors.Green);
 
   await ctx.editReply({
     flags: EphemeralComponentsV2Flags,
@@ -457,7 +470,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
           )}\`\`\``
         )
       ),
-      buildCategoryInfo(category, true, Colors.Green, true),
+      buildCategoryInfo(category, true, Colors.Green),
     ],
   });
 }
@@ -488,7 +501,7 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
     return;
   }
 
-  const channelCounts: { id: string; count: number }[] =
+  const channelCounts: HydratedDocument<{ count: number }>[] =
     await TempChannel.aggregate([
       {
         $match: {
@@ -503,9 +516,11 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
       },
     ]);
 
+  console.log(`Channel counts: ${typeof channelCounts[0]._id}`);
+
   const channelCountMap = new Map<string, number>();
   channelCounts.forEach((item) => {
-    channelCountMap.set(item.id, item.count);
+    channelCountMap.set(item._id.toHexString(), item.count);
   });
 
   const categoryList = categories.map((cat) => {
@@ -576,12 +591,108 @@ async function listCategoryChannels(
     flags: EphemeralComponentsV2Flags,
     components: [
       SuccessContainer().addTextDisplayComponents(
-        (t) => t.setContent(`### \`${category.name}\`:`),
+        (t) => t.setContent(`### \`${category.name}\``),
         (t) => t.setContent(channelList)
       ),
     ],
   });
   return;
+}
+
+async function debugCategories(ctx: CachedCommandInteraction): Promise<void> {
+  const categoryValue = ctx.options.getString("category", false);
+  if (categoryValue) {
+    await ctx.reply(
+      ErrorResponse("Debugging a specific category is not implemented yet.")
+    );
+    return;
+  }
+
+  // Placeholder for debugging logic
+  await ctx.reply({
+    flags: EphemeralComponentsV2Flags,
+    components: [
+      new ContainerBuilder().addTextDisplayComponents((t) =>
+        t.setContent("Debugging temporary voice channels...")
+      ),
+    ],
+  });
+
+  const categories = await TempChannelCategory.find({
+    guildId: ctx.guildId,
+  });
+
+  if (categories.length === 0) {
+    await ctx.editReply(
+      ErrorResponse("No temporary voice categories found for debugging.")
+    );
+    return;
+  }
+
+  const errors: string[] = [];
+
+  for (const category of categories) {
+    const channels = await TempChannel.find({
+      guildId: ctx.guildId,
+      category: category._id,
+    });
+
+    const currentContainer = new ContainerBuilder().addTextDisplayComponents(
+      (t) =>
+        t.setContent(
+          `- Category: \`${category.name}\` (${category.id})\n` +
+            `- Channels: ${channels.length}`
+        )
+    );
+
+    await ctx.editReply({
+      flags: EphemeralComponentsV2Flags,
+      components: [currentContainer],
+    });
+
+    for (const channel of channels) {
+      await ctx.editReply({
+        flags: EphemeralComponentsV2Flags,
+        components: [
+          currentContainer.addTextDisplayComponents((t) =>
+            t.setContent(`- Channel: <#${channel.channelId}> (${channel.id})`)
+          ),
+        ],
+      });
+
+      try {
+        const dcChannel = await ctx.guild.channels.fetch(channel.channelId);
+        if (!dcChannel) {
+          errors.push(
+            `Channel <#${channel.channelId}> (${channel.id}) does not exist.`
+          );
+        } else if (dcChannel.type !== ChannelType.GuildVoice) {
+          errors.push(
+            `Channel <#${channel.channelId}> (${channel.id}) is not a voice channel. _(HOW??? This should not happen)_`
+          );
+        } else if (dcChannel.parentId !== category.id) {
+          errors.push(
+            `Channel <#${channel.channelId}> (${channel.id}) is not in the expected category <#${category.id}>.`
+          );
+        } else {
+          currentContainer.addTextDisplayComponents((t) =>
+            t.setContent(`✅ | <#${channel.channelId}> (${channel.id}).`)
+          );
+        }
+      } catch (error) {
+        errors.push(
+          `Error fetching channel <#${channel.channelId}> (${channel.id}): ${error}`
+        );
+      }
+
+      await ctx.editReply({
+        flags: EphemeralComponentsV2Flags,
+        components: [currentContainer],
+      });
+
+      await delay(600);
+    }
+  }
 }
 
 export default {
