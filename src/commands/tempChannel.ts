@@ -42,6 +42,7 @@ const parentCategoryOption = () =>
     .setDescription(
       "The parent category for the temporary channel | Default: None (Root of the guild)"
     )
+    .addChannelTypes(ChannelType.GuildCategory)
     .setRequired(false);
 
 const maxChannelsOption = (required = false) =>
@@ -126,18 +127,18 @@ const data = new SlashCommandBuilder()
   )
   .addSubcommand((sub) =>
     sub
-      .setName("rename")
-      .setDescription("Rename a temporary voice category")
-      .addStringOption(categoryNameOption("The category to rename", true))
+      .setName("edit")
+      .setDescription("Edit a temporary voice category")
+      .addStringOption(categoryNameOption("The category to edit", true))
       .addStringOption((op) =>
         op
           .setName("name")
           .setDescription("The name of the temporary voice category")
           .setMinLength(3)
           .setMaxLength(100)
-          .setRequired(true)
+          .setRequired(false)
       )
-      .addStringOption(namingOption(true))
+      .addStringOption(namingOption(false))
       .addIntegerOption(maxChannelsOption(false))
       .addIntegerOption(maxMembersOption(false))
       .addChannelOption(parentCategoryOption())
@@ -388,8 +389,9 @@ async function deleteCategory(ctx: CachedCommandInteraction): Promise<void> {
  * 1. Validates that a valid category ID is provided (not "%none%")
  * 2. Checks if the specified category exists in the database
  * 3. Only updates fields that have defined values to avoid overwriting with undefined
- * 4. Responds with success message showing updated parameters and category information
- * 5. Uses ephemeral replies to keep responses private to the command user
+ * 4. Remove all current channels from the category and create a new one with the updated parameters
+ * 5. Responds with success message showing updated parameters and category information
+ * 6. Uses ephemeral replies to keep responses private to the command user
  *
  * Will send error response if category ID is invalid, category doesn't exist, or update fails
  */
@@ -455,6 +457,18 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
 
   if (!category) {
     await ctx.editReply(ErrorResponse("Failed to update category."));
+    return;
+  }
+
+  await deleteTempChannels(ctx.guild, category.id);
+  const result = await createAndSaveTempChannel(
+    ctx.guild,
+    category,
+    options.parentId || null,
+    false
+  );
+  if (!result.success) {
+    await ctx.editReply(ErrorResponse(result.error));
     return;
   }
 
