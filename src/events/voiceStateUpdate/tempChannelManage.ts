@@ -4,6 +4,25 @@ import { HydratedDocument } from "mongoose";
 import { createAndSaveTempChannel } from "../../utils/tempChannels.js";
 import * as Sentry from "@sentry/node";
 
+async function updateUserCounts(
+  guildId: string,
+  ...voices: VoiceState["channel"][]
+) {
+  for (const voice of voices) {
+    if (!voice) continue;
+
+    await TempChannel.updateOne(
+      {
+        channelId: voice.id,
+        guildId: guildId,
+      },
+      {
+        $set: { userCount: voice.members.size },
+      }
+    );
+  }
+}
+
 async function handleUserLeave(oldState: VoiceState) {
   if (!oldState.channel || !oldState.guild) return;
   // Check if the channel is a temporary channel
@@ -14,10 +33,7 @@ async function handleUserLeave(oldState: VoiceState) {
 
   if (!tempChannel) return;
 
-  // Update user count
-  let newUserCount = oldState.channel.members.size;
-  tempChannel.userCount = newUserCount;
-  await tempChannel.save();
+  const newUserCount = tempChannel.userCount;
 
   // If channel is now empty, check if we should delete it
   if (newUserCount <= 0) {
@@ -36,7 +52,6 @@ async function handleUserLeave(oldState: VoiceState) {
     if (emptyChannelsInCategory.length > 1) {
       const toDeleteChannelId = emptyChannelsInCategory[0].channelId; // Get the most recently created empty channel
       try {
-        console.log(`tChannel to delete: ${toDeleteChannelId}`);
         await oldState.guild.channels.delete(
           toDeleteChannelId, // Delete the most recently created empty channel
           "Temporary channel cleanup - multiple empty channels"
@@ -65,11 +80,6 @@ async function handleUserJoin(newState: VoiceState) {
 
   if (!tempChannel) return;
 
-  // Update user count
-  const newUserCount = newState.channel.members.size;
-  tempChannel.userCount = newUserCount;
-  await tempChannel.save();
-
   // Check if we need to create a new empty channel
   const emptyChannelsInCategory = await TempChannel.countDocuments({
     guildId: newState.guild.id,
@@ -90,6 +100,11 @@ async function handleUserJoin(newState: VoiceState) {
 
 export default async function (oldState: VoiceState, newState: VoiceState) {
   try {
+    await updateUserCounts(
+      newState.guild.id,
+      oldState.channel,
+      newState.channel
+    );
     // Check if user left a channel (was in a channel and either left completely or moved to a different channel)
     if (
       oldState.channel &&
