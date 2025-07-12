@@ -220,7 +220,8 @@ client.on("interactionCreate", async (interaction) => {
     try {
       await comp.run(interaction);
     } catch (error) {
-      Sentry.captureException(error);
+      const errId = Sentry.captureException(error);
+      const replyContent = `There was an error while executing this component!\n\n> Error ID:\n\`\`\`${errId}\`\`\``;
       if (
         interaction.replied ||
         (interaction.deferred && interaction.isMessageComponent())
@@ -228,22 +229,14 @@ client.on("interactionCreate", async (interaction) => {
         await interaction
           .editReply({
             flags: MessageFlags.IsComponentsV2,
-            components: [
-              new TextDisplayBuilder().setContent(
-                "There was an error while executing this component!"
-              ),
-            ],
+            components: [new TextDisplayBuilder().setContent(replyContent)],
           })
           .catch(() => {});
       } else if (interaction.isModalSubmit()) {
         await interaction
           .reply({
             flags: MessageFlags.IsComponentsV2 | 64,
-            components: [
-              new TextDisplayBuilder().setContent(
-                "There was an error while executing this component!"
-              ),
-            ],
+            components: [new TextDisplayBuilder().setContent(replyContent)],
           })
           .catch(() => {});
       } else {
