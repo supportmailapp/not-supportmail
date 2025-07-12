@@ -10,6 +10,17 @@
       "name": "Run App (Dev)",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [ "dev" ]
+    },
+    // Prod with debugger
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run App (Prod)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [ "start" ],
+      "env": {
+        "NODE_ENV": "production"
+      }
     }
   ]
 }
