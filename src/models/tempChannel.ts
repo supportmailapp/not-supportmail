@@ -95,7 +95,7 @@ const TempChannelCategorySchema = new Schema<ITempChannelCategory>({
    */
   maxChannels: {
     type: Number,
-    default: 20,
+    default: 10,
     min: 1,
     max: 100,
     required: true,
@@ -106,7 +106,6 @@ const TempChannelCategorySchema = new Schema<ITempChannelCategory>({
    */
   maxUsersPerChannel: {
     type: Number,
-    default: 10,
     min: 1,
     max: 99,
     required: false,
