@@ -7,7 +7,6 @@ import {
   Guild,
   JSONEncodable,
   OverwriteData,
-  SectionBuilder,
   TextDisplayBuilder,
   VoiceChannel,
 } from "discord.js";
@@ -18,7 +17,7 @@ import { EphemeralComponentsV2Flags } from "./enums.js";
 type LastChannelDataSuccess = {
   success: true;
   overwrites: OverwriteData[];
-  position: number;
+  channel: VoiceChannel;
 };
 type LastChannelDataError = {
   success: false;
@@ -26,14 +25,16 @@ type LastChannelDataError = {
 };
 
 export async function fetchLastChannelData(
-  guild: Guild
+  guild: Guild,
+  categoryId: string
 ): Promise<LastChannelDataSuccess | LastChannelDataError> {
   const lastTempChannel = await TempChannel.findOne(
     {
       guildId: guild.id,
+      category: categoryId,
     },
-    null,
-    { limit: 1, sort: { createdAt: -1 } }
+    "channelId",
+    { sort: { createdAt: -1 } }
   );
   if (!lastTempChannel) {
     return { success: false, error: "Last channel not found in database" };
@@ -63,7 +64,7 @@ export async function fetchLastChannelData(
         deny: overwrite.deny.bitfield,
       };
     }),
-    position: lastDCChannel.position,
+    channel: lastDCChannel,
   };
 }
 
@@ -117,10 +118,10 @@ export async function createAndSaveTempChannel(
   let lastChannelData: LastChannelDataSuccess | LastChannelDataError | null =
     null;
   if (withOverwrites) {
-    lastChannelData = await fetchLastChannelData(guild);
-    console.debug(
-      "Last channel position",
-      lastChannelData.success ? lastChannelData.position : "N/A"
+    lastChannelData = await fetchLastChannelData(guild, tCategory.id);
+    Sentry.logger.trace(
+      "Fetched old channel data for new temp channel creation",
+      { ...lastChannelData }
     );
     if (!lastChannelData.success) {
       Sentry.captureMessage(lastChannelData.error);
@@ -137,29 +138,62 @@ export async function createAndSaveTempChannel(
     String(nextChannelNumber)
   );
 
-  const channel = await guild.channels
-    .create({
-      name: channelName,
-      type: ChannelType.GuildVoice,
-      parent: parentId,
-      position: lastChannelData?.success
-        ? lastChannelData.position + 1
-        : undefined,
-      permissionOverwrites: lastChannelData?.success
-        ? lastChannelData.overwrites
-        : undefined,
-      userLimit: tCategory.maxUsersPerChannel || undefined, // '||' also covers the case where maxUsersPerChannel is 0 which means no limit
-    })
-    .catch((err) => {
-      Sentry.captureException(err);
-      return null;
-    });
+  let channel: VoiceChannel | null = null;
+  if (lastChannelData?.success) {
+    channel = await lastChannelData.channel
+      .clone({
+        name: channelName,
+        type: ChannelType.GuildVoice,
+        parent: parentId,
+        userLimit: tCategory.maxUsersPerChannel || undefined,
+      })
+      .catch((err) => {
+        Sentry.captureException(err);
+        return null;
+      });
+  } else {
+    channel = await guild.channels
+      .create({
+        name: channelName,
+        type: ChannelType.GuildVoice,
+        parent: parentId,
+        userLimit: tCategory.maxUsersPerChannel || undefined,
+      })
+      .catch((err) => {
+        Sentry.captureException(err);
+        return null;
+      });
+  }
 
   if (!channel) {
     return {
       success: false,
       error: "Channel Creation failed. Please check your Sentry errors.",
     };
+  }
+
+  Sentry.logger.trace(
+    `Created new temp channel (${channel.id}) with position ${channel.position}.`
+  );
+
+  if (
+    lastChannelData?.channel.position !== undefined &&
+    channel.position !== lastChannelData?.channel.position
+  ) {
+    Sentry.logger.warn(
+      `Channel position mismatch: Expected ${lastChannelData.channel.position}, got ${channel.position}. Adjusting...`
+    );
+    await channel
+      .setPosition(lastChannelData.channel.position + 1, {
+        reason: "Set position to match last channel",
+        relative: false,
+      })
+      .catch((err) => {
+        const errId = Sentry.captureException(err);
+        Sentry.logger.error("Failed to set channel position after creation", {
+          errorId: errId,
+        });
+      });
   }
 
   await TempChannel.create({
@@ -182,8 +216,6 @@ export type EditAction =
   | "namingScheme"
   | "maxUsersPerChannel"
   | "maxTempChannels";
-
-type ExtendedEditAction = EditAction | "id";
 
 /**
  * Builds a custom ID string for Discord components related to temporary channel categories.
@@ -210,14 +242,11 @@ type ExtendedEditAction = EditAction | "id";
 export function buildCustomId(
   component: "edit" | "info",
   categoryId: string,
-  action: EditAction | null = null,
-  asLocal?: boolean
+  action: EditAction | null = null
 ) {
-  const prefix = asLocal ? "~" : "tempChannelCategory";
-  const prefixWithComponent = `${prefix}/${component}` as const;
-  if (!!action)
-    return `${prefixWithComponent}/${action}?${categoryId}` as const;
-  else return `${prefixWithComponent}?${categoryId}` as const;
+  const prefix = `tempChannelCategory/${component}` as const;
+  if (action) return `${prefix}/${action}?${categoryId}` as const;
+  else return `${prefix}?${categoryId}` as const;
 }
 
 export function ErrorResponse(content: string): {
@@ -241,21 +270,13 @@ export function SuccessContainer(): ContainerBuilder {
 export function buildCategoryInfo(
   cat: HydratedDocument<ITempChannelCategory>,
   withContainer?: false,
-  color?: number,
-  withButtons?: boolean
+  color?: number
 ): TextDisplayBuilder[];
 export function buildCategoryInfo(
   cat: HydratedDocument<ITempChannelCategory>,
   withContainer: true,
-  color?: number,
-  withButtons?: boolean
+  color?: number
 ): ContainerBuilder;
-export function buildCategoryInfo(
-  cat: HydratedDocument<ITempChannelCategory>,
-  withContainer: true,
-  color: number,
-  withButtons: true
-): SectionBuilder[];
 /**
  * Builds the category information display.
  * @param cat The category document.
@@ -266,12 +287,10 @@ export function buildCategoryInfo(
 export function buildCategoryInfo(
   cat: HydratedDocument<ITempChannelCategory>,
   withContainer: boolean = false,
-  color: number = Colors.Blue,
-  withButtons: boolean = false
+  color: number = Colors.Blue
 ) {
-  const infoContent: Record<ExtendedEditAction, string> = {
-    name: `- **Category Name:** ${cat.name}`,
-    id: `-# - **Category ID:** ${cat.id}`,
+  const infoContent: Record<EditAction, string> = {
+    name: `- **Category Name:** ${cat.name}\n-# - **Category ID:** ${cat.id}`,
     parent: `- **Parent Category ID:** ${
       cat.parentId
         ? `https://discord.com/channels/${cat.guildId}/${cat.parentId}`
@@ -286,61 +305,17 @@ export function buildCategoryInfo(
     maxTempChannels: `- **Max Temp Channels:** \`${cat.maxChannels}\``,
   };
 
-  if (!withButtons) {
-    const textDisplays: TextDisplayBuilder[] = [
-      new TextDisplayBuilder().setContent(
-        Object.values(infoContent).join("\n")
-      ),
-    ];
-    if (withContainer) {
-      return new ContainerBuilder()
-        .setAccentColor(color)
-        .addTextDisplayComponents(...textDisplays);
-    }
-    return textDisplays;
-  }
-
-  const textDisplays: TextDisplayBuilder[] = [];
-  const sections: SectionBuilder[] = [];
-
-  for (const [key, value] of Object.entries(infoContent) as [
-    ExtendedEditAction,
-    string
-  ][]) {
-    const textDisplay = new TextDisplayBuilder().setContent(value);
-
-    if (key === "id") {
-      textDisplays.push(textDisplay);
-    } else {
-      sections.push(
-        new SectionBuilder()
-          .addTextDisplayComponents(textDisplay)
-          .setButtonAccessory((b) =>
-            b
-              .setCustomId(buildCustomId("edit", cat.id, key))
-              .setEmoji({ name: "✏️" })
-              .setStyle(1)
-          )
-      );
-    }
-  }
-
+  const textDisplays: TextDisplayBuilder[] = [
+    new TextDisplayBuilder().setContent(Object.values(infoContent).join("\n")),
+  ];
   if (withContainer) {
-    const container = new ContainerBuilder().setAccentColor(color);
-    if (sections.length > 0) {
-      container.addSectionComponents(...sections);
-    } else if (textDisplays.length > 0) {
-      container.addTextDisplayComponents(...textDisplays);
-    }
-    return container;
+    return new ContainerBuilder()
+      .setAccentColor(color)
+      .addTextDisplayComponents(...textDisplays);
   }
-
-  if (withButtons) {
-    return sections;
-  } else {
-    return textDisplays;
-  }
+  return textDisplays;
 }
+
 /**
  * Deletes temporary channels within a specified category in a guild and removes their records from the database.
  *
