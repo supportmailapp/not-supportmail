@@ -12,8 +12,13 @@ import {
   TextDisplayBuilder,
   TextInputBuilder,
 } from "discord.js";
-import { parseCustomId, safeParseInt } from "../utils/main.js";
+import { HydratedDocument, UpdateQuery } from "mongoose";
+import {
+  TempChannelCategory,
+  type ITempChannelCategory,
+} from "../models/tempChannel.js";
 import { EphemeralComponentsV2Flags } from "../utils/enums.js";
+import { parseCustomId, safeParseInt } from "../utils/main.js";
 import {
   buildCategoryInfo,
   buildCustomId,
@@ -21,11 +26,6 @@ import {
   SuccessContainer,
   type EditAction,
 } from "../utils/tempChannels.js";
-import {
-  TempChannelCategory,
-  type ITempChannelCategory,
-} from "../models/tempChannel.js";
-import { HydratedDocument, UpdateQuery } from "mongoose";
 
 async function run(
   ctx:
@@ -92,6 +92,7 @@ async function showEditModal(
               .setMinLength(3)
               .setMaxLength(100)
               .setRequired(true)
+              .setStyle(1)
               .setValue(category.name)
           )
         );
@@ -108,6 +109,7 @@ async function showEditModal(
               .setMinLength(3)
               .setMaxLength(100)
               .setRequired(true)
+              .setStyle(1)
               .setValue(category.namingScheme)
           )
         );
@@ -122,6 +124,7 @@ async function showEditModal(
             .setMaxLength(2)
             .setRequired(true)
             .setPlaceholder("0 = Unlimited")
+            .setStyle(1)
             .setValue((category.maxUsersPerChannel || 0).toString())
         )
       );
@@ -137,6 +140,7 @@ async function showEditModal(
               .setMinLength(1)
               .setMaxLength(3)
               .setRequired(true)
+              .setStyle(1)
               .setValue(category.maxChannels.toString())
           )
         );
@@ -226,7 +230,8 @@ async function changeCategory(
       componentType: ComponentType.ChannelSelect,
     });
     newCatId = channelCtx.values.length > 0 ? channelCtx.values[0] : null;
-  } catch {
+  } catch (err) {
+    console.error("Error awaiting channel select interaction:", err);
     return;
   }
 

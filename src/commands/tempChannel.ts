@@ -283,6 +283,9 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
     return;
   }
 
+  const container = buildCategoryInfo(newCategory, true, Colors.Green, true);
+  console.log(container.toJSON());
+
   await ctx.editReply({
     components: [
       SuccessContainer().addTextDisplayComponents(
@@ -292,7 +295,7 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
           ),
         (t) => t.setContent(`> First temp channel: ${createRes.channel.url}`)
       ),
-      buildCategoryInfo(newCategory, true, Colors.Green, true),
+      container,
     ],
   });
 }

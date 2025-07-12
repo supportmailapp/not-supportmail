@@ -316,11 +316,10 @@ export function buildCategoryInfo(
 
   if (withContainer) {
     const container = new ContainerBuilder().setAccentColor(color);
-    if (textDisplays.length > 0) {
-      container.addTextDisplayComponents(...textDisplays);
-    }
     if (sections.length > 0) {
       container.addSectionComponents(...sections);
+    } else if (textDisplays.length > 0) {
+      container.addTextDisplayComponents(...textDisplays);
     }
     return container;
   }
