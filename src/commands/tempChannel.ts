@@ -284,9 +284,9 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
   }
 
   const container = buildCategoryInfo(newCategory, true, Colors.Green, true);
-  console.log(container.toJSON());
 
   await ctx.editReply({
+    flags: EphemeralComponentsV2Flags,
     components: [
       SuccessContainer().addTextDisplayComponents(
         (t) =>
@@ -456,22 +456,24 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
       { $set: setParams },
       { new: true }
     );
+
+    if (category) {
+      await deleteTempChannels(ctx.guild, category.id);
+      const result = await createAndSaveTempChannel(
+        ctx.guild,
+        category,
+        options.parentId || null,
+        false
+      );
+      if (!result.success) {
+        await ctx.editReply(ErrorResponse(result.error));
+        return;
+      }
+    }
   }
 
   if (!category) {
     await ctx.editReply(ErrorResponse("Failed to update category."));
-    return;
-  }
-
-  await deleteTempChannels(ctx.guild, category.id);
-  const result = await createAndSaveTempChannel(
-    ctx.guild,
-    category,
-    options.parentId || null,
-    false
-  );
-  if (!result.success) {
-    await ctx.editReply(ErrorResponse(result.error));
     return;
   }
 
