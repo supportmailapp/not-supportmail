@@ -36,6 +36,7 @@ var client = new Client({
     IntentsBitField.Flags.AutoModerationExecution,
     IntentsBitField.Flags.DirectMessages,
     IntentsBitField.Flags.GuildModeration,
+    IntentsBitField.Flags.GuildVoiceStates,
   ],
 
   makeCache: Options.cacheWithLimits({
