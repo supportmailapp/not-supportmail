@@ -126,10 +126,9 @@ async function updateUserCounts(
             }
           );
 
-          // Cache the updated count
-          cache.set(`userCount-${cacheKey}`, voice.members.size, 3);
+          // Don't cache user count here to prevent race conditions
           console.debug(
-            `[TempChannel] Cached user count ${voice.members.size} for channel ${voice.id}`
+            `[TempChannel] Updated database user count ${voice.members.size} for channel ${voice.id}`
           );
 
           // Clean up
@@ -157,6 +156,15 @@ async function getUserCount(
   guildId: string,
   fallbackChannel?: VoiceState["channel"]
 ): Promise<number> {
+  // Always get fresh count from Discord API first if available
+  if (fallbackChannel?.members) {
+    const count = fallbackChannel.members.size;
+    console.debug(
+      `[TempChannel] Fresh Discord API user count for ${channelId}: ${count}`
+    );
+    return count;
+  }
+
   const cacheKey = `userCount-${guildId}-${channelId}`;
   const cachedCount = cache.get<number>(cacheKey);
 
@@ -179,18 +187,10 @@ async function getUserCount(
 
   if (tempChannel) {
     const count = tempChannel.userCount;
-    cache.set(cacheKey, count, 3);
+    // Only cache database results briefly to avoid stale data
+    cache.set(cacheKey, count, 1);
     console.debug(
-      `[TempChannel] Database user count for ${channelId}: ${count} (cached)`
-    );
-    return count;
-  }
-
-  // Last resort: get from Discord API if channel provided
-  if (fallbackChannel?.members) {
-    const count = fallbackChannel.members.size;
-    console.debug(
-      `[TempChannel] Fallback Discord API user count for ${channelId}: ${count}`
+      `[TempChannel] Database user count for ${channelId}: ${count} (cached for 1s)`
     );
     return count;
   }
@@ -411,40 +411,27 @@ async function handleUserJoin(newState: VoiceState) {
     );
   }
 
-  // Cache category stats to avoid repeated queries
-  const categoryStatsKey = `categoryStats-${newState.guild.id}-${tempChannel.category.id}`;
-  let categoryStats = cache.get<{
-    totalChannels: number;
-    emptyChannels: number;
-  }>(categoryStatsKey);
+  // Don't cache category stats - always get fresh data for decisions
+  console.debug(
+    `[TempChannel] Getting fresh category stats for category ${tempChannel.category.id}`
+  );
 
-  if (!categoryStats) {
-    console.debug(
-      `[TempChannel] Cache miss for category stats, querying database for category ${tempChannel.category.id}`
-    );
+  const [totalChannels, emptyChannels] = await Promise.all([
+    TempChannel.countDocuments({
+      guildId: newState.guild.id,
+      category: tempChannel.category.id,
+    }),
+    TempChannel.countDocuments({
+      guildId: newState.guild.id,
+      category: tempChannel.category.id,
+      userCount: 0,
+    }),
+  ]);
 
-    const [totalChannels, emptyChannels] = await Promise.all([
-      TempChannel.countDocuments({
-        guildId: newState.guild.id,
-        category: tempChannel.category.id,
-      }),
-      TempChannel.countDocuments({
-        guildId: newState.guild.id,
-        category: tempChannel.category.id,
-        userCount: 0,
-      }),
-    ]);
-
-    categoryStats = { totalChannels, emptyChannels };
-    cache.set(categoryStatsKey, categoryStats, 30); // Cache for 30 seconds
-    console.debug(
-      `[TempChannel] Category ${tempChannel.category.id} stats: ${totalChannels} total, ${emptyChannels} empty (cached)`
-    );
-  } else {
-    console.debug(
-      `[TempChannel] Cache hit for category stats: ${tempChannel.category.id} - ${categoryStats.totalChannels} total, ${categoryStats.emptyChannels} empty`
-    );
-  }
+  const categoryStats = { totalChannels, emptyChannels };
+  console.debug(
+    `[TempChannel] Category ${tempChannel.category.id} fresh stats: ${totalChannels} total, ${emptyChannels} empty`
+  );
 
   // Check against the categories' max channel limit.
   if (
@@ -470,10 +457,8 @@ async function handleUserJoin(newState: VoiceState) {
       true
     );
 
-    // Invalidate category stats cache since we created a new channel
-    cache.del(categoryStatsKey);
     console.debug(
-      `[TempChannel] Created new temp channel and invalidated category stats cache for ${tempChannel.category.id}`
+      `[TempChannel] Created new temp channel for category ${tempChannel.category.id}`
     );
   } else {
     console.debug(
@@ -486,17 +471,14 @@ async function handleUserJoin(newState: VoiceState) {
 // Handles both user joins and leaves, and updates user counts accordingly.
 export default async function (oldState: VoiceState, newState: VoiceState) {
   try {
-    const userId =
-      newState.member?.user.id || oldState.member?.user.id || "unknown";
+    const userId = newState.member?.user.id || oldState.member?.user.id;
     const guildId = newState.guild.id;
 
     console.debug(
       `[TempChannel] Voice state update for user ${userId} in guild ${guildId}`
     );
     console.debug(
-      `[TempChannel] Old channel: ${
-        oldState.channel?.id || "none"
-      }, New channel: ${newState.channel?.id || "none"}`
+      `[TempChannel] Old channel: ${oldState.channel?.id}, New channel: ${newState.channel?.id}`
     );
 
     // Handle user movements with debounced updates
