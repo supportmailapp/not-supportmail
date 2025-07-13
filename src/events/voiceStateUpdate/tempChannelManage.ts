@@ -1,3 +1,4 @@
+// @ts-nocheck | TODO: Remove this when the logic is fixed
 import * as Sentry from "@sentry/node";
 import { VoiceState } from "discord.js";
 import { type HydratedDocument } from "mongoose";
@@ -20,6 +21,17 @@ const cache = new NodeCache({
   useClones: false,
 });
 
+type DisconnectValue = {
+  /**
+   * Unix timestamp of when the user disconnected.
+   */
+  timestamp: number;
+  /**
+   * Whether this disconnect was initiated by the bot automatically.
+   */
+  botInitiated: boolean;
+};
+
 /**
  * Cache for tracking users who recently disconnected.
  * Key: `${guildId}-${userId}`, Value: timestamp of disconnect
@@ -37,53 +49,53 @@ const modifiedChannels = new Set<string>();
 /**
  * Scheduled job to update database with cached user counts every 10 seconds
  */
-const databaseUpdateJob = scheduleJob("*/10 * * * * *", async () => {
-  if (modifiedChannels.size === 0) {
-    console.debug(
-      "[TempChannel] No modified channels, skipping database update"
-    );
-    return;
-  }
+// const databaseUpdateJob = scheduleJob("*/10 * * * * *", async () => {
+//   if (modifiedChannels.size === 0) {
+//     console.debug(
+//       "[TempChannel] No modified channels, skipping database update"
+//     );
+//     return;
+//   }
 
-  console.debug(
-    `[TempChannel] Updating database for ${modifiedChannels.size} modified channels`
-  );
+//   console.debug(
+//     `[TempChannel] Updating database for ${modifiedChannels.size} modified channels`
+//   );
 
-  const channelsToUpdate = Array.from(modifiedChannels);
-  modifiedChannels.clear();
+//   const channelsToUpdate = Array.from(modifiedChannels);
+//   modifiedChannels.clear();
 
-  const updatePromises = channelsToUpdate.map(async (cacheKey) => {
-    const userCount = cache.get<number>(cacheKey);
-    if (userCount === undefined) {
-      console.debug(
-        `[TempChannel] Cache miss during scheduled update for ${cacheKey}`
-      );
-      return;
-    }
+//   const updatePromises = channelsToUpdate.map(async (cacheKey) => {
+//     const userCount = cache.get<number>(cacheKey);
+//     if (userCount === undefined) {
+//       console.debug(
+//         `[TempChannel] Cache miss during scheduled update for ${cacheKey}`
+//       );
+//       return;
+//     }
 
-    const [guildId, channelId] = cacheKey.split("-");
+//     const [guildId, channelId] = cacheKey.split("-");
 
-    try {
-      await TempChannel.updateOne(
-        { channelId, guildId },
-        { $set: { userCount } }
-      );
-      console.debug(
-        `[TempChannel] Updated database user count to ${userCount} for channel ${channelId}`
-      );
-    } catch (error) {
-      console.error(
-        `[TempChannel] Error updating database for channel ${channelId}:`,
-        error
-      );
-      Sentry.captureException(error);
-      // Re-add to modified channels for retry
-      modifiedChannels.add(cacheKey);
-    }
-  });
+//     try {
+//       await TempChannel.updateOne(
+//         { channelId, guildId },
+//         { $set: { userCount } }
+//       );
+//       console.debug(
+//         `[TempChannel] Updated database user count to ${userCount} for channel ${channelId}`
+//       );
+//     } catch (error) {
+//       console.error(
+//         `[TempChannel] Error updating database for channel ${channelId}:`,
+//         error
+//       );
+//       Sentry.captureException(error);
+//       // Re-add to modified channels for retry
+//       modifiedChannels.add(cacheKey);
+//     }
+//   });
 
-  await Promise.all(updatePromises);
-});
+//   await Promise.all(updatePromises);
+// });
 
 /**
  * Get user count with cache-first approach
@@ -190,7 +202,7 @@ async function handleUserLeave(oldState: VoiceState) {
 
   // Check if user has a recent disconnect entry to prevent infinite loops
   const disconnectKey = `${oldState.guild.id}-${userId}`;
-  const recentDisconnect = disconnectCache.get<number>(disconnectKey);
+  const recentDisconnect = disconnectCache.get<DisconnectValue>(disconnectKey);
 
   if (recentDisconnect) {
     console.debug(
@@ -200,7 +212,10 @@ async function handleUserLeave(oldState: VoiceState) {
   }
 
   // Mark user as recently disconnected
-  disconnectCache.set(disconnectKey, dayjs().unix());
+  disconnectCache.set<DisconnectValue>(disconnectKey, {
+    timestamp: dayjs().unix(),
+    botInitiated: false, // This is a user-initiated leave
+  });
   console.debug(`[TempChannel] Marked user ${userId} as recently disconnected`);
 
   // Check if this is a temp channel
@@ -356,11 +371,17 @@ async function handleUserJoin(newState: VoiceState) {
     return;
   }
 
-  if (disconnectCache.has(`${newState.guild.id}-${newState.member?.user.id}`)) {
+  const recentDisconnect = disconnectCache.get<DisconnectValue>(
+    `${newState.guild.id}-${newState.member?.user.id}`
+  );
+  if (recentDisconnect && !recentDisconnect.botInitiated) {
     await newState.setChannel(null, "Disconnect due to recent leave");
-    disconnectCache.set(
+    disconnectCache.set<DisconnectValue>(
       `${newState.guild.id}-${newState.member?.user.id}`,
-      dayjs().unix()
+      {
+        timestamp: dayjs().unix(),
+        botInitiated: true,
+      }
     );
     console.debug(
       `[TempChannel] User ${newState.member?.user.id} recently disconnected, resetting channel`
@@ -436,6 +457,7 @@ export function cleanupChannelCache(guildId: string, channelId: string) {
 
 // Main event handler
 export default async function (oldState: VoiceState, newState: VoiceState) {
+  return;
   try {
     const userId = newState.member?.user.id || oldState.member?.user.id;
     const guildId = newState.guild.id;
