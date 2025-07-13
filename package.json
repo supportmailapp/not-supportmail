@@ -1,7 +1,7 @@
 {
   "name": "not-supportmail",
   "private": true,
-  "version": "1.17.0-beta.6",
+  "version": "1.17.0-beta.7",
   "description": "SupportMail Management Bot",
   "main": "./dist/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "npx tsc && pnpm sentry:sourcemaps",
     "dev": "npx tsc && node --env-file=.env.dev ./dist/index.js",
     "start": "pnpm build && node --env-file=.env.production ./dist/index.js",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org lukez-dev --project not-supportmail --release=1.17.0-beta.6 ./dist && sentry-cli sourcemaps upload --org lukez-dev --project not-supportmail --release=1.17.0-beta.6 ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org lukez-dev --project not-supportmail --release=1.17.0-beta.7 ./dist && sentry-cli sourcemaps upload --org lukez-dev --project not-supportmail --release=1.17.0-beta.7 ./dist"
   },
   "author": "supportmailapp",
   "license": "ISC",
@@ -17,23 +17,19 @@
   "dependencies": {
     "@sapphire/snowflake": "^3.5.5",
     "@sentry/cli": "^2.47.0",
-    "@sentry/node": "^9.37.0",
+    "@sentry/node": "^9.38.0",
     "dayjs": "^1.11.13",
     "discord.js": "^14.21.0",
     "djs-command-helper": "^4.2.2",
-    "dotenv": "^16.6.1",
     "humanize-duration": "^3.33.0",
     "ky": "^1.8.1",
     "mongoose": "^8.16.3",
     "node-cache": "^5.1.2",
-    "node-schedule": "^2.1.1",
-    "randomstring": "^1.3.1"
+    "node-schedule": "^2.1.1"
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",
-    "@types/node-schedule": "^2.1.7",
-    "@types/randomstring": "^1.3.0",
-    "supportmail-types": "github:The-LukeZ/supportmail-types"
+    "@types/node-schedule": "^2.1.8"
   },
   "packageManager": "pnpm@10.12.1",
   "engines": {
