@@ -150,7 +150,7 @@ const TempChannelSchema = new Schema<ITempChannel>(
     number: { type: Number, required: true },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false },
+    timestamps: true,
     versionKey: false,
   }
 );
