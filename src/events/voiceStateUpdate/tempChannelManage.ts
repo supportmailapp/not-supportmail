@@ -1,173 +1,113 @@
 import * as Sentry from "@sentry/node";
 import { VoiceState } from "discord.js";
-import type { HydratedDocument } from "mongoose";
+import { type HydratedDocument } from "mongoose";
 import NodeCache from "node-cache";
+import { scheduleJob } from "node-schedule";
 import {
-  ITempChannel,
-  ITempChannelCategory,
   TempChannel,
+  type ITempChannelCategory,
 } from "../../models/tempChannel.js";
 import { createAndSaveTempChannel } from "../../utils/tempChannels.js";
-
-type CachedTempChannel = Record<string, any> &
-  Omit<ITempChannel, "category"> & { id: string } & {
-    category: ITempChannelCategory & { id: string };
-  };
-
-function TempChannelDocToCached(
-  doc: HydratedDocument<Omit<ITempChannel, "category">> & {
-    category: HydratedDocument<ITempChannelCategory>;
-  }
-): CachedTempChannel {
-  console.debug(
-    `[TempChannel] Converting document to cached format for channel ${doc.channelId}`
-  );
-  return {
-    ...doc.toJSON({ versionKey: false, flattenObjectIds: true }),
-    id: doc._id.toHexString(),
-    category: {
-      ...doc.category.toJSON({ versionKey: false, flattenObjectIds: true }),
-      id: doc.category._id.toHexString(),
-    },
-  };
-}
-
-const userCountUpdateDelay = 3; // Delay to allow for user count stabilization
+import dayjs from "dayjs";
 
 /**
- * Multi-purpose cache for temporary voice channel management to reduce database operations
- * and prevent race conditions during rapid voice state changes.
- *
- * Cached data includes:
- * - `userCount-{guildId}-{channelId}`: Current user count for a channel (TTL: 3s)
- * - `tempChannel-{guildId}-{channelId}`: Full temp channel document with populated category (TTL: 5min)
- * - `categoryStats-{guildId}-{categoryId}`: Channel counts per category (totalChannels, emptyChannels) (TTL: 30s)
- *
- * This caching strategy prevents:
- * - Excessive database queries during rapid joins/leaves
- * - Race conditions when multiple users join/leave simultaneously
- * - Unnecessary channel creation/deletion operations
- * - Database write conflicts during user count updates
- *
- * Similar to how MEE6 and TempVoice bots handle voice state management.
- *
- * Yes, this was constructed with AI. It couldn't be tested due to my limited resources.
+ * Simplified cache for user count data only.
+ * All user counts are stored here and periodically synced to database.
  */
 const cache = new NodeCache({
   errorOnMissing: false,
-  stdTTL: userCountUpdateDelay,
+  checkperiod: 0, // Disable automatic cleanup
+  useClones: false,
+});
+
+/**
+ * Cache for tracking users who recently disconnected.
+ * Key: `${guildId}-${userId}`, Value: timestamp of disconnect
+ */
+const disconnectCache = new NodeCache({
+  errorOnMissing: false,
+  stdTTL: 5, // 5 second TTL for disconnect tracking
   checkperiod: 2,
   useClones: false,
 });
 
-// Cache pending updates to prevent race conditions
-const pendingUpdates = new Map<string, NodeJS.Timeout>();
+// Set to track which channels have been modified and need database updates
+const modifiedChannels = new Set<string>();
 
-// Update user counts for channels after a voice state change with debouncing
-async function updateUserCounts(
-  guildId: string,
-  ...voices: VoiceState["channel"][]
-) {
+/**
+ * Scheduled job to update database with cached user counts every 10 seconds
+ */
+const databaseUpdateJob = scheduleJob("*/10 * * * * *", async () => {
+  if (modifiedChannels.size === 0) {
+    console.debug(
+      "[TempChannel] No modified channels, skipping database update"
+    );
+    return;
+  }
+
   console.debug(
-    `[TempChannel] Updating user counts for ${voices.length} channels in guild ${guildId}`
+    `[TempChannel] Updating database for ${modifiedChannels.size} modified channels`
   );
 
-  for (const voice of voices) {
-    if (!voice?.members) {
+  const channelsToUpdate = Array.from(modifiedChannels);
+  modifiedChannels.clear();
+
+  const updatePromises = channelsToUpdate.map(async (cacheKey) => {
+    const userCount = cache.get<number>(cacheKey);
+    if (userCount === undefined) {
       console.debug(
-        `[TempChannel] Skipping voice channel with no members: ${
-          voice?.id || "null"
-        }`
+        `[TempChannel] Cache miss during scheduled update for ${cacheKey}`
       );
-      continue;
+      return;
     }
 
-    const cacheKey = `${guildId}-${voice.id}`;
-    console.debug(
-      `[TempChannel] Processing user count update for channel ${voice.id}, current members: ${voice.members.size}`
-    );
+    const [guildId, channelId] = cacheKey.split("-");
 
-    // Clear any existing pending update for this channel
-    if (pendingUpdates.has(cacheKey)) {
-      console.debug(
-        `[TempChannel] Clearing existing pending update for channel ${voice.id}`
+    try {
+      await TempChannel.updateOne(
+        { channelId, guildId },
+        { $set: { userCount } }
       );
-      clearTimeout(pendingUpdates.get(cacheKey)!);
+      console.debug(
+        `[TempChannel] Updated database user count to ${userCount} for channel ${channelId}`
+      );
+    } catch (error) {
+      console.error(
+        `[TempChannel] Error updating database for channel ${channelId}:`,
+        error
+      );
+      Sentry.captureException(error);
+      // Re-add to modified channels for retry
+      modifiedChannels.add(cacheKey);
     }
+  });
 
-    // Set a new debounced update
-    pendingUpdates.set(
-      cacheKey,
-      setTimeout(async () => {
-        try {
-          console.debug(
-            `[TempChannel] Executing debounced user count update for channel ${voice.id}`
-          );
+  await Promise.all(updatePromises);
+});
 
-          // Get fresh member count at time of execution
-          if (!voice.members) {
-            console.debug(
-              `[TempChannel] No members found during debounced update for channel ${voice.id}`
-            );
-            return;
-          }
-
-          console.debug(
-            `[TempChannel] Updating database user count to ${voice.members.size} for channel ${voice.id}`
-          );
-
-          await TempChannel.updateOne(
-            {
-              channelId: voice.id,
-              guildId: guildId,
-            },
-            {
-              $set: { userCount: voice.members.size },
-            }
-          );
-
-          // Don't cache user count here to prevent race conditions
-          console.debug(
-            `[TempChannel] Updated database user count ${voice.members.size} for channel ${voice.id}`
-          );
-
-          // Clean up
-          pendingUpdates.delete(cacheKey);
-        } catch (error) {
-          console.error(
-            `[TempChannel] Error updating user count for channel ${voice.id}:`,
-            error
-          );
-          Sentry.captureException(error);
-          pendingUpdates.delete(cacheKey);
-        }
-      }, userCountUpdateDelay * 1000)
-    );
-
-    console.debug(
-      `[TempChannel] Scheduled debounced update for channel ${voice.id} in ${userCountUpdateDelay}s`
-    );
-  }
-}
-
-// Get user count with cache fallback
+/**
+ * Get user count with cache-first approach
+ */
 async function getUserCount(
   channelId: string,
   guildId: string,
   fallbackChannel?: VoiceState["channel"]
 ): Promise<number> {
-  // Always get fresh count from Discord API first if available
+  const cacheKey = `${guildId}-${channelId}`;
+
+  // Always update cache with fresh Discord data if available
   if (fallbackChannel?.members) {
     const count = fallbackChannel.members.size;
     console.debug(
-      `[TempChannel] Fresh Discord API user count for ${channelId}: ${count}`
+      `[TempChannel] Updating cache with fresh Discord count for ${channelId}: ${count}`
     );
+    cache.set(cacheKey, count);
+    modifiedChannels.add(cacheKey);
     return count;
   }
 
-  const cacheKey = `userCount-${guildId}-${channelId}`;
+  // Try cache first
   const cachedCount = cache.get<number>(cacheKey);
-
   if (cachedCount !== undefined) {
     console.debug(
       `[TempChannel] Cache hit for user count: ${channelId} = ${cachedCount}`
@@ -175,75 +115,108 @@ async function getUserCount(
     return cachedCount;
   }
 
+  // Cache miss - query database
   console.debug(
     `[TempChannel] Cache miss for user count, querying database for channel ${channelId}`
   );
 
-  // If not cached, get from database
   const tempChannel = await TempChannel.findOne({
     channelId,
     guildId,
   });
 
-  if (tempChannel) {
-    const count = tempChannel.userCount;
-    // Only cache database results briefly to avoid stale data
-    cache.set(cacheKey, count, 1);
-    console.debug(
-      `[TempChannel] Database user count for ${channelId}: ${count} (cached for 1s)`
-    );
-    return count;
+  const count = tempChannel?.userCount || 0;
+
+  // Cache the database result
+  cache.set(cacheKey, count);
+  console.debug(
+    `[TempChannel] Cached database user count for ${channelId}: ${count}`
+  );
+
+  return count;
+}
+
+/**
+ * New approach: Calculate empty channels by checking cached counts first,
+ * then falling back to database for missing data
+ */
+async function getEmptyChannelCount(
+  guildId: string,
+  categoryId: string
+): Promise<number> {
+  console.debug(
+    `[TempChannel] Calculating empty channels for category ${categoryId}`
+  );
+
+  // Get all temp channels in the category
+  const tempChannels = await TempChannel.find(
+    {
+      guildId,
+      category: categoryId,
+    },
+    { channelId: 1, userCount: 1 }
+  );
+
+  let emptyCount = 0;
+
+  for (const channel of tempChannels) {
+    const cacheKey = `${guildId}-${channel.channelId}`;
+    const cachedCount = cache.get<number>(cacheKey);
+
+    // Use cached count if available, otherwise use database value
+    const userCount =
+      cachedCount !== undefined ? cachedCount : channel.userCount;
+
+    if (userCount === 0) {
+      emptyCount++;
+    }
   }
 
   console.debug(
-    `[TempChannel] No user count found for channel ${channelId}, returning 0`
+    `[TempChannel] Found ${emptyCount} empty channels in category ${categoryId}`
   );
-  return 0;
+  return emptyCount;
 }
 
 async function handleUserLeave(oldState: VoiceState) {
   if (!oldState.channel || !oldState.guild) return;
 
+  const userId = oldState.member?.user.id;
+  if (!userId) return;
+
   console.debug(
     `[TempChannel] Handling user leave from channel ${oldState.channel.id} in guild ${oldState.guild.id}`
   );
 
-  // Check cache first to avoid unnecessary DB queries
-  const cacheKey = `tempChannel-${oldState.guild.id}-${oldState.channel.id}`;
-  let tempChannel = cache.get<CachedTempChannel>(cacheKey);
+  // Check if user has a recent disconnect entry to prevent infinite loops
+  const disconnectKey = `${oldState.guild.id}-${userId}`;
+  const recentDisconnect = disconnectCache.get<number>(disconnectKey);
 
-  if (!tempChannel) {
+  if (recentDisconnect) {
     console.debug(
-      `[TempChannel] Cache miss for temp channel, querying database: ${oldState.channel.id}`
+      `[TempChannel] User ${userId} has recent disconnect entry, skipping to prevent loops`
     );
-
-    const tempChannelDoc = await TempChannel.findOne({
-      channelId: oldState.channel.id,
-      guildId: oldState.guild.id,
-    }).populate<{ category: HydratedDocument<ITempChannelCategory> }>(
-      "category"
-    );
-
-    if (!tempChannelDoc) {
-      console.debug(
-        `[TempChannel] Channel ${oldState.channel.id} is not a temporary channel`
-      );
-      return;
-    }
-
-    tempChannel = TempChannelDocToCached(tempChannelDoc);
-    // Cache the temp channel info
-    cache.set(cacheKey, tempChannel, 300); // Cache for 5 minutes
-    console.debug(
-      `[TempChannel] Cached temp channel info for ${oldState.channel.id}`
-    );
-  } else {
-    console.debug(
-      `[TempChannel] Cache hit for temp channel: ${oldState.channel.id}`
-    );
+    return;
   }
 
-  // Get current user count (with potential delay/debouncing)
+  // Mark user as recently disconnected
+  disconnectCache.set(disconnectKey, dayjs().unix());
+  console.debug(`[TempChannel] Marked user ${userId} as recently disconnected`);
+
+  // Check if this is a temp channel
+  const tempChannelDoc = await TempChannel.findOne({
+    channelId: oldState.channel.id,
+    guildId: oldState.guild.id,
+  }).populate<{ category: HydratedDocument<ITempChannelCategory> }>("category");
+
+  if (!tempChannelDoc) {
+    console.debug(
+      `[TempChannel] Channel ${oldState.channel.id} is not a temporary channel`
+    );
+    return;
+  }
+
+  // Get current user count and update cache
   const newUserCount = await getUserCount(
     oldState.channel.id,
     oldState.guild.id,
@@ -254,13 +227,13 @@ async function handleUserLeave(oldState: VoiceState) {
     `[TempChannel] Current user count after leave: ${newUserCount} for channel ${oldState.channel.id}`
   );
 
-  // If the channel is now empty, check if there are multiple empty channels in the same category.
+  // If the channel is now empty, check for cleanup
   if (newUserCount <= 0) {
     console.debug(
       `[TempChannel] Channel ${oldState.channel.id} is empty, scheduling cleanup check`
     );
 
-    // Add small delay to prevent race conditions with rapid joins/leaves
+    // Add delay to prevent race conditions
     setTimeout(async () => {
       try {
         console.debug(
@@ -280,86 +253,88 @@ async function handleUserLeave(oldState: VoiceState) {
           console.debug(
             `[TempChannel] Channel ${
               oldState.channel!.id
-            } no longer empty (${finalUserCount} users), skipping cleanup`
+            } no longer empty, skipping cleanup`
           );
-          return; // Someone joined in the meantime
+          return;
         }
 
-        console.debug(
-          `[TempChannel] Finding empty channels in category ${tempChannel.category.id}`
-        );
-
-        // Find all empty channels in the category, sorted by number descending.
-        const emptyChannelsInCategory = await TempChannel.find(
-          {
-            guildId: oldState.guild!.id,
-            category: tempChannel.category.id,
-            userCount: 0,
-          },
-          null,
-          { sort: { number: -1 } }
+        // Get empty channel count using new approach
+        const emptyChannelCount = await getEmptyChannelCount(
+          oldState.guild!.id,
+          tempChannelDoc.category._id.toHexString()
         );
 
         console.debug(
-          `[TempChannel] Found ${emptyChannelsInCategory.length} empty channels in category ${tempChannel.category.id}`
+          `[TempChannel] Found ${emptyChannelCount} empty channels in category`
         );
 
-        // Only delete if there is more than one empty channel.
-        if (emptyChannelsInCategory.length > 1) {
-          const toDeleteChannelId = emptyChannelsInCategory[0].channelId;
-          console.debug(
-            `[TempChannel] Deleting excess empty channel: ${toDeleteChannelId}`
-          );
+        // Only delete if there are multiple empty channels
+        if (emptyChannelCount > 1) {
+          // Find the highest numbered empty channel to delete
+          const emptyChannelsInCategory = await TempChannel.find(
+            {
+              guildId: oldState.guild!.id,
+              category: tempChannelDoc.category._id,
+            },
+            { channelId: 1, number: 1 }
+          ).sort({ number: -1 });
 
-          try {
-            await oldState.guild!.channels.delete(
-              toDeleteChannelId,
-              "Temporary channel cleanup - multiple empty channels"
-            );
-            await TempChannel.deleteOne({
-              channelId: toDeleteChannelId,
-            });
+          // Filter by cached user counts
+          const emptyChannels = [];
+          for (const channel of emptyChannelsInCategory) {
+            const cacheKey = `${oldState.guild!.id}-${channel.channelId}`;
+            const cachedCount = cache.get<number>(cacheKey);
+            const userCount = cachedCount !== undefined ? cachedCount : 0;
 
-            // Clear cache for deleted channel
-            cache.del(`tempChannel-${oldState.guild!.id}-${toDeleteChannelId}`);
-            cache.del(`userCount-${oldState.guild!.id}-${toDeleteChannelId}`);
+            if (userCount === 0) {
+              emptyChannels.push(channel);
+            }
+          }
 
+          if (emptyChannels.length > 1) {
+            const toDeleteChannelId = emptyChannels[0].channelId;
             console.debug(
-              `[TempChannel] Successfully deleted temporary channel: ${toDeleteChannelId}`
+              `[TempChannel] Deleting excess empty channel: ${toDeleteChannelId}`
             );
-            Sentry.logger.debug(
-              `Deleted empty temporary channel: ${oldState.channel?.name}`
-            );
-          } catch (error) {
-            console.error(
-              `[TempChannel] Error deleting channel ${toDeleteChannelId}:`,
-              error
-            );
-            Sentry.captureException(error);
+
+            try {
+              await oldState.guild!.channels.delete(
+                toDeleteChannelId,
+                "Temporary channel cleanup - multiple empty channels"
+              );
+              await TempChannel.deleteOne({ channelId: toDeleteChannelId });
+
+              // Clear cache for deleted channel
+              const cacheKey = `${oldState.guild!.id}-${toDeleteChannelId}`;
+              cache.del(cacheKey);
+              modifiedChannels.delete(cacheKey);
+
+              console.debug(
+                `[TempChannel] Successfully deleted temporary channel: ${toDeleteChannelId}`
+              );
+              Sentry.logger.debug(
+                `Deleted empty temporary channel: ${oldState.channel?.name}`
+              );
+            } catch (error) {
+              console.error(
+                `[TempChannel] Error deleting channel ${toDeleteChannelId}:`,
+                error
+              );
+              Sentry.captureException(error);
+            }
           }
         } else {
           console.debug(
-            `[TempChannel] Only ${
-              emptyChannelsInCategory.length
-            } empty channel(s) in category, keeping channel ${
-              oldState.channel!.id
-            }`
+            `[TempChannel] Only ${emptyChannelCount} empty channel(s) in category, keeping channel`
           );
         }
       } catch (error) {
-        console.error(
-          `[TempChannel] Error in cleanup check for channel ${
-            oldState.channel!.id
-          }:`,
-          error
-        );
+        console.error(`[TempChannel] Error in cleanup check:`, error);
         Sentry.captureException(error);
       }
-    }, 2000); // 2 second delay to prevent race conditions
+    }, 2000);
   }
 }
-
-// TODO: Test caching logic with multiple users joining/leaving rapidly
 
 async function handleUserJoin(newState: VoiceState) {
   if (!newState.channel || !newState.guild) return;
@@ -368,107 +343,98 @@ async function handleUserJoin(newState: VoiceState) {
     `[TempChannel] Handling user join to channel ${newState.channel.id} in guild ${newState.guild.id}`
   );
 
-  // Check cache first
-  const cacheKey = `tempChannel-${newState.guild.id}-${newState.channel.id}`;
-  let tempChannel = cache.get<CachedTempChannel>(cacheKey);
-  let tempChannelDoc:
-    | (HydratedDocument<Omit<ITempChannel, "category">> & {
-        category: HydratedDocument<ITempChannelCategory>;
-      })
-    | null;
+  // Check if this is a temp channel
+  const tempChannelDoc = await TempChannel.findOne({
+    channelId: newState.channel.id,
+    guildId: newState.guild.id,
+  }).populate<{ category: HydratedDocument<ITempChannelCategory> }>("category");
 
-  if (!tempChannel) {
+  if (!tempChannelDoc) {
     console.debug(
-      `[TempChannel] Cache miss for temp channel, querying database: ${newState.channel.id}`
-    );
-
-    tempChannelDoc = await TempChannel.findOne({
-      channelId: newState.channel.id,
-      guildId: newState.guild.id,
-    }).populate<{ category: HydratedDocument<ITempChannelCategory> }>(
-      "category"
-    );
-
-    if (!tempChannelDoc) {
-      console.debug(
-        `[TempChannel] Channel ${newState.channel.id} is not a temporary channel`
-      );
-      return;
-    }
-
-    tempChannel = TempChannelDocToCached(tempChannelDoc);
-
-    if (!tempChannel) return;
-
-    // Cache the temp channel info
-    cache.set(cacheKey, tempChannel, 300); // Cache for 5 minutes
-    console.debug(
-      `[TempChannel] Cached temp channel info for ${newState.channel.id}`
-    );
-  } else {
-    console.debug(
-      `[TempChannel] Cache hit for temp channel: ${newState.channel.id}`
-    );
-  }
-
-  // Don't cache category stats - always get fresh data for decisions
-  console.debug(
-    `[TempChannel] Getting fresh category stats for category ${tempChannel.category.id}`
-  );
-
-  const [totalChannels, emptyChannels] = await Promise.all([
-    TempChannel.countDocuments({
-      guildId: newState.guild.id,
-      category: tempChannel.category.id,
-    }),
-    TempChannel.countDocuments({
-      guildId: newState.guild.id,
-      category: tempChannel.category.id,
-      userCount: 0,
-    }),
-  ]);
-
-  const categoryStats = { totalChannels, emptyChannels };
-  console.debug(
-    `[TempChannel] Category ${tempChannel.category.id} fresh stats: ${totalChannels} total, ${emptyChannels} empty`
-  );
-
-  // Check against the categories' max channel limit.
-  if (
-    tempChannel.category.maxChannels &&
-    categoryStats.totalChannels >= tempChannel.category.maxChannels
-  ) {
-    console.debug(
-      `[TempChannel] Category ${tempChannel.category.id} at max channels (${categoryStats.totalChannels}/${tempChannel.category.maxChannels}), not creating new channel`
+      `[TempChannel] Channel ${newState.channel.id} is not a temporary channel`
     );
     return;
   }
 
-  if (categoryStats.emptyChannels === 0) {
-    console.debug(
-      `[TempChannel] No empty channels in category ${tempChannel.category.id}, creating new channel`
+  if (disconnectCache.has(`${newState.guild.id}-${newState.member?.user.id}`)) {
+    await newState.setChannel(null, "Disconnect due to recent leave");
+    disconnectCache.set(
+      `${newState.guild.id}-${newState.member?.user.id}`,
+      dayjs().unix()
     );
+    console.debug(
+      `[TempChannel] User ${newState.member?.user.id} recently disconnected, resetting channel`
+    );
+    await newState.member
+      ?.send(
+        `:warning: Please wait a moment before rejoining. Try again <t:${dayjs()
+          .add(5, "s")
+          .unix()}:R>`
+      )
+      .catch(() => {});
+    return;
+  }
 
-    // Always keep at least one empty channel available for new users.
+  // Update user count in cache
+  await getUserCount(newState.channel.id, newState.guild.id, newState.channel);
+
+  // Check category limits
+  const [totalChannels, emptyChannelCount] = await Promise.all([
+    TempChannel.countDocuments({
+      guildId: newState.guild.id,
+      category: tempChannelDoc.category._id,
+    }),
+    getEmptyChannelCount(
+      newState.guild.id,
+      tempChannelDoc.category._id.toHexString()
+    ),
+  ]);
+
+  console.debug(
+    `[TempChannel] Category stats: ${totalChannels} total, ${emptyChannelCount} empty`
+  );
+
+  // Check max channel limit
+  if (
+    tempChannelDoc.category.maxChannels &&
+    totalChannels >= tempChannelDoc.category.maxChannels
+  ) {
+    console.debug(
+      `[TempChannel] Category at max channels, not creating new channel`
+    );
+    return;
+  }
+
+  // Create new channel if no empty channels available
+  if (emptyChannelCount === 0) {
+    console.debug(
+      `[TempChannel] No empty channels available, creating new channel`
+    );
     await createAndSaveTempChannel(
       newState.guild,
-      tempChannelDoc!.category,
-      tempChannel.category.parentId,
+      tempChannelDoc.category,
+      tempChannelDoc.category.parentId,
       true
     );
-
-    console.debug(
-      `[TempChannel] Created new temp channel for category ${tempChannel.category.id}`
-    );
+    console.debug(`[TempChannel] Created new temp channel for category`);
   } else {
     console.debug(
-      `[TempChannel] Category ${tempChannel.category.id} has ${categoryStats.emptyChannels} empty channel(s), no new channel needed`
+      `[TempChannel] ${emptyChannelCount} empty channel(s) available, no new channel needed`
     );
   }
 }
 
-// Main event handler for voice state updates.
-// Handles both user joins and leaves, and updates user counts accordingly.
+// Clean up cache when channels are deleted externally
+export function cleanupChannelCache(guildId: string, channelId: string) {
+  const cacheKey = `${guildId}-${channelId}`;
+  cache.del(cacheKey);
+  modifiedChannels.delete(cacheKey);
+  console.debug(
+    `[TempChannel] Cleaned up cache for deleted channel: ${channelId}`
+  );
+}
+
+// Main event handler
 export default async function (oldState: VoiceState, newState: VoiceState) {
   try {
     const userId = newState.member?.user.id || oldState.member?.user.id;
@@ -479,13 +445,6 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
     );
     console.debug(
       `[TempChannel] Old channel: ${oldState.channel?.id}, New channel: ${newState.channel?.id}`
-    );
-
-    // Handle user movements with debounced updates
-    await updateUserCounts(
-      newState.guild.id,
-      oldState.channel,
-      newState.channel
     );
 
     // User left a channel
@@ -518,3 +477,16 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
     Sentry.captureException(error);
   }
 }
+
+// Graceful shutdown
+process.on("SIGINT", () => {
+  console.debug("[TempChannel] Shutting down, canceling scheduled job");
+  databaseUpdateJob.cancel();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  console.debug("[TempChannel] Shutting down, canceling scheduled job");
+  databaseUpdateJob.cancel();
+  process.exit(0);
+});
