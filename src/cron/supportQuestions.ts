@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/node";
 import dayjs from "dayjs";
-import { APIGuildForumTag, DiscordAPIError, REST, Routes } from "discord.js";
+import { DiscordAPIError, REST, Routes } from "discord.js";
 import config from "../config.js";
 import { SupportPost } from "../models/supportPost.js";
 import schedule from "node-schedule";
@@ -106,11 +106,7 @@ export async function processSupportPostsWithRetry(): Promise<void> {
         rest
           .patch(Routes.guildChannels(post.postId), {
             body: {
-              available_tags: [
-                {
-                  id: config.tags.solved,
-                },
-              ] as APIGuildForumTag[],
+              applied_tags: [config.tags.solved],
             },
           })
           .then(async () => {
