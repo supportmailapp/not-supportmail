@@ -73,7 +73,7 @@ const SupportPostSchema = new Schema<ISupportPost>(
     flags: { type: SupportPostFlags, required: false },
     users: { type: [String], default: [] },
     helped: { type: [String], default: [] },
-    lastActivity: { type: Date, default: new Date() },
+    lastActivity: { type: Date, default: null },
   },
   { timestamps: true }
 );

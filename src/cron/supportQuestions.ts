@@ -3,9 +3,9 @@
 import * as Sentry from "@sentry/node";
 import dayjs from "dayjs";
 import { DiscordAPIError, REST, Routes } from "discord.js";
+import schedule from "node-schedule";
 import config from "../config.js";
 import { SupportPost } from "../models/supportPost.js";
-import schedule from "node-schedule";
 
 // Constants
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
@@ -39,7 +39,20 @@ export async function processSupportPostsWithRetry(): Promise<void> {
       const postsToRemind = await SupportPost.find(
         {
           $and: [
-            { lastActivity: { $lte: dayjs().subtract(1, "day").toDate() } },
+            {
+              $or: [
+                {
+                  lastActivity: {
+                    $ne: null,
+                    $lte: dayjs().subtract(1, "day").toDate(),
+                  },
+                },
+                {
+                  lastActivity: null,
+                  createdAt: { $lte: dayjs().subtract(1, "day").toDate() },
+                },
+              ],
+            },
             { remindedAt: null },
             { closedAt: null },
             { "ignoreFlags.reminder": { $ne: true } },
@@ -48,7 +61,7 @@ export async function processSupportPostsWithRetry(): Promise<void> {
         null,
         {
           limit: BATCH_SIZE,
-          sort: { lastActivity: 1 },
+          sort: { lastActivity: 1, createdAt: 1 },
         }
       );
 

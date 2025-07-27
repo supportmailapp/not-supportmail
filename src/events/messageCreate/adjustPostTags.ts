@@ -1,7 +1,7 @@
 import { ChannelType, Message } from "discord.js";
 
-import { SupportPost } from "../../models/supportPost.js";
 import config from "../../config.js";
+import { SupportPost } from "../../models/supportPost.js";
 import { updateDBUsername } from "../../utils/main.js";
 
 /**
@@ -21,21 +21,14 @@ export default async function adjustPostTags(message: Message) {
       return;
     }
 
-    // Always update lastActivity for any message in the thread
-    const updateQuery = {} as any;
-
     // If this is the author responding after being reminded, clear the reminder
     if (message.author.id === supportPost.author) {
-      updateQuery.$set = {
-        lastActivity: new Date(),
-        remindedAt: null,
-      };
-    }
-
-    await supportPost.updateOne(updateQuery);
-
-    // If the message is from the author, we're done (no tag changes needed)
-    if (message.author.id === supportPost.author) {
+      await supportPost.updateOne({
+        $set: {
+          lastActivity: new Date(),
+          remindedAt: null,
+        },
+      });
       return;
     }
 
