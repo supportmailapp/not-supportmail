@@ -12,14 +12,14 @@ export default async function (
 ) {
   if (oldMember.roles.cache.size === member.roles.cache.size) return;
 
-  const addedRoles = member.roles.cache
+  const addedRoleIds = member.roles.cache
     .filter((role) => !oldMember.roles.cache.has(role.id))
     .map((role) => role.id);
   const removedRoles = oldMember.roles.cache
     .filter((role) => !member.roles.cache.has(role.id))
     .map((role) => role.id);
 
-  if (addedRoles.length === 0 && removedRoles.length === 0) return;
+  if (addedRoleIds.length === 0 && removedRoles.length === 0) return;
 
   // Determine if join roles should be applied based on cache
   await delay(2_000); // Wait for the audit log handler to finish first
@@ -30,8 +30,15 @@ export default async function (
     return;
   }
 
-  // Check if join roles should be applied
-  const rolesToApply = addedRoles.filter((role) => joinRoles.has(role));
+  // Check if join roles should be applied (missing roles)
+  // Differentiate between bot (bot) and human (!bot) roles
+  const isBot = member.user.bot;
+  const rolesToApply = addedRoleIds.filter((roleId) => {
+    const jr = joinRoles.get(roleId);
+    if (!jr) return false; // Skip if role config doesn't exist
+
+    return isBot ? jr.bot : !jr.bot;
+  });
   if (rolesToApply.length === 0) return;
 
   // Store which roles should be applied in cache
