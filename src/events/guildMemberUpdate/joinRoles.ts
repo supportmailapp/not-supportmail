@@ -18,8 +18,8 @@ export default async function (
     isBot: member.user.bot,
   });
 
-  if (oldMember.pending && !member.pending) {
-    Sentry.logger.debug("Member is no longer pending, processing join roles");
+  if (!oldMember.pending || member.pending) {
+    Sentry.logger.debug("Member is still was not pending or is still pending, skipping join roles");
     return;
   }
 
