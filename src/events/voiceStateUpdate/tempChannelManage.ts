@@ -499,16 +499,3 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
     Sentry.captureException(error);
   }
 }
-
-// Graceful shutdown
-process.on("SIGINT", () => {
-  console.debug("[TempChannel] Shutting down, canceling scheduled job");
-  databaseUpdateJob?.cancel();
-  process.exit(0);
-});
-
-process.on("SIGTERM", () => {
-  console.debug("[TempChannel] Shutting down, canceling scheduled job");
-  databaseUpdateJob?.cancel();
-  process.exit(0);
-});
