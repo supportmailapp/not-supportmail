@@ -10,16 +10,7 @@ export default async function (
   oldMember: ClientEvents["guildMemberUpdate"][0],
   member: ClientEvents["guildMemberUpdate"][1]
 ) {
-  if (oldMember.roles.cache.size === member.roles.cache.size) return;
-
-  const addedRoleIds = member.roles.cache
-    .filter((role) => !oldMember.roles.cache.has(role.id))
-    .map((role) => role.id);
-  const removedRoles = oldMember.roles.cache
-    .filter((role) => !member.roles.cache.has(role.id))
-    .map((role) => role.id);
-
-  if (addedRoleIds.length === 0 && removedRoles.length === 0) return;
+  if (oldMember.pending && !member.pending) return;
 
   // Determine if join roles should be applied based on cache
   await delay(2_000); // Wait for the audit log handler to finish first
@@ -33,16 +24,20 @@ export default async function (
   // Check if join roles should be applied (missing roles)
   // Differentiate between bot (bot) and human (!bot) roles
   const isBot = member.user.bot;
-  const rolesToApply = addedRoleIds.filter((roleId) => {
-    const jr = joinRoles.get(roleId);
+  const rolesToApply = member.roles.cache.filter((role) => {
+    const jr = joinRoles.get(role.id);
     if (!jr) return false; // Skip if role config doesn't exist
 
     return isBot ? jr.bot : !jr.bot;
   });
-  if (rolesToApply.length === 0) return;
+  if (rolesToApply.size === 0) return;
 
   // Store which roles should be applied in cache
-  joinRolesCache.set(member.guild.id, member.id, rolesToApply);
+  joinRolesCache.set(
+    member.guild.id,
+    member.id,
+    rolesToApply.map((role) => role.id)
+  );
 
   // Wait 8 seconds
   await delay(8_000);
