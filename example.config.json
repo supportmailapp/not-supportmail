@@ -41,5 +41,12 @@
       "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
       "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"]
     }
+  },
+  "joinRoles": {
+    "<RoleId>": {
+      "notes": "some notes for something",
+      "bot": true, // If true, only bots can get this role
+      "delay": 0 // Delay in seconds before the role is assigned
+    }
   }
 }

@@ -4,6 +4,8 @@ const config = (
   })
 ).default;
 
+export type ConfigType = typeof config;
+
 export default {
   ...config,
   tags: {
