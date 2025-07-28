@@ -1,10 +1,10 @@
 import * as Sentry from "@sentry/node";
-import type { ClientEvents } from "discord.js";
+import { Collection, type ClientEvents } from "discord.js";
 import joinRolesCache from "../../caches/joinRoles.js";
 import config from "../../config.js";
 import { delay } from "../../utils/main.js";
 
-const joinRoles = new Map(Object.entries(config.joinRoles));
+const joinRoles = new Collection(Object.entries(config.joinRoles));
 
 export default async function (
   oldMember: ClientEvents["guildMemberUpdate"][0],
@@ -19,7 +19,9 @@ export default async function (
   });
 
   if (!oldMember.pending || member.pending) {
-    Sentry.logger.debug("Member is still was not pending or is still pending, skipping join roles");
+    Sentry.logger.debug(
+      "Member is still was not pending or is still pending, skipping join roles"
+    );
     return;
   }
 
@@ -42,18 +44,18 @@ export default async function (
   // Check if join roles should be applied (missing roles)
   // Differentiate between bot (bot) and human (!bot) roles
   const isBot = member.user.bot;
-  const rolesToApply = member.roles.cache.filter((role) => {
-    const jr = joinRoles.get(role.id);
-    if (!jr) return false; // Skip if role config doesn't exist
-
-    return isBot ? jr.bot : !jr.bot;
+  const rolesToApply = joinRoles.filter((role, rid) => {
+    const hasRole = member.roles.cache.has(rid);
+    if (hasRole) return false; // Skip if already has the role
+    return isBot ? role.bot : !role.bot;
   });
+  const roleIds = rolesToApply.map((_, id) => id);
 
   Sentry.logger.debug("Filtered roles to apply", {
     userId: member.id,
     isBot,
     rolesToApplyCount: rolesToApply.size,
-    rolesToApplyIds: rolesToApply.map((r) => r.id),
+    rolesToApplyIds: roleIds,
   });
 
   if (rolesToApply.size === 0) {
@@ -62,7 +64,6 @@ export default async function (
   }
 
   // Store which roles should be applied in cache
-  const roleIds = rolesToApply.map((role) => role.id);
   joinRolesCache.set(member.guild.id, member.id, roleIds);
 
   Sentry.logger.debug("Stored roles in cache", {
