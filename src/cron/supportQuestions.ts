@@ -117,7 +117,7 @@ export async function processSupportPostsWithRetry(): Promise<void> {
       // Close posts with concurrency limit
       const closePromises = postsToClose.map((post) =>
         rest
-          .patch(Routes.guildChannels(post.postId), {
+          .patch(Routes.channel(post.postId), {
             body: {
               applied_tags: [config.tags.solved],
             },
