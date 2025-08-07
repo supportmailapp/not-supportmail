@@ -31,7 +31,7 @@
     "@types/humanize-duration": "^3.27.4",
     "@types/node-schedule": "^2.1.8"
   },
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=10.0.0"
