@@ -6,7 +6,6 @@ import {
   Client,
   Collection,
   IntentsBitField,
-  MessageFlags,
   Options,
   Partials,
   SlashCommandBuilder,
@@ -21,6 +20,10 @@ import { betterstackClient, isBetterStackEnabled } from "./utils/incidents.js";
 import { startSupportPostSyncCron } from "./cron/supportQuestions.js";
 
 import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
+import {
+  ComponentsV2Flags,
+  EphemeralComponentsV2Flags,
+} from "./utils/enums.js";
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
@@ -180,7 +183,7 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.replied || interaction.deferred) {
         await interaction
           .editReply({
-            flags: MessageFlags.IsComponentsV2,
+            flags: ComponentsV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
                 "There was an error while executing this command!"
@@ -191,7 +194,7 @@ client.on("interactionCreate", async (interaction) => {
       } else {
         await interaction
           .reply({
-            flags: MessageFlags.IsComponentsV2 | 64,
+            flags: EphemeralComponentsV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
                 "There was an error while executing this command!"
@@ -228,21 +231,21 @@ client.on("interactionCreate", async (interaction) => {
       ) {
         await interaction
           .editReply({
-            flags: MessageFlags.IsComponentsV2,
+            flags: ComponentsV2Flags,
             components: [new TextDisplayBuilder().setContent(replyContent)],
           })
           .catch(() => {});
       } else if (interaction.isModalSubmit()) {
         await interaction
           .reply({
-            flags: MessageFlags.IsComponentsV2 | 64,
+            flags: EphemeralComponentsV2Flags,
             components: [new TextDisplayBuilder().setContent(replyContent)],
           })
           .catch(() => {});
       } else {
         await interaction
           .reply({
-            flags: MessageFlags.IsComponentsV2 | 64,
+            flags: EphemeralComponentsV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
                 "There was an error while executing this component!"
@@ -255,7 +258,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-client.on("ready", async (client) => {
+client.once("clientReady", async (client) => {
   console.info(
     `[${new Date().toLocaleString("en")}] Logged in as ${client.user.tag} | ${
       client.user.id
