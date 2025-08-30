@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   Client,
   Collection,
-  IntentsBitField,
+  GatewayIntentBits,
   Options,
   Partials,
   SlashCommandBuilder,
@@ -30,16 +30,17 @@ const _dirname = getDirname(_filename);
 
 var client = new Client({
   intents: [
-    IntentsBitField.Flags.Guilds,
-    IntentsBitField.Flags.GuildMembers,
-    IntentsBitField.Flags.MessageContent,
-    IntentsBitField.Flags.GuildMessages,
-    IntentsBitField.Flags.GuildWebhooks,
-    IntentsBitField.Flags.AutoModerationConfiguration,
-    IntentsBitField.Flags.AutoModerationExecution,
-    IntentsBitField.Flags.DirectMessages,
-    IntentsBitField.Flags.GuildModeration,
-    IntentsBitField.Flags.GuildVoiceStates,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildWebhooks,
+    GatewayIntentBits.AutoModerationConfiguration,
+    GatewayIntentBits.AutoModerationExecution,
+    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessageReactions,
   ],
 
   makeCache: Options.cacheWithLimits({
