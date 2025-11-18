@@ -1,12 +1,17 @@
 import {
   ChannelType,
+  Colors,
+  ContainerBuilder,
   SlashCommandBuilder,
   TextDisplayBuilder,
   type ChatInputCommandInteraction,
   type GuildMember,
 } from "discord.js";
 import { canUpdateSupportPost } from "../utils/main.js";
-import { EphemeralComponentsV2Flags } from "../utils/enums.js";
+import {
+  ComponentsV2Flags,
+  EphemeralComponentsV2Flags,
+} from "../utils/enums.js";
 import config from "../config.js";
 
 export default {
@@ -77,7 +82,18 @@ export default {
         }
         const newTags = currentTags.concat([config.tags.solved]);
         await ctx.channel.setAppliedTags(newTags);
-        break;
+        return ctx.editReply({
+          flags: ComponentsV2Flags,
+          components: [
+            new ContainerBuilder()
+              .setAccentColor(Colors.Green)
+              .addTextDisplayComponents((t) =>
+                t.setContent(
+                  "### ✅ The post has been marked as solved.\nThank y'all for helping!"
+                )
+              ),
+          ],
+        });
       case "unsolve":
         const existingTags = ctx.channel.appliedTags || [];
         if (!existingTags.includes(config.tags.solved)) {
@@ -87,7 +103,21 @@ export default {
           (tag) => tag !== config.tags.solved
         );
         await ctx.channel.setAppliedTags(updatedTags);
-        break;
+        return ctx.editReply({
+          flags: ComponentsV2Flags,
+          components: [
+            new ContainerBuilder()
+              .setAccentColor(Colors.DarkBlue)
+              .addTextDisplayComponents((t) =>
+                t.setContent(
+                  "### 🔓 The post has been unsolved." +
+                    (threadOwner === ctx.user.id
+                      ? `\n<@${threadOwner}>, please respond why you have unsolved your post.`
+                      : "")
+                )
+              ),
+          ],
+        });
       case "dev":
         const devTags = ctx.channel.appliedTags || [];
         if (devTags.includes(config.tags.dev)) {
@@ -101,7 +131,18 @@ export default {
         }
         const newDevTags = devTags.concat([config.tags.dev]);
         await ctx.channel.setAppliedTags(newDevTags);
-        break;
+        return ctx.editReply({
+          flags: ComponentsV2Flags,
+          components: [
+            new ContainerBuilder()
+              .setAccentColor(Colors.Orange)
+              .addTextDisplayComponents((t) =>
+                t.setContent(
+                  "### 🛠️ The post has been marked for developer review.\nA developer will look into this as soon as possible. Please be patient OP."
+                )
+              ),
+          ],
+        });
       default:
         await ctx.reply({
           content: "Unknown subcommand.",
