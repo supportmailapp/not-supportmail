@@ -16,14 +16,14 @@
   "type": "module",
   "dependencies": {
     "@sapphire/snowflake": "^3.5.5",
-    "@sentry/cli": "^2.47.0",
-    "@sentry/node": "^9.38.0",
-    "dayjs": "^1.11.13",
-    "discord.js": "^14.22.1",
+    "@sentry/cli": "^2.58.2",
+    "@sentry/node": "^9.47.1",
+    "dayjs": "^1.11.19",
+    "discord.js": "^14.25.0",
     "djs-command-helper": "^4.2.2",
-    "humanize-duration": "^3.33.0",
-    "ky": "^1.8.1",
-    "mongoose": "^8.16.3",
+    "humanize-duration": "^3.33.1",
+    "ky": "^1.14.0",
+    "mongoose": "^8.20.0",
     "node-cache": "^5.1.2",
     "node-schedule": "^2.1.1"
   },
@@ -31,7 +31,7 @@
     "@types/humanize-duration": "^3.27.4",
     "@types/node-schedule": "^2.1.8"
   },
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.22.0",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=10.0.0"
