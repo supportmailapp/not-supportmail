@@ -5,23 +5,26 @@ import {
   type ChatInputCommandInteraction,
   type GuildMember,
 } from "discord.js";
-import { SupportPost } from "../models/supportPost.js";
 import { canUpdateSupportPost } from "../utils/main.js";
-import * as SolveSubcommand from "./utils/supportQuestions/solve.js";
-import * as UnsolveSubcommand from "./utils/supportQuestions/unsolve.js";
-import * as DevSubcommand from "./utils/supportQuestions/dev.js";
-import * as PrioritySubcommand from "./utils/supportQuestions/priority.js";
 import { EphemeralComponentsV2Flags } from "../utils/enums.js";
+import config from "../config.js";
 
 export default {
   data: new SlashCommandBuilder()
     .setName("question")
     .setDescription("Manage support questions")
     .setContexts(0)
-    .addSubcommand(SolveSubcommand.data)
-    .addSubcommand(UnsolveSubcommand.data)
-    .addSubcommand(DevSubcommand.data)
-    .addSubcommand(PrioritySubcommand.data),
+    .addSubcommand((sub) =>
+      sub.setName("solve").setDescription("Mark the post as solved")
+    )
+    .addSubcommand((sub) =>
+      sub.setName("unsolve").setDescription("Mark the post as unsolved")
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("dev")
+        .setDescription("Mark the post for review by a developer")
+    ),
 
   async run(ctx: ChatInputCommandInteraction) {
     if (
@@ -37,25 +40,13 @@ export default {
 
     if (!ctx.inCachedGuild()) await ctx.guild!.fetch();
 
-    const supportPost = await SupportPost.findOne({
-      postId: ctx.channel.id,
-    });
-
-    if (!supportPost) {
-      return await ctx.reply({
-        content: "This post is not a support question.",
-        flags: 64,
-      });
-    }
-
     const subcommand = ctx.options.getSubcommand();
 
     // Check if the user can update the support post
+    const threadOwner = ctx.channel.ownerId;
     const isAllowedToUpdate = !canUpdateSupportPost(
       ctx.member as GuildMember,
-      subcommand === "solve" || subcommand === "unsolve"
-        ? supportPost.author
-        : null
+      subcommand === "solve" || subcommand === "unsolve" ? threadOwner : null
     );
 
     if (isAllowedToUpdate) {
@@ -76,18 +67,40 @@ export default {
       return;
     }
 
+    await ctx.deferReply({ flags: 64 });
+
     switch (subcommand) {
       case "solve":
-        await SolveSubcommand.handler(ctx, ctx.channel, supportPost);
+        const currentTags = ctx.channel.appliedTags || [];
+        if (currentTags.includes(config.tags.solved)) {
+          return ctx.editReply("This post is already marked as solved.");
+        }
+        const newTags = currentTags.concat([config.tags.solved]);
+        await ctx.channel.setAppliedTags(newTags);
         break;
       case "unsolve":
-        await UnsolveSubcommand.handler(ctx, ctx.channel, supportPost);
+        const existingTags = ctx.channel.appliedTags || [];
+        if (!existingTags.includes(config.tags.solved)) {
+          return ctx.editReply("This post is not marked as solved.");
+        }
+        const updatedTags = existingTags.filter(
+          (tag) => tag !== config.tags.solved
+        );
+        await ctx.channel.setAppliedTags(updatedTags);
         break;
       case "dev":
-        await DevSubcommand.handler(ctx, ctx.channel, supportPost);
-        break;
-      case "priority":
-        await PrioritySubcommand.handler(ctx, ctx.channel, supportPost);
+        const devTags = ctx.channel.appliedTags || [];
+        if (devTags.includes(config.tags.dev)) {
+          return ctx.editReply(
+            "This post is already marked for developer review."
+          );
+        } else if (devTags.includes(config.tags.solved)) {
+          return ctx.editReply(
+            "A solved post cannot be marked for developer review. Unsolve it first."
+          );
+        }
+        const newDevTags = devTags.concat([config.tags.dev]);
+        await ctx.channel.setAppliedTags(newDevTags);
         break;
       default:
         await ctx.reply({

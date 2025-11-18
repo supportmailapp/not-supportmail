@@ -16,8 +16,6 @@ import { deployCommands } from "djs-command-helper";
 import mongoose from "mongoose";
 import * as Sentry from "@sentry/node";
 import { parseCustomId } from "./utils/main.js";
-import { betterstackClient, isBetterStackEnabled } from "./utils/incidents.js";
-import { startSupportPostSyncCron } from "./cron/supportQuestions.js";
 
 import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
 import {
@@ -295,12 +293,5 @@ process
 
     client.login(process.env.BOT_TOKEN);
     Sentry.logger.info("Bot started");
-
-    // Start cron jobs
-    await startSupportPostSyncCron();
-
-    if (isBetterStackEnabled() && betterstackClient) {
-      await betterstackClient.start();
-    }
   });
 })();

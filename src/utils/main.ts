@@ -3,15 +3,9 @@ import {
   APIEmbed,
   Client,
   GuildMember,
-  PublicThreadChannel,
-  SlashCommandStringOption,
   StringSelectMenuBuilder,
-  ThreadAutoArchiveDuration,
 } from "discord.js";
-import { HydratedDocument } from "mongoose";
 import type { PartialMember } from "../caches/helpfulUsers.js";
-import config from "../config.js";
-import { ISupportPost, SupportPost } from "../models/supportPost.js";
 import { DBUser } from "../models/user.js";
 
 type ParsedCustomId = {
@@ -179,59 +173,6 @@ export function buildHelpfulResponse(postId: string, members: PartialMember[]) {
 }
 
 /**
- * Creates a slash command string option for priority selection.
- *
- * @param required - Whether the priority option is required. Defaults to false.
- * @returns A SlashCommandStringOption configured with priority choices (P0-High, P1-Medium, P2-Low)
- */
-export const PriorityOption = (required = false) => {
-  return new SlashCommandStringOption()
-    .setName("priority")
-    .setDescription("Priority of the support question")
-    .setRequired(required)
-    .addChoices(
-      { name: "P0 (High)", value: "P0" },
-      { name: "P1 (Medium)", value: "P1" },
-      { name: "P2 (Low)", value: "P2" }
-    );
-};
-
-/**
- * Sets the priority level for a support post and optionally updates the associated Discord channel.
- *
- * @param post - The hydrated support post document to update
- * @param priority - The priority level to set for the support post
- * @param channel - Optional Discord thread channel to update with priority tags
- * @returns Promise that resolves to the tag ID for the set priority level
- * @throws {Error} When an invalid priority level is provided or updating the channel fails
- */
-export async function setPostPriority(
-  post: HydratedDocument<ISupportPost>,
-  priority: PriorityLevel,
-  channel?: PublicThreadChannel
-) {
-  const tagId = config.priorityTags[priority];
-  if (!tagId) {
-    throw new Error(`Invalid priority level: ${priority} (HOW???)`);
-  }
-
-  await SupportPost.updateOne({ id: post.id }, { priority: priority });
-
-  if (channel) {
-    const tags = [
-      ...filterExternalPostTags(channel.appliedTags, "priority"),
-      tagId,
-    ];
-    await channel.edit({
-      appliedTags: tags,
-      autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-    });
-    return tagId;
-  }
-  return tagId;
-}
-
-/**
  * Retrieves a Discord command mention string for the specified command name.
  *
  * @param commandName - The name of the command to get a mention for. Can include subcommands separated by spaces.
@@ -257,43 +198,6 @@ export async function getCommandMention(commandName: string, client: Client) {
   }
 
   return cmd ? `</${commandName}:${cmd.id}>` : `\`/${commandName}\``;
-}
-
-/**
- * List of internal tag IDs that are used by the system.
- */
-export const InternalTags = Object.values(config.tags).concat(
-  Object.values(config.priorityTags)
-);
-
-/**
- * Filters out internal tags from an array of applied tags based on the specified type.
- *
- * @param appliedTags - Array of tag strings to filter
- * @param type - Type of filtering to apply:
- *   - "priority": Filters out priority tags from `config.priorityTags`
- *   - "support": Filters out support tags from `config.tags`
- *   - "all": Filters out all internal tags from `InternalTags` array
- * @returns Filtered array of tags with internal tags removed
- *
- * @remarks
- * This function is useful for ensuring that external tags are preserved while internal tags are removed.
- */
-export function filterExternalPostTags(
-  appliedTags: string[],
-  type: "support" | "priority" | "all" = "all"
-) {
-  if (type === "priority") {
-    return appliedTags.filter(
-      (tag) => !Object.values(config.priorityTags).includes(tag)
-    );
-  } else if (type === "support") {
-    return appliedTags.filter(
-      (tag) => !Object.values(config.tags).includes(tag)
-    );
-  } else {
-    return appliedTags.filter((tag) => !InternalTags.includes(tag));
-  }
 }
 
 /**

@@ -4,10 +4,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import NodeCache from "node-cache";
-import { FeatureRequest } from "../models/featureRequest.js";
-import { SupportPost } from "../models/supportPost.js";
 import { DBUser } from "../models/user.js";
-import { FeatureRequestStatus } from "../utils/enums.js";
 
 const cache = new NodeCache({
   stdTTL: 600,
@@ -53,71 +50,17 @@ export default {
       });
     }
 
-    // Get feature request stats
-    const featureRequests = await FeatureRequest.find({
-      userId: targetUser.id,
-    });
-    const filterFRs = (status: FeatureRequestStatus) => {
-      return featureRequests
-        .filter((fr) => fr.status === status)
-        .length.toString();
-    };
-    const frStats = {
-      all: featureRequests.length.toString(),
-      implemented: filterFRs(FeatureRequestStatus.Implemented),
-      pending: filterFRs(FeatureRequestStatus.Pending),
-      accepted: filterFRs(FeatureRequestStatus.Accepted),
-      denied: filterFRs(FeatureRequestStatus.Denied),
-    };
-
-    // Get support post stats
-    const supportPosts = await SupportPost.countDocuments({
-      author: targetUser.id,
-    });
-    const helpfulCount = await SupportPost.countDocuments({
-      helped: { $in: [targetUser.id] },
-    });
-
-    if (!supportPosts && !helpfulCount && !featureRequests.length) {
-      await ctx.reply({
-        content: `${
-          targetUser.id === ctx.user.id
-            ? "You haven't"
-            : `${targetUser.username} hasn't`
-        } contributed yet!`,
-        flags: 64,
-      });
-      return;
-    }
-
     const statsEmbed = new EmbedBuilder()
       .setAuthor({ name: "User Statistics" })
-      .setTitle(targetMember.displayName || targetUser.username)
+      .setTitle(
+        targetMember.displayName || targetUser.globalName || targetUser.username
+      )
       .setThumbnail(targetUser.avatarURL() || targetUser.defaultAvatarURL)
       .setColor(0xff5733)
       .addFields([
         {
           name: "__Bugs Reported__",
           value: `- \`${dbUser.stats.bugsReported}\``,
-          inline: false,
-        },
-        {
-          name: "__Support Posts__",
-          value: [
-            `- Created: \`${supportPosts}\` posts`,
-            `- Commendations: \`${helpfulCount}\``,
-          ].join("\n"),
-          inline: false,
-        },
-        {
-          name: "__Feature Requests__",
-          value: [
-            `- All: \`${frStats.all}\``,
-            `- Implemented: \`${frStats.implemented}\``,
-            `- Pending: \`${frStats.pending}\``,
-            `- Accepted: \`${frStats.accepted}\``,
-            `- Denied: \`${frStats.denied}\``,
-          ].join("\n"),
           inline: false,
         },
       ])

@@ -9,29 +9,15 @@ export type ConfigType = typeof config;
 export default {
   ...config,
   tags: {
-    unanswered: process.env.TAG_UNANSWERED,
-    unsolved: process.env.TAG_UNSOLVED,
     solved: process.env.TAG_SOLVED,
-    review: process.env.TAG_REVIEW,
-  },
-  priorityTags: {
-    P0: process.env.TAG_PRIORITY_P0,
-    P1: process.env.TAG_PRIORITY_P1,
-    P2: process.env.TAG_PRIORITY_P2,
+    dev: process.env.TAG_DEV,
   },
 } as typeof config & {
   autoThreadedChannels: { [key: string]: ThreadConfig };
   autoPublishChannels: { [key: string]: ChannelConfig };
   tags: {
-    unanswered: string;
-    unsolved: string;
     solved: string;
-    review: string;
-  };
-  priorityTags: {
-    P0: string;
-    P1: string;
-    P2: string;
+    dev: string;
   };
 };
 
