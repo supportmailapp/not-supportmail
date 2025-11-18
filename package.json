@@ -1,7 +1,7 @@
 {
   "name": "not-supportmail",
   "private": true,
-  "version": "1.17.0",
+  "version": "2.0.0",
   "description": "SupportMail Management Bot",
   "main": "./dist/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "build": "npx tsc && pnpm sentry:sourcemaps",
     "dev": "npx tsc && node --env-file=.env.dev ./dist/index.js",
     "start": "pnpm build && node --env-file=.env.production ./dist/index.js",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org lukez-dev --project not-supportmail --release=1.17.0 ./dist && sentry-cli sourcemaps upload --org lukez-dev --project not-supportmail --release=1.17.0 ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org lukez-dev --project not-supportmail --release=2.0.0 ./dist && sentry-cli sourcemaps upload --org lukez-dev --project not-supportmail --release=2.0.0 ./dist"
   },
   "author": "supportmailapp",
   "license": "ISC",
