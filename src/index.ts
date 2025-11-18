@@ -3,6 +3,7 @@ import { dirname as getDirname, join as pathJoin } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  ActivityType,
   Client,
   Collection,
   GatewayIntentBits,
@@ -51,6 +52,16 @@ var client = new Client({
   partials: [Partials.Channel],
 
   allowedMentions: { parse: ["users", "roles"], repliedUser: false },
+
+  presence: {
+    activities: [
+      {
+        type: ActivityType.Listening,
+        name: "🎶 All I Want For Christmas Is You 🎶",
+      },
+    ],
+    status: "online",
+  },
 });
 
 type CommandFile = {
@@ -291,7 +302,7 @@ process
   mongoose.connect(process.env.MONGO_URI!).then(async () => {
     Sentry.logger.info("Connected to DB");
 
-    client.login(process.env.BOT_TOKEN);
+    await client.login(process.env.BOT_TOKEN);
     Sentry.logger.info("Bot started");
   });
 })();
