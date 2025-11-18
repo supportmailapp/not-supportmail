@@ -29,7 +29,8 @@
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",
-    "@types/node-schedule": "^2.1.8"
+    "@types/node-schedule": "^2.1.8",
+    "typescript": "^5.9.3"
   },
   "packageManager": "pnpm@10.22.0",
   "engines": {
