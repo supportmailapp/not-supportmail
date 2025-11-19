@@ -1,5 +1,4 @@
 import {
-  ApplicationIntegrationType,
   ChannelType,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
@@ -10,7 +9,6 @@ export default {
     .setName("deep-clone-channel")
     .setDescription("Deeply clones a channel for you")
     .setContexts(0)
-    .setIntegrationTypes(ApplicationIntegrationType.GuildInstall)
     .setDefaultMemberPermissions(32)
     .addChannelOption((op) =>
       op
