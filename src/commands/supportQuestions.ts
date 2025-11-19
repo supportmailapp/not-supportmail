@@ -7,12 +7,47 @@ import {
   type ChatInputCommandInteraction,
   type GuildMember,
 } from "discord.js";
-import { canUpdateSupportPost } from "../utils/main.js";
+import config from "../config.js";
 import {
   ComponentsV2Flags,
   EphemeralComponentsV2Flags,
 } from "../utils/enums.js";
-import config from "../config.js";
+import { canUpdateSupportPost } from "../utils/main.js";
+
+// Helper functions
+function hasTag(tags: string[], tagId: string): boolean {
+  return tags.includes(tagId);
+}
+
+function addTag(tags: string[], tagId: string): string[] {
+  return tags.concat([tagId]);
+}
+
+function removeTag(tags: string[], tagId: string): string[] {
+  return tags.filter((tag) => tag !== tagId);
+}
+
+function createStatusMessage(color: number, content: string) {
+  return {
+    flags: ComponentsV2Flags,
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(color)
+        .addTextDisplayComponents((t) => t.setContent(content)),
+    ],
+  };
+}
+
+async function replyOrDelete(
+  ctx: ChatInputCommandInteraction,
+  message: string,
+  isThreadOwner: boolean
+) {
+  if (isThreadOwner) {
+    return ctx.deleteReply();
+  }
+  return ctx.editReply(message);
+}
 
 export default {
   data: new SlashCommandBuilder()
@@ -33,7 +68,31 @@ export default {
     .addSubcommand((sub) =>
       sub
         .setName("wrong-channel")
-        .setDescription("Mark the post as being in the wrong channel")
+        .setDescription(
+          "Mark the post as being in the wrong channel | Locks the post!"
+        )
+        .addChannelOption((op) =>
+          op
+            .setName("correct-channel")
+            .setDescription(
+              "The correct channel for this question | Ignored, when open-ticket is True"
+            )
+            .setRequired(false)
+            .addChannelTypes(
+              ChannelType.GuildText,
+              ChannelType.GuildForum,
+              ChannelType.PublicThread,
+              ChannelType.GuildVoice
+            )
+        )
+        .addBooleanOption((op) =>
+          op
+            .setName("open-ticket")
+            .setDescription(
+              "If True, adds a note for the user to open a ticket "
+            )
+            .setRequired(false)
+        )
     ),
 
   async run(ctx: ChatInputCommandInteraction) {
@@ -54,12 +113,12 @@ export default {
 
     // Check if the user can update the support post
     const threadOwner = ctx.channel.ownerId;
-    const isAllowedToUpdate = !canUpdateSupportPost(
+    const canUpdate = canUpdateSupportPost(
       ctx.member as GuildMember,
       subcommand === "solve" || subcommand === "unsolve" ? threadOwner : null
     );
 
-    if (isAllowedToUpdate) {
+    if (!canUpdate) {
       const reason =
         subcommand === "solve" || subcommand === "unsolve"
           ? "Only the author or a staff member can do this."
@@ -79,82 +138,111 @@ export default {
 
     await ctx.deferReply({ flags: 64 });
 
+    const currentTags = ctx.channel.appliedTags || [];
+    const isThreadOwner = threadOwner === ctx.user.id;
+
     switch (subcommand) {
       case "solve":
-        const currentTags = ctx.channel.appliedTags || [];
-        if (currentTags.includes(config.tags.solved)) {
+        if (hasTag(currentTags, config.supportTags.solved)) {
           return ctx.editReply("This post is already marked as solved.");
         }
-        const newTags = currentTags.concat([config.tags.solved]);
-        await ctx.channel.setAppliedTags(newTags);
-        return ctx.editReply({
-          flags: ComponentsV2Flags,
-          components: [
-            new ContainerBuilder()
-              .setAccentColor(Colors.Green)
-              .addTextDisplayComponents((t) =>
-                t.setContent(
-                  "### ✅ The post has been marked as solved.\nThank y'all for helping!"
-                )
-              ),
-          ],
-        });
+
+        await ctx.channel.setAppliedTags(
+          addTag(currentTags, config.supportTags.solved)
+        );
+        await ctx.channel.send(
+          createStatusMessage(
+            Colors.Green,
+            "### ✅ The post has been marked as solved.\nThank y'all for helping!"
+          )
+        );
+
+        return replyOrDelete(ctx, "Post marked as solved.", isThreadOwner);
+
       case "unsolve":
-        const existingTags = ctx.channel.appliedTags || [];
-        if (!existingTags.includes(config.tags.solved)) {
+        if (!hasTag(currentTags, config.supportTags.solved)) {
           return ctx.editReply("This post is not marked as solved.");
         }
-        const updatedTags = existingTags.filter(
-          (tag) => tag !== config.tags.solved
+
+        await ctx.channel.setAppliedTags(
+          removeTag(currentTags, config.supportTags.solved)
         );
-        await ctx.channel.setAppliedTags(updatedTags);
-        return ctx.editReply({
-          flags: ComponentsV2Flags,
-          components: [
-            new ContainerBuilder()
-              .setAccentColor(Colors.DarkBlue)
-              .addTextDisplayComponents((t) =>
-                t.setContent(
-                  "### 🔓 The post has been unsolved." +
-                    (threadOwner === ctx.user.id
-                      ? `\n<@${threadOwner}>, please respond why you have unsolved your post.`
-                      : "")
-                )
-              ),
-          ],
-        });
+        await ctx.channel.send(
+          createStatusMessage(
+            Colors.DarkBlue,
+            "### 🔓 The post has been unsolved." +
+              (isThreadOwner
+                ? `\n<@${threadOwner}>, please respond why you have unsolved your post.`
+                : "")
+          )
+        );
+
+        return replyOrDelete(ctx, "Post marked as unsolved.", isThreadOwner);
+
       case "dev":
-        const devTags = ctx.channel.appliedTags || [];
-        if (devTags.includes(config.tags.dev)) {
+        if (hasTag(currentTags, config.supportTags.dev)) {
           return ctx.editReply(
             "This post is already marked for developer review."
           );
-        } else if (devTags.includes(config.tags.solved)) {
+        }
+        if (hasTag(currentTags, config.supportTags.solved)) {
           return ctx.editReply(
             "A solved post cannot be marked for developer review. Unsolve it first."
           );
         }
-        const newDevTags = devTags.concat([config.tags.dev]);
-        await ctx.channel.setAppliedTags(newDevTags);
-        return ctx.editReply({
-          flags: ComponentsV2Flags,
-          components: [
-            new ContainerBuilder()
-              .setAccentColor(Colors.Orange)
-              .addTextDisplayComponents((t) =>
-                t.setContent(
-                  "### 🛠️ The post has been marked for developer review.\nA developer will look into this as soon as possible. Please be patient OP."
-                )
-              ),
-          ],
+
+        await ctx.channel.setAppliedTags(
+          addTag(currentTags, config.supportTags.dev)
+        );
+        await ctx.channel.send(
+          createStatusMessage(
+            Colors.Orange,
+            "### 🛠️ The post has been marked for developer review.\nA developer will look into this as soon as possible. Please be patient OP."
+          )
+        );
+
+        return ctx.editReply("Post marked for developer review.");
+
+      case "wrong-channel":
+        if (hasTag(currentTags, config.supportTags.wrongChannel)) {
+          return ctx.editReply(
+            "This post is already marked as being in the wrong channel."
+          );
+        }
+
+        const correctChannel = ctx.options.getChannel(
+          "correct-channel",
+          false,
+          [
+            ChannelType.GuildText,
+            ChannelType.GuildForum,
+            ChannelType.PublicThread,
+            ChannelType.GuildVoice,
+          ]
+        );
+        const openTicket = ctx.options.getBoolean("open-ticket") ?? false;
+
+        let replyText = `### ✖️ This is the wrong channel for your question <@${threadOwner}>!`;
+        if (openTicket) {
+          replyText += `\n\nIf you need further assistance, please open a support ticket in <#${config.channels.ticketSupport}>.`;
+        } else if (correctChannel) {
+          replyText += `\n\nPlease use <#${correctChannel.id}> for your question.`;
+        }
+
+        await ctx.channel.send({
+          ...createStatusMessage(Colors.Red, replyText),
+          allowedMentions: { users: [threadOwner] },
         });
+
+        await ctx.editReply("Post marked as being in the wrong channel.");
+
+        return ctx.channel.edit({
+          locked: true,
+          appliedTags: addTag(currentTags, config.supportTags.wrongChannel),
+        });
+
       default:
-        await ctx.reply({
-          content: "Unknown subcommand.",
-          flags: 64,
-        });
-        break;
+        return ctx.editReply("Unknown subcommand.");
     }
-    return;
   },
 };
