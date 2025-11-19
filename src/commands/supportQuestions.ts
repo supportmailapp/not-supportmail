@@ -29,6 +29,11 @@ export default {
       sub
         .setName("dev")
         .setDescription("Mark the post for review by a developer")
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("wrong-channel")
+        .setDescription("Mark the post as being in the wrong channel")
     ),
 
   async run(ctx: ChatInputCommandInteraction) {
