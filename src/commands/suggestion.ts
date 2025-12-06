@@ -107,6 +107,15 @@ export default {
     // Remove old status tags before adding new one
     const tagsWithoutStatus = removeOldStatusTags(currentTags);
 
+    // add dev, if user has dev role
+    if (
+      process.env.ROLE_DEVELOPER &&
+      ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER) &&
+      !ctx.channel.members.cache.has(ctx.user.id)
+    ) {
+      await ctx.channel.members.add(ctx.user.id);
+    }
+
     switch (newStatus) {
       case "noted": {
         if (hasTag(currentTags, config.suggestionTags.noted)) {
