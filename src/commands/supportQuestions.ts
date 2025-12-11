@@ -149,7 +149,7 @@ export default {
         }
 
         await ctx.channel.edit({
-          appliedTags: addTag(currentTags, config.supportTags.solved)
+          appliedTags: addTag(currentTags, config.supportTags.solved),
           autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
         });
         await ctx.channel.send(
@@ -250,4 +250,5 @@ export default {
     }
   },
 };
+
 
