@@ -12,7 +12,7 @@ import {
 } from "discord.js";
 import { HydratedDocument } from "mongoose";
 import { ITempChannelCategory, TempChannel } from "../models/tempChannel.js";
-import { EphemeralComponentsV2Flags } from "./enums.js";
+import { EphemeralV2Flags } from "./enums.js";
 
 type LastChannelDataSuccess = {
   success: true;
@@ -250,11 +250,11 @@ export function buildCustomId(
 }
 
 export function ErrorResponse(content: string): {
-  flags: typeof EphemeralComponentsV2Flags;
+  flags: typeof EphemeralV2Flags;
   components: JSONEncodable<APIMessageTopLevelComponent>[];
 } {
   return {
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [
       new ContainerBuilder()
         .setAccentColor(Colors.Red)

@@ -3,8 +3,8 @@ import {
   SlashCommandBuilder,
   TextDisplayBuilder,
 } from "discord.js";
+import { EphemeralV2Flags } from "../utils/enums.js";
 import adminSend from "./utils/adminSend.js";
-import { EphemeralComponentsV2Flags } from "../utils/enums.js";
 
 export default {
   data: new SlashCommandBuilder()
@@ -42,7 +42,7 @@ export default {
         break;
       default:
         await ctx.reply({
-          flags: EphemeralComponentsV2Flags,
+          flags: EphemeralV2Flags,
           components: [
             new TextDisplayBuilder().setContent(
               "### :x: Invalid subcommand.\n" + "-# Please use `/admin send`."

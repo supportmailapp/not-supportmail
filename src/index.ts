@@ -13,16 +13,13 @@ import {
   TextDisplayBuilder,
 } from "discord.js";
 // @ts-ignore | Ignore because if we don't need it TS goes crazy
+import * as Sentry from "@sentry/node";
 import { deployCommands } from "djs-command-helper";
 import mongoose from "mongoose";
-import * as Sentry from "@sentry/node";
 import { parseCustomId } from "./utils/main.js";
 
+import { ComponentsV2Flags, EphemeralV2Flags } from "./utils/enums.js";
 import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
-import {
-  ComponentsV2Flags,
-  EphemeralComponentsV2Flags,
-} from "./utils/enums.js";
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
@@ -204,7 +201,7 @@ client.on("interactionCreate", async (interaction) => {
       } else {
         await interaction
           .reply({
-            flags: EphemeralComponentsV2Flags,
+            flags: EphemeralV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
                 "There was an error while executing this command!"
@@ -248,14 +245,14 @@ client.on("interactionCreate", async (interaction) => {
       } else if (interaction.isModalSubmit()) {
         await interaction
           .reply({
-            flags: EphemeralComponentsV2Flags,
+            flags: EphemeralV2Flags,
             components: [new TextDisplayBuilder().setContent(replyContent)],
           })
           .catch(() => {});
       } else {
         await interaction
           .reply({
-            flags: EphemeralComponentsV2Flags,
+            flags: EphemeralV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
                 "There was an error while executing this component!"
@@ -298,11 +295,10 @@ process
     Sentry.captureException(error);
   });
 
-(async function start() {
-  mongoose.connect(process.env.MONGO_URI!).then(async () => {
-    Sentry.logger.info("Connected to DB");
+await mongoose.connect(process.env.MONGO_URI!);
+Sentry.logger.info("Connected to DB");
 
-    await client.login(process.env.BOT_TOKEN);
-    Sentry.logger.info("Bot started");
-  });
-})();
+await client.login(process.env.BOT_TOKEN);
+Sentry.logger.info("Bot started");
+
+export { client };

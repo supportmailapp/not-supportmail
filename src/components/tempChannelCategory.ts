@@ -1,6 +1,6 @@
 import { ButtonInteraction, Colors } from "discord.js";
 import { TempChannelCategory } from "../models/tempChannel.js";
-import { EphemeralComponentsV2Flags } from "../utils/enums.js";
+import { EphemeralV2Flags } from "../utils/enums.js";
 import { parseCustomId } from "../utils/main.js";
 import { buildCategoryInfo, ErrorResponse } from "../utils/tempChannels.js";
 
@@ -25,7 +25,7 @@ async function showInfo(ctx: ButtonInteraction, categoryId: string) {
   }
 
   await ctx.reply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [buildCategoryInfo(category, true, Colors.Blue)],
   });
 }

@@ -6,10 +6,7 @@ import {
   type ChatInputCommandInteraction,
 } from "discord.js";
 import config from "../config.js";
-import {
-  ComponentsV2Flags,
-  EphemeralComponentsV2Flags,
-} from "../utils/enums.js";
+import { ComponentsV2Flags, EphemeralV2Flags } from "../utils/enums.js";
 
 // Helper functions
 function hasTag(tags: string[], tagId: string): boolean {
@@ -84,7 +81,7 @@ export default {
 
     if (!canUpdate) {
       await ctx.reply({
-        flags: EphemeralComponentsV2Flags,
+        flags: EphemeralV2Flags,
         components: [
           new ContainerBuilder()
             .setAccentColor(Colors.Red)

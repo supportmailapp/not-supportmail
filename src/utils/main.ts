@@ -1,12 +1,17 @@
 import {
   ActionRowBuilder,
   APIEmbed,
+  ButtonBuilder,
   Client,
+  Colors,
+  ContainerBuilder,
   GuildMember,
+  MessageCreateOptions,
   StringSelectMenuBuilder,
 } from "discord.js";
 import type { PartialMember } from "../caches/helpfulUsers.js";
 import { DBUser } from "../models/user.js";
+import { ComponentsV2Flags } from "./enums.js";
 
 type ParsedCustomId = {
   compPath: string[];
@@ -240,4 +245,57 @@ export function safeParseInt(
   } catch {
     return _defaultValue;
   }
+}
+
+export const voteMessage: MessageCreateOptions = {
+  flags: ComponentsV2Flags,
+  components: [
+    new ContainerBuilder()
+      .setAccentColor(0x0099ff)
+      .addTextDisplayComponents((t) =>
+        t.setContent(
+          [
+            "### Vote Rewards!",
+            "You can vote on top.gg every 12 hours for each bot. Follow the links below.",
+            "- You gain the Vote-Reward-Role for 24 hours every time you vote.",
+          ].join("\n")
+        )
+      ),
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder({
+        style: 5,
+        label: "Vote for Ticketon",
+        url: "https://top.gg/bot/1415608381372371047/vote",
+        emoji: {
+          id: "1440465809846829177",
+          name: "ticketon",
+        },
+      }),
+      new ButtonBuilder({
+        style: 5,
+        label: "Vote for SupportMail",
+        url: "https://top.gg/bot/1082707872565182614/vote",
+        emoji: {
+          id: "1248944135654739988",
+          name: "supportmail",
+        },
+      }),
+      new ButtonBuilder({
+        style: 5,
+        label: "Vote for UpvoteEngine",
+        url: "https://top.gg/bot/1435613778547834910/vote",
+        emoji: {
+          id: "1440466098624532705",
+          name: "upvote_engine",
+        },
+      })
+    ),
+  ],
+};
+
+export function randomColor() {
+  const values = Object.values(Colors).filter(
+    (v) => typeof v === "number"
+  ) as number[];
+  return values[Math.floor(Math.random() * values.length)]!;
 }

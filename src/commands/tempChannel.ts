@@ -12,12 +12,14 @@ import {
   SlashCommandStringOption,
   TextDisplayBuilder,
 } from "discord.js";
+import type { HydratedDocument } from "mongoose";
 import {
   ITempChannelCategory,
   TempChannel,
   TempChannelCategory,
 } from "../models/tempChannel.js";
-import { EphemeralComponentsV2Flags, EphemeralFlags } from "../utils/enums.js";
+import { EphemeralFlags, EphemeralV2Flags } from "../utils/enums.js";
+import { delay } from "../utils/main.js";
 import {
   buildCategoryInfo,
   createAndSaveTempChannel,
@@ -25,8 +27,6 @@ import {
   ErrorResponse,
   SuccessContainer,
 } from "../utils/tempChannels.js";
-import type { HydratedDocument } from "mongoose";
-import { delay } from "../utils/main.js";
 
 type CachedCommandInteraction = ChatInputCommandInteraction<"cached">;
 
@@ -186,7 +186,7 @@ async function run(ctx: CachedCommandInteraction) {
             "How did you even get here? This command does not exist!"
           ),
         ],
-        flags: EphemeralComponentsV2Flags,
+        flags: EphemeralV2Flags,
       });
       return;
   }
@@ -299,7 +299,7 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
   const container = buildCategoryInfo(newCategory, true, Colors.Green);
 
   await ctx.editReply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [
       SuccessContainer().addTextDisplayComponents(
         (t) =>
@@ -351,7 +351,7 @@ async function deleteCategory(ctx: CachedCommandInteraction): Promise<void> {
   });
 
   await ctx.reply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [
       SuccessContainer().addTextDisplayComponents(
         (t) =>
@@ -459,7 +459,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
   }
 
   await ctx.editReply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [
       SuccessContainer().addTextDisplayComponents((t) =>
         t.setContent(
@@ -533,7 +533,7 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
   });
 
   await ctx.reply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [
       SuccessContainer()
         .addTextDisplayComponents((t) =>
@@ -588,7 +588,7 @@ async function listCategoryChannels(
   const channelList = channels.map((c) => `- <#${c.channelId}>`).join("\n");
 
   await ctx.reply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [
       SuccessContainer().addTextDisplayComponents(
         (t) => t.setContent(`### \`${category.name}\``),
@@ -692,7 +692,7 @@ async function debugSingleCategory(
     );
 
   await ctx.editReply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [container],
   });
 }
@@ -778,7 +778,7 @@ async function debugAllCategories(
     );
 
   await ctx.editReply({
-    flags: EphemeralComponentsV2Flags,
+    flags: EphemeralV2Flags,
     components: [container],
   });
 }

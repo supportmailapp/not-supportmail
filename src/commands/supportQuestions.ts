@@ -8,10 +8,7 @@ import {
   type GuildMember,
 } from "discord.js";
 import config from "../config.js";
-import {
-  ComponentsV2Flags,
-  EphemeralComponentsV2Flags,
-} from "../utils/enums.js";
+import { ComponentsV2Flags, EphemeralV2Flags } from "../utils/enums.js";
 import { canUpdateSupportPost } from "../utils/main.js";
 
 // Helper functions
@@ -125,7 +122,7 @@ export default {
           : "Only a staff member can do this.";
 
       await ctx.reply({
-        flags: EphemeralComponentsV2Flags,
+        flags: EphemeralV2Flags,
         components: [
           new TextDisplayBuilder().setContent(
             "### :x: You are not authorized to mark this post for review by a developer.\n" +
