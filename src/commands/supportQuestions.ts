@@ -4,6 +4,7 @@ import {
   ContainerBuilder,
   SlashCommandBuilder,
   TextDisplayBuilder,
+  ThreadAutoArchiveDuration,
   type ChatInputCommandInteraction,
   type GuildMember,
 } from "discord.js";
@@ -144,9 +145,10 @@ export default {
           return ctx.editReply("This post is already marked as solved.");
         }
 
-        await ctx.channel.setAppliedTags(
-          addTag(currentTags, config.supportTags.solved)
-        );
+        await ctx.channel.edit({
+          appliedTags: addTag(currentTags, config.supportTags.solved),
+          autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
+        });
         await ctx.channel.send(
           createStatusMessage(
             Colors.Green,
@@ -161,9 +163,10 @@ export default {
           return ctx.editReply("This post is not marked as solved.");
         }
 
-        await ctx.channel.setAppliedTags(
-          removeTag(currentTags, config.supportTags.solved)
-        );
+        await ctx.channel.edit({
+          appliedTags: removeTag(currentTags, config.supportTags.solved),
+          autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
+        });
         await ctx.channel.send(
           createStatusMessage(
             Colors.DarkBlue,
@@ -236,6 +239,7 @@ export default {
         return ctx.channel.edit({
           locked: true,
           appliedTags: addTag(currentTags, config.supportTags.wrongChannel),
+          autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
         });
 
       default:
@@ -243,3 +247,5 @@ export default {
     }
   },
 };
+
+
