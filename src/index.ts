@@ -21,6 +21,8 @@ import { parseCustomId } from "./utils/main.js";
 import { ComponentsV2Flags, EphemeralV2Flags } from "./utils/enums.js";
 import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
 
+import "./cron/daily.js";
+
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = getDirname(_filename);
 
