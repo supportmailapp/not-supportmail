@@ -7,17 +7,17 @@ import {
   Colors,
   ContainerBuilder,
   GuildResolvable,
-  inlineCode,
+  userMention,
 } from "discord.js";
 import { DBUser } from "../../models/user.js";
 import { ComponentsV2Flags } from "../../utils/enums.js";
 import { botVoteBtns } from "../../utils/main.js";
 import * as Sentry from "@sentry/node";
 
-const pm = (userId: string, roleNames: string[]) => {
+const pm = (userId: string, botIds: string[]) => {
   return (
-    `**Hey <@${userId}>! You've just lost the vote role for ${roleNames
-      .map(inlineCode)
+    `**Hey <@${userId}>! You've just lost the vote role for ${botIds
+      .map(userMention)
       .join(", ")} since your last vote expired.**\n` +
     "**Your support means a lot to us — feel free to vote again to regain the role for another 24 hours!** :heart_hands:"
   );
@@ -26,9 +26,21 @@ const pm = (userId: string, roleNames: string[]) => {
 // This file is exclusively for LukeZ' bots that use vote roles because it's so much stuff that would be needed to be generic otherwise
 
 const voteRoles = [
-  { key: "ticketon", id: "1440467925336064010", botName: "Ticketon" },
-  { key: "supportmail", id: "1114933959365763132", botName: "SupportMail" },
-  { key: "upvoteengine", id: "1440468021943734322", botName: "UpvoteEngine" },
+  {
+    key: "ticketon",
+    id: "1440467925336064010",
+    botId: "1415608381372371047",
+  },
+  {
+    key: "supportmail",
+    id: "1114933959365763132",
+    botId: "1082707872565182614",
+  },
+  {
+    key: "upvoteengine",
+    id: "1440468021943734322",
+    botId: "1435613778547834910",
+  },
 ] as const;
 
 export default async function loseVoteRole(
@@ -76,7 +88,7 @@ export default async function loseVoteRole(
         t.setContent(
           pm(
             member.id,
-            votesLost.map((v) => v.botName)
+            votesLost.map((v) => v.id)
           )
         ),
       (t) =>
