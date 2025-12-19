@@ -205,6 +205,36 @@ export async function getCommandMention(commandName: string, client: Client) {
   return cmd ? `</${commandName}:${cmd.id}>` : `\`/${commandName}\``;
 }
 
+export const botVoteBtns = {
+  ticketon: new ButtonBuilder({
+    style: 5,
+    label: "Vote for Ticketon",
+    url: "https://top.gg/bot/1415608381372371047/vote",
+    emoji: {
+      id: "1440465809846829177",
+      name: "ticketon",
+    },
+  }),
+  supportmail: new ButtonBuilder({
+    style: 5,
+    label: "Vote for SupportMail",
+    url: "https://top.gg/bot/1082707872565182614/vote",
+    emoji: {
+      id: "1248944135654739988",
+      name: "supportmail",
+    },
+  }),
+  upvoteengine: new ButtonBuilder({
+    style: 5,
+    label: "Vote for UpvoteEngine",
+    url: "https://top.gg/bot/1435613778547834910/vote",
+    emoji: {
+      id: "1440466098624532705",
+      name: "upvote_engine",
+    },
+  }),
+};
+
 /**
  * Attempts to parse a string as an integer with validation and clamping.
  *
@@ -262,33 +292,7 @@ export const voteMessage: MessageCreateOptions = {
         )
       ),
     new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder({
-        style: 5,
-        label: "Vote for Ticketon",
-        url: "https://top.gg/bot/1415608381372371047/vote",
-        emoji: {
-          id: "1440465809846829177",
-          name: "ticketon",
-        },
-      }),
-      new ButtonBuilder({
-        style: 5,
-        label: "Vote for SupportMail",
-        url: "https://top.gg/bot/1082707872565182614/vote",
-        emoji: {
-          id: "1248944135654739988",
-          name: "supportmail",
-        },
-      }),
-      new ButtonBuilder({
-        style: 5,
-        label: "Vote for UpvoteEngine",
-        url: "https://top.gg/bot/1435613778547834910/vote",
-        emoji: {
-          id: "1440466098624532705",
-          name: "upvote_engine",
-        },
-      })
+      Object.values(botVoteBtns)
     ),
   ],
 };

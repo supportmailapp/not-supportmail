@@ -12,6 +12,7 @@ export interface IUser {
   username: string;
   displayName?: string;
   stats: IUserStats;
+  voteLooseDM?: boolean;
   createdAt: NativeDate;
   updatedAt: NativeDate;
 }
@@ -32,6 +33,7 @@ const UserSchema = new Schema<IUser>(
       type: UserStatsSchema,
       default: { bugsReported: 0 },
     },
+    voteLooseDM: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
