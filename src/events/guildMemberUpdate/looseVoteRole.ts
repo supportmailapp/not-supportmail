@@ -16,7 +16,7 @@ import * as Sentry from "@sentry/node";
 
 const pm = (userId: string, botIds: string[]) => {
   return (
-    `**Hey <@${userId}>! You've just lost the vote role for ${botIds
+    `**Hey ${userMention(userId)}! You've just lost the vote role for ${botIds
       .map(userMention)
       .join(", ")} since your last vote expired.**\n` +
     "**Your support means a lot to us — feel free to vote again to regain the role for another 24 hours!** :heart_hands:"
@@ -88,7 +88,7 @@ export default async function loseVoteRole(
         t.setContent(
           pm(
             member.id,
-            votesLost.map((v) => v.id)
+            votesLost.map((v) => v.botId)
           )
         ),
       (t) =>
