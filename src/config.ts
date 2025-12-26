@@ -25,6 +25,7 @@ export default {
     botCommands: process.env.CHANNEL_BOT_COMMANDS,
     ticketSupport: process.env.CHANNEL_TICKET_SUPPORT,
   },
+  developers: config.developers || [],
 } as typeof config & {
   autoThreadedChannels: { [key: string]: ThreadConfig };
   autoPublishChannels: { [key: string]: ChannelConfig };
@@ -45,6 +46,7 @@ export default {
     botCommands: string;
     ticketSupport: string;
   };
+  developers: { id: string; gender: "m" | "f" | "d" }[];
 };
 
 type ThreadConfig = {
