@@ -86,6 +86,9 @@ The bot uses MongoDB to store data. Make sure your MongoDB instance is running a
 
 ## Current Features
 
+> [!IMPORTANT]
+> The list is not up-to-date with the codebase. Please refer to the source code for the most accurate information.
+
 ### Support Forum Management
 
 - **Automatic Post Tracking**: Creates database entries for new support posts in the forum
@@ -139,6 +142,22 @@ The bot uses MongoDB to store data. Make sure your MongoDB instance is running a
 - **Auto-join Threads**: Bot automatically joins new support threads for monitoring
 - **Message Pinning**: Automatically pins the starter message in new support posts
 - **Username Tracking**: Maintains up-to-date user information in the database
+
+---
+
+### `NO_PINGS_AUTOMOD_RULE_ID` Feature
+
+Make a Discord automod rule with the following settings:
+
+- Keywords: `<@[developer-id]>`
+- Regexes: `<@\d+>`
+- Exclude channels and roles as needed
+
+This is to prevent users from pinging developers **and** normal users. We want to send a warning message instead of allowing the ping to go through. The ping gets blocked by Discord automatically, but we want to inform the user about it.
+
+So after you created the rule, right click the 2 dots on the right side of the rule and select "Copy Rule ID". Then paste it into the `NO_PINGS_AUTOMOD_RULE_ID` variable in your `.env` files.
+
+---
 
 ## License (Summary - not binding)
 
