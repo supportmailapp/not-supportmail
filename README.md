@@ -149,13 +149,14 @@ The bot uses MongoDB to store data. Make sure your MongoDB instance is running a
 
 Make a Discord automod rule with the following settings:
 
-- Keywords: `<@[developer-id]>`
 - Regexes: `<@\d+>`
 - Exclude channels and roles as needed
 
 This is to prevent users from pinging developers **and** normal users. We want to send a warning message instead of allowing the ping to go through. The ping gets blocked by Discord automatically, but we want to inform the user about it.
 
 So after you created the rule, right click the 2 dots on the right side of the rule and select "Copy Rule ID". Then paste it into the `NO_PINGS_AUTOMOD_RULE_ID` variable in your `.env` files.
+
+Then modify the `config.json` with the developer information (id and gender) to make the warning message more personalized. (E.g. "he" or "she")
 
 ---
 
