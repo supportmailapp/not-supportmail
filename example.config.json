@@ -48,5 +48,16 @@
       "bot": true, // If true, only bots can get this role
       "delay": 0 // Delay in seconds before the role is assigned
     }
-  }
+  },
+  "developers": [
+    {
+      "id": "developer-user-id-1",
+      "gender": "m" // "m" for male, "f" for female, "d" for diverse
+    },
+    {
+      "id": "developer-user-id-2",
+      "gender": "f"
+    }
+    // Add more developer user IDs as needed | This is needed for the NO_PINGS_AUTOMOD_RULE feature (read readme)
+  ]
 }
