@@ -56,7 +56,7 @@ var client = new Client({
     activities: [
       {
         type: ActivityType.Listening,
-        name: "🎶 All I Want For Christmas Is You 🎶",
+        name: "Drinking hot chocolate and judging your 2026 resolutions",
       },
     ],
     status: "online",
