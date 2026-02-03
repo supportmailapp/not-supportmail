@@ -269,9 +269,9 @@ export async function buildSuggestSolveMessage(
   mentionId?: string,
 ) {
   const cmdMention = await getCommandMention("question solve", client);
-  let content = `>>> -# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# This helps to reduce clutter.`;
+  let content = `>>> -# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved to reduce clutter.`;
   if (mentionId) {
-    content = `>>> Hey <@${mentionId}>!\n-# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# This helps to reduce clutter.`;
+    content = `>>> Hey <@${mentionId}>!\n-# If your issue has been resolved, please use ${cmdMention} to mark your post as solved to reduce clutter.`;
   }
   return {
     flags: ComponentsV2Flags,
