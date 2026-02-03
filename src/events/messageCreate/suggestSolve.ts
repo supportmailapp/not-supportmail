@@ -2,6 +2,7 @@ import { ChannelType, Message } from "discord.js";
 import wildcardMatch from "wildcard-match";
 import suggestSolveCache from "../../caches/suggestSolveCache";
 import { buildSuggestSolveMessage } from "../../utils/main";
+import config from "../../config";
 
 const SUGGEST_SOLVE_PATTERNS = [
   "*solved*",
@@ -25,7 +26,8 @@ export default async function suggestSolve(msg: Message) {
     msg.author.bot ||
     msg.channel.parentId !== Bun.env.CHANNEL_SUPPORT_FORUM ||
     msg.channel.type !== ChannelType.PublicThread ||
-    msg.channel.ownerId !== msg.author.id // Only suggest in user's own threads
+    msg.channel.ownerId !== msg.author.id || // Only suggest in user's own threads
+    msg.channel.appliedTags.includes(config.supportTags.solved)
   ) {
     return;
   }
