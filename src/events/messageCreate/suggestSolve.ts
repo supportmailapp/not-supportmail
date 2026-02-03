@@ -9,6 +9,8 @@ const SUGGEST_SOLVE_PATTERNS = [
   "*issue resolved*",
   "*fixed*",
   "*problem fixed*",
+  "*thanks*",
+  "*thank you*",
   "*thanks*worked*",
   "*thank you*worked*",
   "*worked*thanks*",
@@ -20,15 +22,16 @@ const SUGGEST_SOLVE_PATTERNS = [
   "*never mind*fixed it*",
 ];
 
+const allTags = Object.values(config.supportTags);
+
 export async function suggestSolve(msg: Message) {
-  console.log("suggestSolve event triggered");
   if (
     !msg.inGuild() ||
     msg.author.bot ||
     msg.channel.parentId !== config.channels.supportForum ||
     msg.channel.type !== ChannelType.PublicThread ||
     msg.channel.ownerId !== msg.author.id || // Only suggest in user's own threads
-    msg.channel.appliedTags.includes(config.supportTags.solved)
+    msg.channel.appliedTags.some((tag) => allTags.includes(tag))
   ) {
     return;
   }
@@ -41,7 +44,7 @@ export async function suggestSolve(msg: Message) {
       const setting = await suggestSolveCache.get(msg.author.id);
       if (!setting) return;
       const message = await buildSuggestSolveMessage(msg.client);
-      return msg.channel.send(message);
+      return msg.reply({ ...message, allowedMentions: { repliedUser: false } });
     }
   }
 }
