@@ -46,6 +46,10 @@ export async function suggestSolve(msg: Message | PartialMessage) {
     return;
   }
 
+  console.debug("Suggest solve: checking message content.", {
+    ...(msg.toJSON() as object),
+  });
+
   const content = msg.content.replace(/\s+/g, " ").replace("\n", " ");
   for (const pattern of SUGGEST_SOLVE_PATTERNS) {
     const isMatch = wildcardMatch(pattern, { flags: "i" });
