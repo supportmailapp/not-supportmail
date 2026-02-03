@@ -74,8 +74,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
 
   // Check if the user can update suggestions (staff only)
   const canUpdate = ctx.member.roles.cache.hasAny(
-    process.env.ROLE_THREAD_MANAGER!,
-    process.env.ROLE_DEVELOPER!,
+    Bun.env.ROLE_THREAD_MANAGER!,
+    Bun.env.ROLE_DEVELOPER!,
   );
 
   if (!canUpdate) {
@@ -105,8 +105,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
 
   // add dev, if user has dev role
   if (
-    process.env.ROLE_DEVELOPER &&
-    ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER) &&
+    Bun.env.ROLE_DEVELOPER &&
+    ctx.member.roles.cache.has(Bun.env.ROLE_DEVELOPER) &&
     !ctx.channel.members.cache.has(ctx.user.id)
   ) {
     await ctx.channel.members.add(ctx.user.id);

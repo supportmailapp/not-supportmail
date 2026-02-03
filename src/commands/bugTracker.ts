@@ -58,7 +58,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
     return;
   }
 
-  if (!ctx.member.roles.cache.has(process.env.ROLE_DEVELOPER!)) {
+  if (!ctx.member.roles.cache.has(Bun.env.ROLE_DEVELOPER!)) {
     await ctx.reply({
       flags: MessageFlags.IsComponentsV2 | 64,
       components: [
@@ -90,9 +90,9 @@ export async function run(ctx: ChatInputCommandInteraction) {
     let roleAdded = false;
     if (
       newCount >= BUG_TRACKER_THRESHOLD &&
-      !member.roles.cache.has(process.env.ROLE_BUG_HUNTER!)
+      !member.roles.cache.has(Bun.env.ROLE_BUG_HUNTER!)
     ) {
-      await member.roles.add(process.env.ROLE_BUG_HUNTER!);
+      await member.roles.add(Bun.env.ROLE_BUG_HUNTER!);
       roleAdded = true;
     }
 
@@ -126,9 +126,9 @@ export async function run(ctx: ChatInputCommandInteraction) {
     let roleRemoved = false;
     if (
       newCount < BUG_TRACKER_THRESHOLD &&
-      member.roles.cache.has(process.env.ROLE_BUG_HUNTER!)
+      member.roles.cache.has(Bun.env.ROLE_BUG_HUNTER!)
     ) {
-      await member.roles.remove(process.env.ROLE_BUG_HUNTER!);
+      await member.roles.remove(Bun.env.ROLE_BUG_HUNTER!);
       roleRemoved = true;
     }
 

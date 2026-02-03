@@ -4,7 +4,7 @@ import { updateDBUsername } from "../../utils/main.js";
 export async function supportPostCreate(thread: AnyThreadChannel) {
   if (
     thread.type != ChannelType.PublicThread ||
-    process.env.CHANNEL_SUPPORT_FORUM != thread.parentId
+    Bun.env.CHANNEL_SUPPORT_FORUM != thread.parentId
   ) {
     return;
   }

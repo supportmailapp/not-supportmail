@@ -13,8 +13,8 @@ export async function noPingsAutoModerationActionExecution(
   event: AutoModerationActionExecution,
 ) {
   if (
-    !process.env.NO_PINGS_AUTOMOD_RULE_ID ||
-    event.ruleId !== process.env.NO_PINGS_AUTOMOD_RULE_ID ||
+    !Bun.env.NO_PINGS_AUTOMOD_RULE_ID ||
+    event.ruleId !== Bun.env.NO_PINGS_AUTOMOD_RULE_ID ||
     !event.channel ||
     !event.channel.isSendable()
   ) {

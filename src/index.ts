@@ -267,10 +267,10 @@ process
     Sentry.captureException(error);
   });
 
-await mongoose.connect(process.env.MONGO_URI!);
+await mongoose.connect(Bun.env.MONGO_URI!);
 Sentry.logger.info("Connected to DB");
 await loadAllModules();
 Sentry.logger.info("Modules loaded");
 
-await client.login(process.env.BOT_TOKEN);
+await client.login(Bun.env.BOT_TOKEN);
 Sentry.logger.info("Bot started");

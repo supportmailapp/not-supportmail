@@ -4,7 +4,7 @@ import utc from "dayjs/plugin/utc.js";
 import config from "../../config.js";
 import { checkUserAccess } from "../../utils/main.js";
 
-const UTCOffeset = process.env.UTC_OFFSET || null;
+const UTCOffeset = Bun.env.UTC_OFFSET || null;
 dayjs.extend(utc);
 
 export async function autoThreads(message: Message) {
@@ -12,7 +12,7 @@ export async function autoThreads(message: Message) {
     message.channel.isDMBased() ||
     message.channel.isThread() ||
     message.channel.isVoiceBased() ||
-    message.guildId !== process.env.GUILD_ID ||
+    message.guildId !== Bun.env.GUILD_ID ||
     message.author.bot
   ) {
     return;

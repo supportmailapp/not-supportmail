@@ -94,7 +94,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
   if (
     !ctx.channel || // TS BS
     ctx.channel.type !== ChannelType.PublicThread ||
-    ctx.channel.parentId !== process.env.CHANNEL_SUPPORT_FORUM
+    ctx.channel.parentId !== Bun.env.CHANNEL_SUPPORT_FORUM
   ) {
     return await ctx.reply({
       content: "This is the wrong channel my friend.",

@@ -68,8 +68,8 @@ export function canUpdateSupportPost(
 ) {
   const canRolewise =
     member.roles.cache.hasAny(
-      process.env.ROLE_THREAD_MANAGER!,
-      process.env.ROLE_DEVELOPER!,
+      Bun.env.ROLE_THREAD_MANAGER!,
+      Bun.env.ROLE_DEVELOPER!,
     ) ||
     (authorId && member.id == authorId);
   const canPermissionwise = member.permissions.has("ManageGuild");

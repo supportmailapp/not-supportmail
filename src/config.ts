@@ -14,21 +14,21 @@ export type ConfigType = typeof configType;
 const config = {
   ...data,
   supportTags: {
-    solved: process.env.TAG_SOLVED,
-    dev: process.env.TAG_DEV,
-    wrongChannel: process.env.TAG_WRONG_CHANNEL,
+    solved: Bun.env.TAG_SOLVED,
+    dev: Bun.env.TAG_DEV,
+    wrongChannel: Bun.env.TAG_WRONG_CHANNEL,
   },
   suggestionTags: {
-    noted: process.env.TAG_NOTED,
-    accepted: process.env.TAG_ACCEPTED,
-    rejected: process.env.TAG_REJECTED,
-    implemented: process.env.TAG_IMPLEMENTED,
-    duplicate: process.env.TAG_DUPLICATE,
+    noted: Bun.env.TAG_NOTED,
+    accepted: Bun.env.TAG_ACCEPTED,
+    rejected: Bun.env.TAG_REJECTED,
+    implemented: Bun.env.TAG_IMPLEMENTED,
+    duplicate: Bun.env.TAG_DUPLICATE,
   },
   channels: {
-    supportForum: process.env.CHANNEL_SUPPORT_FORUM,
-    botCommands: process.env.CHANNEL_BOT_COMMANDS,
-    ticketSupport: process.env.CHANNEL_TICKET_SUPPORT,
+    supportForum: Bun.env.CHANNEL_SUPPORT_FORUM,
+    botCommands: Bun.env.CHANNEL_BOT_COMMANDS,
+    ticketSupport: Bun.env.CHANNEL_TICKET_SUPPORT,
   },
   developers: data.developers || [],
 } as ConfigType & {

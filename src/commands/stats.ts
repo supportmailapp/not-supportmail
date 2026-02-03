@@ -28,7 +28,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
 
   // Initialize response flags based on channel
   let responseFlags =
-    ctx.channelId !== process.env.CHANNEL_BOT_COMMANDS ? 64 : undefined;
+    ctx.channelId !== Bun.env.CHANNEL_BOT_COMMANDS ? 64 : undefined;
 
   let targetUser = ctx.options.getUser("user") ?? ctx.user;
 
@@ -70,7 +70,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
     flags: responseFlags,
   });
 
-  if (ctx.channelId === process.env.CHANNEL_BOT_COMMANDS) {
+  if (ctx.channelId === Bun.env.CHANNEL_BOT_COMMANDS) {
     cache.set(`${ctx.user.id}-${targetUser.id}`, true);
   }
 }

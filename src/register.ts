@@ -4,7 +4,7 @@ import { join as pathJoin } from "path";
 import { deployCommands } from "./utils/commandHelper";
 
 async function main() {
-  if (!process.env.BOT_TOKEN || !process.env.CLIENT_ID) {
+  if (!Bun.env.BOT_TOKEN || !Bun.env.CLIENT_ID) {
     console.error("BOT_TOKEN or CLIENT_ID environment variables are not set.");
     return;
   }
@@ -31,8 +31,8 @@ async function main() {
   console.log(`Loaded ${commands.size} commands:`);
 
   const success = await deployCommands(pathJoin(__dirname, "commands"), {
-    appId: process.env.CLIENT_ID!,
-    appToken: process.env.BOT_TOKEN!,
+    appId: Bun.env.CLIENT_ID!,
+    appToken: Bun.env.BOT_TOKEN!,
     fileExtension: ".ts",
   });
   if (success) {

@@ -4,7 +4,7 @@ import { checkUserAccess } from "../../utils/main.js";
 
 export async function autoPublish(message: Message) {
   if (
-    message.guildId !== process.env.GUILD_ID ||
+    message.guildId !== Bun.env.GUILD_ID ||
     message.type != MessageType.Default
   ) {
     return;

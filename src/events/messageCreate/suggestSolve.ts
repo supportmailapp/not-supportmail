@@ -24,7 +24,7 @@ export async function suggestSolve(msg: Message) {
   if (
     !msg.inGuild() ||
     msg.author.bot ||
-    msg.channel.parentId !== Bun.env.CHANNEL_SUPPORT_FORUM ||
+    msg.channel.parentId !== config.channels.supportForum ||
     msg.channel.type !== ChannelType.PublicThread ||
     msg.channel.ownerId !== msg.author.id || // Only suggest in user's own threads
     msg.channel.appliedTags.includes(config.supportTags.solved)
