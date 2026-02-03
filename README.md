@@ -18,6 +18,7 @@ If you want to use this code, you can do so by forking this repository and modif
   ```
 
 - Discord Bot Token from the [Discord Developer Portal](https://discord.com/developers/applications)
+- Sentry account (required)
 
 ### Setup
 
@@ -44,10 +45,6 @@ Create environment files in the root directory, based on the [`.env.example`](.e
 
 - `.env.dev`: For development environment variables
 - `.env.production`: For production environment variables
-
-> [!IMPORTANT]
-> Make sure, if you use Sentry, to update the `sentry:sourcemaps` script in the `package.json` to point to your Sentry project.
-> **Tip:** You can use the [Sentry CLI](https://docs.sentry.io/platforms/javascript/guides/node/sourcemaps/uploading/typescript/#automatic-setup) to automatically let sentry handle this for you.
 
 #### 4. Configure the bot
 
