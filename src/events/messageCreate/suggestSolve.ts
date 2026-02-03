@@ -33,10 +33,20 @@ export async function suggestSolve(msg: Message) {
     msg.channel.ownerId !== msg.author.id || // Only suggest in user's own threads
     msg.channel.appliedTags.some((tag) => allTags.includes(tag))
   ) {
+    console.log("Suggest solve: conditions not met, exiting.", {
+      guildid: msg.guild?.id,
+      author: msg.author.id,
+      channel: msg.channel.id,
+      bot: msg.author.bot,
+      parentid: (msg.channel as any).parentId,
+      type: msg.channel.type,
+      ownerid: (msg.channel as any).ownerId,
+      appliedtags: (msg.channel as any).appliedTags,
+    });
     return;
   }
 
-  const content = msg.content;
+  const content = msg.content.replace(/\s+/g, " ").replace("\n", " ");
   for (const pattern of SUGGEST_SOLVE_PATTERNS) {
     const isMatch = wildcardMatch(pattern, { flags: "i" });
     if (isMatch(content)) {
