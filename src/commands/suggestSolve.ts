@@ -1,54 +1,39 @@
 import {
+  ChannelType,
   ChatInputCommandInteraction,
-  Colors,
-  ContainerBuilder,
   SlashCommandBuilder,
 } from "discord.js";
-import { DBUser } from "../models/user";
 import { EphemeralV2Flags } from "../utils/enums";
+import { buildErrorMessage, buildSuggestSolveMessage } from "../utils/main";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("suggest-solve")
-    .setDescription("Toggle suggest solve setting for you")
-    .addStringOption((op) =>
-      op
-        .setName("setting")
-        .setDescription("Do you want to enable or disable solve suggestions?")
-        .setRequired(true)
-        .setChoices(
-          {
-            name: "Enabled | Bot will suggest /question solve in support posts of yours",
-            value: "true",
-          },
-          {
-            name: "Disabled | Bot will not suggest /question solve in support posts of yours",
-            value: "false",
-          },
-        ),
+    .setName("suggest-solve-send")
+    .setDescription(
+      "Manually send a suggest solve message in a support thread",
     ),
 
   async run(ctx: ChatInputCommandInteraction) {
-    const setting = ctx.options.getString("setting", true) === "true";
-    await DBUser.updateOne(
-      { id: ctx.user.id },
-      { suggestSolve: setting },
-      { upsert: true },
-    );
+    await ctx.deferReply({ flags: EphemeralV2Flags });
 
-    await ctx.reply({
-      flags: EphemeralV2Flags,
-      components: [
-        new ContainerBuilder()
-          .setAccentColor(setting ? Colors.Green : Colors.Red)
-          .addTextDisplayComponents((t) =>
-            t.setContent(
-              setting
-                ? "✅ Suggest solve has been **enabled**. The bot will now suggest `/question solve` in your support posts."
-                : "✅ Suggest solve has been **disabled**. The bot will no longer suggest `/question solve` in your support posts.",
-            ),
-          ),
-      ],
-    });
+    // Check if the command is being used in a support thread
+    if (
+      !ctx.inGuild() ||
+      ctx.channel?.type !== ChannelType.PublicThread ||
+      ctx.channel.parentId !== Bun.env.CHANNEL_SUPPORT_FORUM
+    ) {
+      return ctx.editReply(buildErrorMessage("This command can only be used in support forum threads."));
+    }
+
+    // Check if the user is the thread owner
+    if (ctx.channel.ownerId !== ctx.user.id) {
+      return ctx.editReply(buildErrorMessage("Only the thread owner can manually send the suggest solve message."));
+    }
+
+    // Send the suggest solve message
+    const message = await buildSuggestSolveMessage(ctx.client);
+
+    await ctx.channel.send(message);
+    await ctx.deleteReply();
   },
 };

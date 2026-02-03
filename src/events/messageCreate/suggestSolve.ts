@@ -1,7 +1,7 @@
-import { ChannelType, Colors, ContainerBuilder, Message } from "discord.js";
+import { ChannelType, Message } from "discord.js";
 import wildcardMatch from "wildcard-match";
 import suggestSolveCache from "../../caches/suggestSolveCache";
-import { ComponentsV2Flags } from "../../utils/enums";
+import { buildSuggestSolveMessage } from "../../utils/main";
 
 const SUGGEST_SOLVE_PATTERNS = [
   "*solved*",
@@ -33,28 +33,12 @@ export default async function suggestSolve(msg: Message) {
   const setting = await suggestSolveCache.get(msg.author.id);
   if (!setting) return;
 
-  const command = msg.client.application.commands.cache.find(
-    (c) => c.name === "question",
-  );
-  const commandMention = command
-    ? `</question solve:${command.id}>`
-    : "`/question solve`";
   const content = msg.content;
   for (const pattern of SUGGEST_SOLVE_PATTERNS) {
     const isMatch = wildcardMatch(pattern, { flags: "i" });
     if (isMatch(content)) {
-      return msg.channel.send({
-        flags: ComponentsV2Flags,
-        components: [
-          new ContainerBuilder()
-            .setAccentColor(Colors.Blurple)
-            .addTextDisplayComponents((t) =>
-              t.setContent(
-                `-# > It looks like your issue has been resolved! Please use ${commandMention} to mark your post as solved.\n-# > This helps to reduce clutter.`,
-              ),
-            ),
-        ],
-      });
+      const message = await buildSuggestSolveMessage(msg.client);
+      return msg.channel.send(message);
     }
   }
 }

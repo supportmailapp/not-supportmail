@@ -1,61 +1,47 @@
 import {
   ActionRowBuilder,
-  APIEmbed,
   ButtonBuilder,
-  Client,
+  type Client,
   Colors,
   ContainerBuilder,
-  GuildMember,
-  MessageCreateOptions,
-  StringSelectMenuBuilder,
+  type GuildMember,
+  heading,
+  type MessageCreateOptions,
 } from "discord.js";
-import type { PartialMember } from "../caches/helpfulUsers.js";
 import { DBUser } from "../models/user.js";
-import { ComponentsV2Flags } from "./enums.js";
-
-type ParsedCustomId = {
-  compPath: string[];
-  prefix: string;
-  lastPathItem: string;
-  component: string | null;
-  params?: string[];
-  firstParam?: string | null;
-  lastParam?: string | null;
-};
+import { ComponentsV2Flags, EphemeralV2Flags } from "./enums.js";
 
 // Overloads
 export function parseCustomId(customId: string, onlyPrefix: true): string;
 export function parseCustomId(
   customId: string,
-  onlyPrefix?: false
-): ParsedCustomId;
+  onlyPrefix?: false,
+): {
+  compPath: string[];
+  prefix: string;
+  lastPathItem: string;
+  component: string | null;
+  params: string[];
+  firstParam: string | null;
+  lastParam: string | null;
+};
 
-/**
- * Parses a custom ID string.
- *
- * The separator is `/`.
- */
-export function parseCustomId(
-  customId: string,
-  onlyPrefix: boolean = false
-): string | ParsedCustomId {
+export function parseCustomId(customId: string, onlyPrefix: boolean = false) {
   if (onlyPrefix) {
-    return (
-      customId.match(/^(?<prefix>.+?)(\/|\?)/i)?.groups?.prefix || customId
-    );
+    const match = customId.match(/^([^\/\s?]+)/i); // match until first / or ?
+    return match![1]!;
   }
-
-  const [path, params] = customId.split("?");
-  const pathParts = path.split("/");
-
+  const [path, params] = customId.split("?") as [string, string | undefined];
+  const pathS = path.split("/");
+  const parms = params?.split("/") || [];
   return {
-    compPath: pathParts,
-    prefix: pathParts[0],
-    lastPathItem: pathParts[pathParts.length - 1],
-    component: pathParts[1] || null,
-    params: params?.split("/") || [],
-    firstParam: params?.split("/")[0] || null,
-    lastParam: params?.split("/").pop() || null,
+    compPath: pathS,
+    prefix: pathS[0],
+    lastPathItem: pathS[pathS.length - 1],
+    component: pathS[1] || null,
+    params: parms || [],
+    firstParam: parms[0] || null,
+    lastParam: parms[parms.length - 1] || null,
   };
 }
 
@@ -78,12 +64,12 @@ export function delay(ms: number) {
  */
 export function canUpdateSupportPost(
   member: GuildMember,
-  authorId: string | null = null
+  authorId: string | null = null,
 ) {
   const canRolewise =
     member.roles.cache.hasAny(
       process.env.ROLE_THREAD_MANAGER!,
-      process.env.ROLE_DEVELOPER!
+      process.env.ROLE_DEVELOPER!,
     ) ||
     (authorId && member.id == authorId);
   const canPermissionwise = member.permissions.has("ManageGuild");
@@ -100,7 +86,7 @@ export function checkUserAccess(
   userId: string,
   roleIds: string[],
   blacklist: string[],
-  whitelist: string[]
+  whitelist: string[],
 ) {
   const _userId = `u-${userId}`;
   const _roleIds = roleIds.map((id) => `r-${id}`);
@@ -125,7 +111,7 @@ export function checkUserAccess(
  */
 export async function updateDBUsername(
   user: { id: string; username: string; displayName?: string },
-  checkForExistence = false
+  checkForExistence = false,
 ) {
   let updateQuery = { username: user.username } as any;
   if (user.displayName) updateQuery["displayName"] = user.displayName;
@@ -142,39 +128,6 @@ export async function updateDBUsername(
 
   await DBUser.updateOne({ id: user.id }, updateQuery);
   return;
-}
-
-export function buildHelpfulResponse(postId: string, members: PartialMember[]) {
-  const embed = {
-    author: { name: "Optional" },
-    title: "Select the user(s) who helped you the most.",
-    description: "-# This will help us to reward the most helpful users.",
-    color: 0x2b2d31,
-  } as APIEmbed;
-  if (members.length > 25) {
-    embed["footer"] = {
-      text: "Showing the first 25 users. More users can not be shown right now.",
-    };
-  }
-  const chunkedMembers = members.slice(0, 25);
-  return {
-    embeds: [embed],
-    components: [
-      new ActionRowBuilder<StringSelectMenuBuilder>({
-        components: [
-          new StringSelectMenuBuilder({
-            customId: "helpful?" + postId,
-            maxValues: chunkedMembers.length,
-          }).setOptions(
-            chunkedMembers.map((members) => ({
-              label: members.displayName,
-              value: members.id,
-            }))
-          ),
-        ],
-      }),
-    ],
-  };
 }
 
 /**
@@ -257,7 +210,7 @@ export function safeParseInt(
   str: unknown,
   _defaultValue: number,
   min = 1,
-  max?: number
+  max?: number,
 ): number {
   try {
     if (typeof str !== "string") {
@@ -288,18 +241,67 @@ export const voteMessage: MessageCreateOptions = {
             "### Vote Rewards!",
             "You can vote on top.gg every 12 hours for each bot. Follow the links below.",
             "- You gain the Vote-Reward-Role for 24 hours every time you vote.",
-          ].join("\n")
-        )
+          ].join("\n"),
+        ),
       ),
     new ActionRowBuilder<ButtonBuilder>().addComponents(
-      Object.values(botVoteBtns)
+      Object.values(botVoteBtns),
     ),
   ],
 };
 
 export function randomColor() {
   const values = Object.values(Colors).filter(
-    (v) => typeof v === "number"
+    (v) => typeof v === "number",
   ) as number[];
   return values[Math.floor(Math.random() * values.length)]!;
 }
+
+/**
+ * Builds a suggest solve message for support threads.
+ *
+ * @param commandMention - The formatted mention string for the solve command (e.g., "</question solve:123>")
+ * @returns A MessageCreateOptions object with the suggest solve message
+ */
+export async function buildSuggestSolveMessage(
+  client: Client<true>,
+): Promise<MessageCreateOptions> {
+  const cmdMention = await getCommandMention("question solve", client);
+  return {
+    flags: ComponentsV2Flags,
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.Blurple)
+        .addTextDisplayComponents((t) =>
+          t.setContent(
+            `-# > It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# > This helps to reduce clutter.`,
+          ),
+        ),
+    ],
+  };
+}
+
+/**
+ * Builds an error message object with ephemeral flags and a dark orange container displaying the error text.
+ * @param error - The error message string to display.
+ * @returns An object containing flags and components for the error message.
+ */
+export const buildErrorMessage = (error: string | string[], withX = true) => ({
+  flags: EphemeralV2Flags,
+  components: [
+    new ContainerBuilder()
+      .setAccentColor(Colors.DarkRed)
+      .addTextDisplayComponents((t) =>
+        t.setContent(
+          heading(
+            withX
+              ? `:x: ${typeof error === "string" ? error : error.join("\n")}`
+              : typeof error === "string"
+                ? error
+                : error.join("\n"),
+            3,
+          ),
+        ),
+      ),
+  ],
+});

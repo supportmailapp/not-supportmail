@@ -101,7 +101,6 @@ export default {
     ) {
       return await ctx.reply({
         content: "This is the wrong channel my friend.",
-        flags: 64,
       });
     }
 
