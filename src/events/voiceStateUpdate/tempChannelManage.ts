@@ -446,7 +446,7 @@ async function handleUserJoin(newState: VoiceState) {
 }
 
 // Clean up cache when channels are deleted externally
-export function cleanupChannelCache(guildId: string, channelId: string) {
+function cleanupChannelCache(guildId: string, channelId: string) {
   const cacheKey = `${guildId}-${channelId}`;
   cache.del(cacheKey);
   modifiedChannels.delete(cacheKey);
