@@ -116,7 +116,7 @@ export async function loseVoteRole(
         { voteLooseDM: false },
         { upsert: true },
       );
-      console.log.debug(
+      console.debug(
         `Could not DM user ${member.id} about lost vote role.`,
       );
     });

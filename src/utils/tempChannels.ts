@@ -122,7 +122,7 @@ export async function createAndSaveTempChannel(
     null;
   if (withOverwrites) {
     lastChannelData = await fetchLastChannelData(guild, tCategory.id);
-    console.log.trace(
+    console.trace(
       "Fetched old channel data for new temp channel creation",
       { ...lastChannelData },
     );
@@ -175,7 +175,7 @@ export async function createAndSaveTempChannel(
     };
   }
 
-  console.log.trace(
+  console.trace(
     `Created new temp channel (${channel.id}) with position ${channel.position}.`,
   );
 
@@ -183,7 +183,7 @@ export async function createAndSaveTempChannel(
     lastChannelData?.channel.position !== undefined &&
     channel.position !== lastChannelData?.channel.position
   ) {
-    console.log.warn(
+    console.warn(
       `Channel position mismatch: Expected ${lastChannelData.channel.position}, got ${channel.position}. Adjusting...`,
     );
     await channel
@@ -193,7 +193,7 @@ export async function createAndSaveTempChannel(
       })
       .catch((err) => {
         const errId = Sentry.captureException(err);
-        console.log.error("Failed to set channel position after creation", {
+        console.error("Failed to set channel position after creation", {
           errorId: errId,
         });
       });

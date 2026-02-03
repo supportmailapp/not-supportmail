@@ -327,7 +327,7 @@ async function handleUserLeave(oldState: VoiceState) {
               console.debug(
                 `[TempChannel] Successfully deleted temporary channel: ${toDeleteChannelId}`,
               );
-              console.log.debug(
+              console.debug(
                 `Deleted empty temporary channel: ${oldState.channel?.name}`,
               );
             } catch (error) {

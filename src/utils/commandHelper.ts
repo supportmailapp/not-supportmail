@@ -109,7 +109,7 @@ export async function deployCommands(
   );
 
   if (opts.logs)
-    console.log.info(`Started refreshing global and guild commands.`);
+    console.info(`Started refreshing global and guild commands.`);
 
   try {
     const rest = new REST().setToken(opts.appToken);
@@ -123,7 +123,7 @@ export async function deployCommands(
 
       // Ensure we have a proper command shape
       if (typeof command !== "object" || !("data" in command)) {
-        console.log.warn(
+        console.warn(
           `Command at '${file}' is missing the 'data' property!`,
         );
         continue;
@@ -132,7 +132,7 @@ export async function deployCommands(
       // Respect ignore flag
       if (Boolean(command.ignore ?? false)) {
         if (opts.logs)
-          console.log.info(
+          console.info(
             `Command '${command.data?.name ?? file}' is ignored!`,
           );
         continue;
@@ -152,7 +152,7 @@ export async function deployCommands(
       body: commands,
     });
     if (opts.logs)
-      console.log.info(`${data.length} global commands refreshed`);
+      console.info(`${data.length} global commands refreshed`);
 
     for (let cmd of privateCommands) {
       for (let gid of cmd.guildIds) {
@@ -163,7 +163,7 @@ export async function deployCommands(
       }
     }
     if (privateCommands.length > 0 && opts.logs) {
-      console.log.info(
+      console.info(
         `${privateCommands.length} guild-specific command sets refreshed`,
       );
     }

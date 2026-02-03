@@ -108,7 +108,7 @@ async function loadEvents() {
             if (!eventListeners.has(event)) eventListeners.set(event, []);
             eventListeners.get(event)!.push(file);
           } else {
-            console.log.warn(
+            console.warn(
               `The event at ${file} does not export a function or EventHandler class.`,
             );
           }
@@ -121,7 +121,7 @@ async function loadEvents() {
 }
 
 async function loadAllModules() {
-  console.log.info("Starting module loading...");
+  console.info("Starting module loading...");
 
   try {
     const startTime = Date.now();
@@ -131,7 +131,7 @@ async function loadAllModules() {
     await loadEvents();
 
     const loadTime = Date.now() - startTime;
-    console.log.info(
+    console.info(
       `All modules loaded successfully - Commands: ${commands.size}, Components: ${components.size}, Events: ${eventListeners.size}, Load time: ${loadTime}ms`,
     );
 
@@ -148,7 +148,7 @@ client.on("interactionCreate", async (interaction) => {
     const command = commands.get(interaction.commandName);
 
     if (!command) {
-      return console.log.error(
+      return console.error(
         `No command matching '${interaction.commandName}' was found.`,
       );
     }
@@ -157,7 +157,7 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.isAutocomplete() && command.autocomplete) {
         await command.autocomplete(interaction);
       } else if (interaction.isAutocomplete() && !command.autocomplete) {
-        console.log.error(
+        console.error(
           `No autocomplete function found for command '${interaction.commandName}'`,
         );
       } else {
@@ -201,7 +201,7 @@ client.on("interactionCreate", async (interaction) => {
     const comp = components.get(parseCustomId(interaction.customId, true));
 
     if (!comp) {
-      console.log.error(
+      console.error(
         `No component matching '${interaction.customId}' was found.`,
       );
       return;
@@ -253,7 +253,7 @@ client.once("clientReady", async (client) => {
   );
 
   await client.application.commands.fetch();
-  console.log.info("Commands deployed & fetched");
+  console.info("Commands deployed & fetched");
 });
 
 process
@@ -268,9 +268,9 @@ process
   });
 
 await mongoose.connect(Bun.env.MONGO_URI!);
-console.log.info("Connected to DB");
+console.info("Connected to DB");
 await loadAllModules();
-console.log.info("Modules loaded");
+console.info("Modules loaded");
 
 await client.login(Bun.env.BOT_TOKEN);
-console.log.info("Bot started");
+console.info("Bot started");
