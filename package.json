@@ -5,6 +5,8 @@
   "description": "SupportMail Management Bot",
   "main": "./src/index.ts",
   "scripts": {
+    "register-dev": "bun run --env-file=.env.dev ./src/register.ts",
+    "register-prod": "bun run --env-file=.env.production ./src/register.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "dev": "bun --preload=./instrument.js --env-file=.env.dev ./src/index.ts",
     "start": "pm2 start pm2.config.js --update-env --env production",
