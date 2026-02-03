@@ -310,6 +310,12 @@ export const buildErrorMessage = (error: string | string[], withX = true) => ({
   ],
 });
 
+function ordinalSuffix(n: number) {
+  const s = ["th", "st", "nd", "rd"],
+    v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]!);
+}
+
 export const SimpleText = (text: string | string[]) =>
   new TextDisplayBuilder().setContent(
     typeof text === "string" ? text : text.join("\n"),
@@ -366,12 +372,9 @@ export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
     container
       .setAccentColor(Colors.White)
       .addTextDisplayComponents(
-        SimpleText(`-# Page ${page}\n### Bug Leaderboard`),
-      )
-      .addTextDisplayComponents(
         ...buggers.map((u, i) =>
           SimpleText(
-            `${inlineCode(i.toString().padStart(2, "0"))}. ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
+            `${inlineCode(i.toString().padStart(2, "0") + ordinalSuffix(i + 1))} — ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
           ),
         ),
       );
