@@ -6,7 +6,9 @@ import {
   ContainerBuilder,
   type GuildMember,
   heading,
+  inlineCode,
   type MessageCreateOptions,
+  TextDisplayBuilder,
 } from "discord.js";
 import { DBUser } from "../models/user.js";
 import { ComponentsV2Flags, EphemeralV2Flags } from "./enums.js";
@@ -307,3 +309,77 @@ export const buildErrorMessage = (error: string | string[], withX = true) => ({
       ),
   ],
 });
+
+export const SimpleText = (text: string | string[]) =>
+  new TextDisplayBuilder().setContent(
+    typeof text === "string" ? text : text.join("\n"),
+  );
+
+export async function buildBugsLeaderboardPage(page: number) {
+  const [totalBuggers, buggers] = await Promise.all([
+    DBUser.countDocuments({
+      "stats.bugsReported": { $gt: 0 },
+    }),
+    DBUser.find(
+      {
+        "stats.bugsReported": { $gt: 0 },
+      },
+      null,
+      {
+        sort: { "stats.bugsReported": -1 },
+        skip: (page - 1) * 10,
+        limit: 10,
+      },
+    ),
+  ]);
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`bugs/back?${page}`)
+      .setEmoji({ name: "◀️" })
+      .setStyle(2),
+    new ButtonBuilder()
+      .setCustomId(`bugs/set`) // triggers modal
+      .setEmoji({ name: "🔢" })
+      .setStyle(2),
+    new ButtonBuilder()
+      .setCustomId(`bugs/next?${page}`)
+      .setEmoji({ name: "▶️" })
+      .setStyle(2),
+  );
+
+  const container = new ContainerBuilder()
+    .addTextDisplayComponents(
+      SimpleText(
+        `-# Page ${page}/${Math.ceil(totalBuggers / 10)}\n### Bug Leaderboard`,
+      ),
+    )
+    .addSeparatorComponents((s) => s.setSpacing(2));
+
+  if (buggers.length === 0) {
+    container
+      .setAccentColor(Colors.Orange)
+      .addTextDisplayComponents(
+        SimpleText("_No buggers are found on the page._"),
+      );
+  } else {
+    container
+      .setAccentColor(Colors.White)
+      .addTextDisplayComponents(
+        SimpleText(`-# Page ${page}\n### Bug Leaderboard`),
+      )
+      .addTextDisplayComponents(
+        ...buggers.map((u, i) =>
+          SimpleText(
+            `${inlineCode(i.toString().padStart(2, "0"))}. ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
+          ),
+        ),
+      );
+  }
+
+  return {
+    flags: EphemeralV2Flags,
+    components: [container, row],
+    allowedMentions: { parse: [] },
+  };
+}
