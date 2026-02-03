@@ -53,13 +53,29 @@ Create environment files in the root directory, based on the [`.env.example`](.e
 bun dev
 ```
 
-**Production mode:**
+**Production mode (with PM2):**
 
 ```bash
+# Start the bot
 bun start
+
+# Stop the bot
+pm2 stop sm-helper
+
+# Restart the bot
+pm2 restart sm-helper
+
+# View logs
+pm2 logs sm-helper
+
+# Monitor the bot
+pm2 monit
 ```
 
-**Building only:**
+> [!NOTE]
+> Production mode uses PM2 for process management. The bot will automatically restart on crashes and can be managed with PM2 commands.
+
+### Building only:**
 
 ```bash
 bun build
