@@ -18,11 +18,15 @@ export async function run(
   ctx: ButtonInteraction | ModalMessageModalSubmitInteraction,
 ) {
   let pageNum: number;
-  if (ctx.isButton()) {
-    const { component, firstParam } = parseCustomId(ctx.customId) as
-      | { component: "next" | "back"; firstParam: string }
-      | { component: "set"; firstParam: null };
+  const { component, params } = parseCustomId(ctx.customId) as {
+    component: "next" | "back" | "set";
+    params: string[];
+  };
+  const [pageStr, totalBuggersStr] = params as [string, string];
+  const totalBuggers = safeParseInt(totalBuggersStr, 0, 0);
+  const maxPages = Math.max(1, Math.ceil(totalBuggers / 10));
 
+  if (ctx.isButton()) {
     if (component === "set") {
       return ctx.showModal(
         new ModalBuilder()
@@ -34,6 +38,7 @@ export async function run(
               .setTextInputComponent((ti) =>
                 ti
                   .setCustomId("page")
+                  .setPlaceholder(`Min: 1, Max: ${maxPages}`)
                   .setStyle(1)
                   .setMinLength(1)
                   .setMaxLength(3)
@@ -43,7 +48,7 @@ export async function run(
       );
     }
 
-    pageNum = safeParseInt(firstParam, 1, 1);
+    pageNum = safeParseInt(pageStr, 1, 1, maxPages);
     if (component === "next") {
       pageNum += 1;
     } else {
@@ -51,7 +56,7 @@ export async function run(
     }
   } else {
     const pageStr = ctx.fields.getTextInputValue("page");
-    pageNum = safeParseInt(pageStr, 1, 1, 999);
+    pageNum = safeParseInt(pageStr, 1, 1, maxPages);
   }
 
   await ctx.update({

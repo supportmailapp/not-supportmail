@@ -325,53 +325,48 @@ export const SimpleText = (text: string | string[]) =>
 export async function buildBugsLeaderboardPage(
   page: number,
   hidden: boolean,
-): Promise<
-  InteractionEditReplyOptions
-> {
-  const [totalBuggers, buggers] = await Promise.all([
-    DBUser.countDocuments({
+): Promise<InteractionEditReplyOptions> {
+  const totalBuggers = await DBUser.countDocuments({
+    "stats.bugsReported": { $gt: 0 },
+  });
+  const maxPages = Math.max(1, Math.ceil(totalBuggers / 10));
+  const buggers = await DBUser.find(
+    {
       "stats.bugsReported": { $gt: 0 },
-    }),
-    DBUser.find(
-      {
-        "stats.bugsReported": { $gt: 0 },
-      },
-      null,
-      {
-        sort: { "stats.bugsReported": -1 },
-        skip: Math.max(0, (page - 1) * 10),
-        limit: 10,
-      },
-    ),
-  ]);
+    },
+    null,
+    {
+      sort: { "stats.bugsReported": -1 },
+      skip: Math.min(Math.max(0, (page - 1) * 10), (maxPages - 1) * 10),
+      limit: 10,
+    },
+  );
 
   // prevent page from going below 1 or above max pages - if that is the case, start from the other end
   if (page < 1) {
-    page = Math.ceil(totalBuggers / 10);
-  } else if (page > Math.ceil(totalBuggers / 10)) {
+    page = maxPages;
+  } else if (page > maxPages) {
     page = 1;
   }
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId(`bugs/back?${page}`)
+      .setCustomId(`bugs/back?${page}/${totalBuggers}`)
       .setEmoji({ name: "◀️" })
       .setStyle(2),
     new ButtonBuilder()
-      .setCustomId(`bugs/set`) // triggers modal
+      .setCustomId(`bugs/set?${page}/${totalBuggers}`) // triggers modal
       .setEmoji({ name: "🔢" })
       .setStyle(2),
     new ButtonBuilder()
-      .setCustomId(`bugs/next?${page}`)
+      .setCustomId(`bugs/next?${page}/${totalBuggers}`)
       .setEmoji({ name: "▶️" })
       .setStyle(2),
   );
 
   const container = new ContainerBuilder()
     .addTextDisplayComponents(
-      SimpleText(
-        `-# Page ${page}/${Math.ceil(totalBuggers / 10)}\n### Bug Leaderboard`,
-      ),
+      SimpleText(`-# Page ${page}/${maxPages}\n### Bug Leaderboard`),
     )
     .addSeparatorComponents((s) => s.setSpacing(2));
 
