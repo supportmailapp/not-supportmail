@@ -315,7 +315,7 @@ export const SimpleText = (text: string | string[]) =>
     typeof text === "string" ? text : text.join("\n"),
   );
 
-export async function buildBugsLeaderboardPage(page: number) {
+export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
   const [totalBuggers, buggers] = await Promise.all([
     DBUser.countDocuments({
       "stats.bugsReported": { $gt: 0 },
@@ -378,7 +378,7 @@ export async function buildBugsLeaderboardPage(page: number) {
   }
 
   return {
-    flags: EphemeralV2Flags,
+    flags: hidden ? EphemeralV2Flags : ComponentsV2Flags,
     components: [container, row],
     allowedMentions: { parse: [] },
   };

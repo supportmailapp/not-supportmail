@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 import NodeCache from "node-cache";
 import { DBUser } from "../models/user.js";
+import { EphemeralFlags } from "../utils/enums.js";
 
 const cache = new NodeCache({
   stdTTL: 600,
@@ -20,7 +21,7 @@ export const data = new SlashCommandBuilder()
     option
       .setName("user")
       .setDescription("User to check stats for (defaults to yourself)")
-      .setRequired(false)
+      .setRequired(false),
   );
 
 export async function run(ctx: ChatInputCommandInteraction) {
@@ -28,7 +29,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
 
   // Initialize response flags based on channel
   let responseFlags =
-    ctx.channelId !== Bun.env.CHANNEL_BOT_COMMANDS ? 64 : undefined;
+    ctx.channelId !== Bun.env.CHANNEL_BOT_COMMANDS ? EphemeralFlags : undefined;
 
   let targetUser = ctx.options.getUser("user") ?? ctx.user;
 
@@ -36,7 +37,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
     | string
     | undefined;
   if (cacheValue) {
-    responseFlags = 64;
+    responseFlags = EphemeralFlags;
   }
 
   let dbUser = await DBUser.findOne({ id: targetUser.id });
@@ -52,7 +53,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
   const statsEmbed = new EmbedBuilder()
     .setAuthor({ name: "User Statistics" })
     .setTitle(
-      targetMember.displayName || targetUser.globalName || targetUser.username
+      targetMember.displayName || targetUser.globalName || targetUser.username,
     )
     .setThumbnail(targetUser.avatarURL() || targetUser.defaultAvatarURL)
     .setColor(0xff5733)
