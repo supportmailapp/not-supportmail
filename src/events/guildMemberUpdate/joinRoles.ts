@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/node";
+import * as Sentry from "@sentry/bun";
 import { Collection, type ClientEvents } from "discord.js";
 import joinRolesCache from "../../caches/joinRoles.js";
 import config from "../../config.js";

@@ -1,166 +1,144 @@
 import { readdirSync } from "node:fs";
-import { dirname as getDirname, join as pathJoin } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join as pathJoin } from "node:path";
 
-import {
-  ActivityType,
-  Client,
-  Collection,
-  GatewayIntentBits,
-  Options,
-  Partials,
-  SlashCommandBuilder,
-  TextDisplayBuilder,
-} from "discord.js";
-// @ts-ignore | Ignore because if we don't need it TS goes crazy
-import * as Sentry from "@sentry/node";
-import { deployCommands } from "djs-command-helper";
+import { Collection, Events, TextDisplayBuilder } from "discord.js";
+import * as Sentry from "@sentry/bun";
 import mongoose from "mongoose";
 import { parseCustomId } from "./utils/main.js";
 
 import { ComponentsV2Flags, EphemeralV2Flags } from "./utils/enums.js";
-import "./utils/instrument.js"; // Import the Sentry instrumentation for better error tracking
 
 import "./cron/daily.js";
+import { client } from "./client.js";
 
-const _filename = fileURLToPath(import.meta.url);
-const _dirname = getDirname(_filename);
+let commands = new Collection<string, any>();
+let components = new Collection<string, any>();
+let eventListeners = new Map<string, string[]>();
+const FILE_EXTENSION = ".ts";
 
-var client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildWebhooks,
-    GatewayIntentBits.AutoModerationConfiguration,
-    GatewayIntentBits.AutoModerationExecution,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.GuildModeration,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessageReactions,
-  ],
+async function loadCommands() {
+  const newCommands = new Collection<string, () => Promise<any>>();
+  const commandsPath = pathJoin(__dirname, "commands");
+  const commandFiles = readdirSync(commandsPath, { encoding: "utf-8" })
+    .filter((fn) => fn.endsWith(FILE_EXTENSION))
+    .map((fn) => pathJoin(commandsPath, fn));
 
-  makeCache: Options.cacheWithLimits({
-    MessageManager: 1024,
-    GuildMessageManager: 1024,
-  }),
-
-  failIfNotExists: false,
-
-  partials: [Partials.Channel],
-
-  allowedMentions: { parse: ["users", "roles"], repliedUser: false },
-
-  presence: {
-    activities: [
-      {
-        type: ActivityType.Listening,
-        name: "Drinking hot chocolate and judging your 2026 resolutions",
-      },
-    ],
-    status: "online",
-  },
-});
-
-type CommandFile = {
-  /**
-   * The data for the slash command
-   *
-   * @see {@link https://discord.js.org/docs/packages/builders/1.9.0/SlashCommandBuilder:Class}
-   */
-  data: SlashCommandBuilder;
-  /**
-   * The function that should be run when the command is executed
-   */
-  run: Function;
-  /**
-   * The optional function that should be run when the command is autocompleted
-   */
-  autocomplete?: Function;
-  [key: string]: any;
-};
-
-type ComponentFile = {
-  /**
-   * The prefix of this component
-   *
-   * @see {@link https://github.com/The-LukeZ/discordjs-app-template?tab=readme-ov-file#component-prefix}
-   */
-  prefix: string;
-  /**
-   * The function that should be run when the component is triggered
-   */
-  run: Function;
-  [key: string]: any;
-};
-
-type EventFile = Function;
-
-let commands = new Collection<string, CommandFile>();
-let components = new Collection<string, ComponentFile>();
-
-const commandsPath = pathJoin(_dirname, "commands");
-const commandFiles = readdirSync(commandsPath, { encoding: "utf-8" })
-  .filter((fn) => fn.endsWith(".js"))
-  .map((fn) => pathJoin(commandsPath, fn));
-
-for (const file of commandFiles) {
-  const filePath = "file://" + file;
-  const command: CommandFile = (await import(filePath)).default;
-  if (typeof command == "object" && "data" in command && "run" in command) {
-    commands.set(command.data.name, command);
-  } else {
-    Sentry.logger.warn(
-      `A commandFile is missing a required "data" or "run" property.`,
-      {
-        filePath,
+  for (const file of commandFiles) {
+    try {
+      const fileExports = await import(file);
+      if (fileExports && "data" in fileExports && "run" in fileExports) {
+        newCommands.set(fileExports.data.name, fileExports);
+      } else {
+        Sentry.captureMessage(
+          `The command at ${file} is missing a required "data" or "run" property.`,
+        );
       }
-    );
+    } catch (error) {
+      Sentry.captureException(error);
+    }
+  }
+
+  // Replace the commands collection
+  commands.clear();
+  newCommands.forEach((value, key) => {
+    commands.set(key, value);
+  });
+  return commands;
+}
+
+// Function to load components
+async function loadComponents() {
+  const newComponents = new Collection<string, any>();
+  const componentsPath = pathJoin(__dirname, "components");
+  const componentFiles = readdirSync(componentsPath, { encoding: "utf-8" })
+    .filter((file) => file.endsWith(FILE_EXTENSION))
+    .map((fn) => pathJoin(componentsPath, fn));
+
+  for (const file of componentFiles) {
+    try {
+      const fileExports = await import(file);
+      if (
+        fileExports &&
+        ("prefix" in fileExports || "PREFIX" in fileExports) &&
+        "run" in fileExports
+      ) {
+        newComponents.set(
+          fileExports.prefix || fileExports.PREFIX,
+          fileExports,
+        );
+      } else {
+        Sentry.captureMessage(
+          `The component at ${file} is missing a required "prefix" or "run" property.`,
+        );
+      }
+    } catch (error) {
+      Sentry.captureException(error);
+    }
+  }
+
+  // Replace the components collection
+  components.clear();
+  newComponents.forEach((value, key) => {
+    components.set(key, value);
+  });
+  return components;
+}
+
+// Function to load event listeners
+async function loadEvents() {
+  const eventsPath = pathJoin(__dirname, "events");
+  const eventsFolders = readdirSync(eventsPath, { encoding: "utf-8" });
+  const clearedEventFolders = eventsFolders.filter((f) =>
+    Object.values(Events).includes(f as any),
+  );
+
+  for (const event of clearedEventFolders) {
+    let eventPath = pathJoin(eventsPath, event);
+    let eventFiles = readdirSync(eventPath)
+      .filter((file) => file.endsWith(FILE_EXTENSION))
+      .map((fn) => pathJoin(eventPath, fn));
+
+    for (let file of eventFiles) {
+      try {
+        const fileExports = await import(file);
+        for (const key in fileExports) {
+          const exported = fileExports[key];
+          if (typeof exported === "function") {
+            client.on(event, (...args) => exported(...args));
+            if (!eventListeners.has(event)) eventListeners.set(event, []);
+            eventListeners.get(event)!.push(file);
+          } else {
+            Sentry.logger.warn(
+              `The event at ${file} does not export a function or EventHandler class.`,
+            );
+          }
+        }
+      } catch (error) {
+        Sentry.captureException(error);
+      }
+    }
   }
 }
 
-const componentsPath = pathJoin(_dirname, "components");
-const componentFiles = readdirSync(componentsPath, { encoding: "utf-8" })
-  .filter((fn) => fn.endsWith(".js"))
-  .map((fn) => pathJoin(componentsPath, fn));
+async function loadAllModules() {
+  Sentry.logger.info("Starting module loading...");
 
-for (const file of componentFiles) {
-  const filePath = "file://" + file;
-  const comp: ComponentFile = (await import(filePath)).default;
-  if (
-    typeof comp === "object" &&
-    comp.hasOwnProperty("prefix") &&
-    comp.hasOwnProperty("run")
-  ) {
-    components.set(comp.prefix, comp);
-  } else {
-    Sentry.logger.error(
-      `The componentFile is missing a required "prefix" or "run" property.`,
-      {
-        filePath,
-      }
+  try {
+    const startTime = Date.now();
+
+    await loadCommands();
+    await loadComponents();
+    await loadEvents();
+
+    const loadTime = Date.now() - startTime;
+    Sentry.logger.info(
+      `All modules loaded successfully - Commands: ${commands.size}, Components: ${components.size}, Events: ${eventListeners.size}, Load time: ${loadTime}ms`,
     );
-  }
-}
 
-// Event files structure: https://github.com/The-LukeZ/discordjs-app-template?tab=readme-ov-file#events
-
-const eventsPath = pathJoin(_dirname, "events");
-const eventsFolders = readdirSync(eventsPath, { encoding: "utf-8" });
-
-for (const event of eventsFolders) {
-  let eventPath = pathJoin(eventsPath, event);
-  let eventFiles = readdirSync(eventPath)
-    .filter((file) => file.endsWith(".js"))
-    .map((fn) => pathJoin(eventPath, fn));
-
-  for (let file of eventFiles) {
-    const filePath = "file://" + file;
-    const func: EventFile = (await import(filePath)).default;
-    if (typeof func !== "function") continue;
-
-    client.on(event, (...args) => func(...args));
+    return { commands, components, eventListeners };
+  } catch (error) {
+    Sentry.captureException(error);
+    throw error;
   }
 }
 
@@ -171,7 +149,7 @@ client.on("interactionCreate", async (interaction) => {
 
     if (!command) {
       return Sentry.logger.error(
-        `No command matching '${interaction.commandName}' was found.`
+        `No command matching '${interaction.commandName}' was found.`,
       );
     }
 
@@ -180,7 +158,7 @@ client.on("interactionCreate", async (interaction) => {
         await command.autocomplete(interaction);
       } else if (interaction.isAutocomplete() && !command.autocomplete) {
         Sentry.logger.error(
-          `No autocomplete function found for command '${interaction.commandName}'`
+          `No autocomplete function found for command '${interaction.commandName}'`,
         );
       } else {
         await command.run(interaction);
@@ -195,7 +173,7 @@ client.on("interactionCreate", async (interaction) => {
             flags: ComponentsV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
-                "There was an error while executing this command!"
+                "There was an error while executing this command!",
               ),
             ],
           })
@@ -206,7 +184,7 @@ client.on("interactionCreate", async (interaction) => {
             flags: EphemeralV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
-                "There was an error while executing this command!"
+                "There was an error while executing this command!",
               ),
             ],
           })
@@ -224,7 +202,7 @@ client.on("interactionCreate", async (interaction) => {
 
     if (!comp) {
       Sentry.logger.error(
-        `No component matching '${interaction.customId}' was found.`
+        `No component matching '${interaction.customId}' was found.`,
       );
       return;
     }
@@ -257,7 +235,7 @@ client.on("interactionCreate", async (interaction) => {
             flags: EphemeralV2Flags,
             components: [
               new TextDisplayBuilder().setContent(
-                "There was an error while executing this component!"
+                "There was an error while executing this component!",
               ),
             ],
           })
@@ -271,17 +249,9 @@ client.once("clientReady", async (client) => {
   console.info(
     `[${new Date().toLocaleString("en")}] Logged in as ${client.user.tag} | ${
       client.user.id
-    }`
+    }`,
   );
-  Sentry.logger.info("Logged in", {
-    username: client.user.tag,
-    applicationId: client.application.id,
-  });
 
-  await deployCommands(commandsPath, {
-    appId: client.application.id,
-    appToken: client.token,
-  });
   await client.application.commands.fetch();
   Sentry.logger.info("Commands deployed & fetched");
 });
@@ -299,8 +269,8 @@ process
 
 await mongoose.connect(process.env.MONGO_URI!);
 Sentry.logger.info("Connected to DB");
+await loadAllModules();
+Sentry.logger.info("Modules loaded");
 
 await client.login(process.env.BOT_TOKEN);
 Sentry.logger.info("Bot started");
-
-export { client };

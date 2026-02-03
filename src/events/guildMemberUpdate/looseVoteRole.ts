@@ -12,7 +12,7 @@ import {
 import { DBUser } from "../../models/user.js";
 import { ComponentsV2Flags } from "../../utils/enums.js";
 import { botVoteBtns } from "../../utils/main.js";
-import * as Sentry from "@sentry/node";
+import * as Sentry from "@sentry/bun";
 
 const pm = (userId: string, botIds: string[]) => {
   return (

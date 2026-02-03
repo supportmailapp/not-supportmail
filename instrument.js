@@ -1,10 +1,17 @@
 // Sentry stuff
 
-import * as Sentry from "@sentry/node";
+import * as Sentry from "@sentry/bun";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.7,
+  environment: process.env.NODE_ENV || "production",
   sendDefaultPii: true,
+  tracesSampleRate: 1.0,
   enableLogs: true,
+  integrations: [
+    Sentry.consoleLoggingIntegration({ levels: ["error", "info", "warn"] }),
+    // Sentry.eventFiltersIntegration({
+    //   ignoreErrors: [],
+    // }),
+  ],
 });

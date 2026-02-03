@@ -1,5 +1,5 @@
 // @ts-nocheck | TODO: Remove this when the logic is fixed
-import * as Sentry from "@sentry/node";
+import * as Sentry from "@sentry/bun";
 import { VoiceState } from "discord.js";
 import { type HydratedDocument } from "mongoose";
 import NodeCache from "node-cache";

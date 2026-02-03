@@ -1,6 +1,6 @@
 import schedule from "node-schedule";
-import { client } from "../index.js";
-import * as Sentry from "@sentry/node";
+import { client } from "../client.js";
+import * as Sentry from "@sentry/bun";
 import { voteMessage } from "../utils/main.js";
 
 // Daily, at UTC+1 09:00
@@ -16,6 +16,6 @@ schedule.scheduleJob("0 8 * * *", async function dailyCron() {
     Sentry.captureException(err, {
       level: "error",
       extra: { context: "Daily Cron: Sending vote message failed" },
-    })
+    }),
   );
 });
