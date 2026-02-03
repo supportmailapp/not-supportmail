@@ -5,6 +5,7 @@
   "description": "SupportMail Management Bot",
   "main": "./src/index.ts",
   "scripts": {
+    "build": "bun build src/index.ts --outdir ./dist --target bun",
     "dev": "bun --preload=./instrument.js --env-file=.env.dev ./src/index.ts",
     "start": "pm2 start pm2.config.js --update-env --env production",
     "typecheck": "bunx tsc --noEmit"
