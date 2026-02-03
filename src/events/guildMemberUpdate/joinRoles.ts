@@ -10,7 +10,7 @@ export async function joinRolesUpdate(
   oldMember: ClientEvents["guildMemberUpdate"][0],
   member: ClientEvents["guildMemberUpdate"][1]
 ) {
-  Sentry.logger.debug("guildMemberUpdate joinRoles event triggered", {
+  console.log.debug("guildMemberUpdate joinRoles event triggered", {
     userId: member.id,
     guildId: member.guild.id,
     oldPending: oldMember.pending,
@@ -19,7 +19,7 @@ export async function joinRolesUpdate(
   });
 
   if (!oldMember.pending || member.pending) {
-    Sentry.logger.debug(
+    console.log.debug(
       "Member is still was not pending or is still pending, skipping join roles"
     );
     return;
@@ -29,7 +29,7 @@ export async function joinRolesUpdate(
   await delay(2_000); // Wait for the audit log handler to finish first
   const shouldApplyJoinRoles = !joinRolesCache.has(member.guild.id, member.id);
 
-  Sentry.logger.debug("Checked join roles cache", {
+  console.log.debug("Checked join roles cache", {
     userId: member.id,
     guildId: member.guild.id,
     shouldApplyJoinRoles,
@@ -37,7 +37,7 @@ export async function joinRolesUpdate(
 
   if (!shouldApplyJoinRoles) {
     // Cache entry exists, abort
-    Sentry.logger.debug("Cache entry exists, aborting join roles application");
+    console.log.debug("Cache entry exists, aborting join roles application");
     return;
   }
 
@@ -51,7 +51,7 @@ export async function joinRolesUpdate(
   });
   const roleIds = rolesToApply.map((_, id) => id);
 
-  Sentry.logger.debug("Filtered roles to apply", {
+  console.log.debug("Filtered roles to apply", {
     userId: member.id,
     isBot,
     rolesToApplyCount: rolesToApply.size,
@@ -59,14 +59,14 @@ export async function joinRolesUpdate(
   });
 
   if (rolesToApply.size === 0) {
-    Sentry.logger.debug("No roles to apply, returning");
+    console.log.debug("No roles to apply, returning");
     return;
   }
 
   // Store which roles should be applied in cache
   joinRolesCache.set(member.guild.id, member.id, roleIds);
 
-  Sentry.logger.debug("Stored roles in cache", {
+  console.log.debug("Stored roles in cache", {
     userId: member.id,
     guildId: member.guild.id,
     roleIds,
@@ -78,7 +78,7 @@ export async function joinRolesUpdate(
   // Check if user still exists in cache (might have been removed by audit log handler)
   if (!joinRolesCache.has(member.guild.id, member.id)) {
     // Cache was cleared by audit log handler, meaning Sapphire already applied roles
-    Sentry.logger.debug(
+    console.log.debug(
       "Cache was cleared by audit log handler, Sapphire already applied roles"
     );
     return;
@@ -87,14 +87,14 @@ export async function joinRolesUpdate(
   // Apply join roles from cache
   const rolesToApplyFromCache = joinRolesCache.take(member.guild.id, member.id);
 
-  Sentry.logger.debug("Retrieved roles from cache", {
+  console.log.debug("Retrieved roles from cache", {
     userId: member.id,
     guildId: member.guild.id,
     rolesToApplyFromCache,
   });
 
   if (!rolesToApplyFromCache || rolesToApplyFromCache.length === 0) {
-    Sentry.logger.debug("No roles to apply from cache, returning");
+    console.log.debug("No roles to apply from cache, returning");
     return;
   }
 
@@ -104,13 +104,13 @@ export async function joinRolesUpdate(
       "Added join roles after member update"
     );
 
-    Sentry.logger.debug("Successfully applied join roles", {
+    console.log.debug("Successfully applied join roles", {
       userId: member.id,
       guildId: member.guild.id,
       appliedRoles: rolesToApplyFromCache,
     });
   } catch (error) {
-    Sentry.logger.error("Failed to add join roles", {
+    console.log.error("Failed to add join roles", {
       userId: member.id,
       rolesToAdd: rolesToApplyFromCache,
       error,

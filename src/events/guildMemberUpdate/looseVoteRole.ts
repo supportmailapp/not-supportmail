@@ -116,7 +116,7 @@ export async function loseVoteRole(
         { voteLooseDM: false },
         { upsert: true },
       );
-      Sentry.logger.debug(
+      console.log.debug(
         `Could not DM user ${member.id} about lost vote role.`,
       );
     });

@@ -108,7 +108,7 @@ async function loadEvents() {
             if (!eventListeners.has(event)) eventListeners.set(event, []);
             eventListeners.get(event)!.push(file);
           } else {
-            Sentry.logger.warn(
+            console.log.warn(
               `The event at ${file} does not export a function or EventHandler class.`,
             );
           }
@@ -121,7 +121,7 @@ async function loadEvents() {
 }
 
 async function loadAllModules() {
-  Sentry.logger.info("Starting module loading...");
+  console.log.info("Starting module loading...");
 
   try {
     const startTime = Date.now();
@@ -131,7 +131,7 @@ async function loadAllModules() {
     await loadEvents();
 
     const loadTime = Date.now() - startTime;
-    Sentry.logger.info(
+    console.log.info(
       `All modules loaded successfully - Commands: ${commands.size}, Components: ${components.size}, Events: ${eventListeners.size}, Load time: ${loadTime}ms`,
     );
 
@@ -148,7 +148,7 @@ client.on("interactionCreate", async (interaction) => {
     const command = commands.get(interaction.commandName);
 
     if (!command) {
-      return Sentry.logger.error(
+      return console.log.error(
         `No command matching '${interaction.commandName}' was found.`,
       );
     }
@@ -157,7 +157,7 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.isAutocomplete() && command.autocomplete) {
         await command.autocomplete(interaction);
       } else if (interaction.isAutocomplete() && !command.autocomplete) {
-        Sentry.logger.error(
+        console.log.error(
           `No autocomplete function found for command '${interaction.commandName}'`,
         );
       } else {
@@ -201,7 +201,7 @@ client.on("interactionCreate", async (interaction) => {
     const comp = components.get(parseCustomId(interaction.customId, true));
 
     if (!comp) {
-      Sentry.logger.error(
+      console.log.error(
         `No component matching '${interaction.customId}' was found.`,
       );
       return;
@@ -253,7 +253,7 @@ client.once("clientReady", async (client) => {
   );
 
   await client.application.commands.fetch();
-  Sentry.logger.info("Commands deployed & fetched");
+  console.log.info("Commands deployed & fetched");
 });
 
 process
@@ -268,9 +268,9 @@ process
   });
 
 await mongoose.connect(Bun.env.MONGO_URI!);
-Sentry.logger.info("Connected to DB");
+console.log.info("Connected to DB");
 await loadAllModules();
-Sentry.logger.info("Modules loaded");
+console.log.info("Modules loaded");
 
 await client.login(Bun.env.BOT_TOKEN);
-Sentry.logger.info("Bot started");
+console.log.info("Bot started");

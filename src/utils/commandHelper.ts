@@ -109,7 +109,7 @@ export async function deployCommands(
   );
 
   if (opts.logs)
-    Sentry.logger.info(`Started refreshing global and guild commands.`);
+    console.log.info(`Started refreshing global and guild commands.`);
 
   try {
     const rest = new REST().setToken(opts.appToken);
@@ -123,7 +123,7 @@ export async function deployCommands(
 
       // Ensure we have a proper command shape
       if (typeof command !== "object" || !("data" in command)) {
-        Sentry.logger.warn(
+        console.log.warn(
           `Command at '${file}' is missing the 'data' property!`,
         );
         continue;
@@ -132,7 +132,7 @@ export async function deployCommands(
       // Respect ignore flag
       if (Boolean(command.ignore ?? false)) {
         if (opts.logs)
-          Sentry.logger.info(
+          console.log.info(
             `Command '${command.data?.name ?? file}' is ignored!`,
           );
         continue;
@@ -152,7 +152,7 @@ export async function deployCommands(
       body: commands,
     });
     if (opts.logs)
-      Sentry.logger.info(`${data.length} global commands refreshed`);
+      console.log.info(`${data.length} global commands refreshed`);
 
     for (let cmd of privateCommands) {
       for (let gid of cmd.guildIds) {
@@ -163,7 +163,7 @@ export async function deployCommands(
       }
     }
     if (privateCommands.length > 0 && opts.logs) {
-      Sentry.logger.info(
+      console.log.info(
         `${privateCommands.length} guild-specific command sets refreshed`,
       );
     }
