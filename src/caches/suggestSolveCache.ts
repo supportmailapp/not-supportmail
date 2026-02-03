@@ -16,8 +16,10 @@ export default {
       { suggestSolve: 1 },
       { lean: true },
     );
-    cache.set(userId, { value: dbUser ? dbUser.suggestSolve : true });
-    return dbUser ? dbUser.suggestSolve : true;
+    const value =
+      typeof dbUser?.suggestSolve === "boolean" ? dbUser.suggestSolve : true;
+    cache.set(userId, { value });
+    return value;
   },
   del: (userId: string) => cache.del(userId),
   take: (userId: string) => cache.take(userId)?.value || null,
