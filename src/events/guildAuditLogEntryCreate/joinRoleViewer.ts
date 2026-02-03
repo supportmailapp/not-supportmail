@@ -2,7 +2,7 @@ import type { ClientEvents } from "discord.js";
 import { AuditLogEvent, Collection } from "discord.js";
 import joinRolesCache from "../../caches/joinRoles.js";
 
-export default async function (
+export async function joinRoleViewer(
   auditLogEntry: ClientEvents["guildAuditLogEntryCreate"][0],
   guild: ClientEvents["guildAuditLogEntryCreate"][1]
 ) {

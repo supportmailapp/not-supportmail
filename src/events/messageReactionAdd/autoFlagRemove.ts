@@ -9,7 +9,7 @@ const { flagRemoval: _config } = config;
 
 const FlagRegex = /^[\u{1F1E6}-\u{1F1FF}]{2}$/u;
 
-export default async function (
+export async function autoFlagRemove(
   reaction: MessageReaction,
   user: User,
   _: MessageReactionEventDetails

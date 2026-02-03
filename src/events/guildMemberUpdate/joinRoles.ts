@@ -6,7 +6,7 @@ import { delay } from "../../utils/main.js";
 
 const joinRoles = new Collection(Object.entries(config.joinRoles));
 
-export default async function (
+export async function joinRolesUpdate(
   oldMember: ClientEvents["guildMemberUpdate"][0],
   member: ClientEvents["guildMemberUpdate"][1]
 ) {

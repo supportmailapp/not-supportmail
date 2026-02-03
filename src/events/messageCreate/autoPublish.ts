@@ -2,7 +2,7 @@ import { Message, MessageType } from "discord.js";
 import config from "../../config.js";
 import { checkUserAccess } from "../../utils/main.js";
 
-export default async function autoPublish(message: Message) {
+export async function autoPublish(message: Message) {
   if (
     message.guildId !== process.env.GUILD_ID ||
     message.type != MessageType.Default

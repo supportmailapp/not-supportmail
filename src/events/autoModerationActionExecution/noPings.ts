@@ -9,7 +9,7 @@ import { ComponentsV2Flags } from "../../utils/enums.js";
 
 // We assume the role
 
-export default async function noPingsAutoModerationActionExecution(
+export async function noPingsAutoModerationActionExecution(
   event: AutoModerationActionExecution,
 ) {
   if (

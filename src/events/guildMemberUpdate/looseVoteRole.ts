@@ -43,7 +43,7 @@ const voteRoles = [
   },
 ] as const;
 
-export default async function loseVoteRole(
+export async function loseVoteRole(
   oldMember: ClientEvents["guildMemberUpdate"][0],
   member: ClientEvents["guildMemberUpdate"][1],
 ) {

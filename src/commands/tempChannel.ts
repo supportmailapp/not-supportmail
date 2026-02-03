@@ -78,7 +78,7 @@ const namingOption = (required = false) =>
     .setMaxLength(100)
     .setRequired(required);
 
-const data = new SlashCommandBuilder()
+export const data = new SlashCommandBuilder()
   .setName("tempchannel")
   .setDescription("Manage temporary voice channels")
   .setDefaultMemberPermissions(32)
@@ -157,7 +157,7 @@ const data = new SlashCommandBuilder()
       ),
   );
 
-async function run(ctx: CachedCommandInteraction) {
+export async function run(ctx: CachedCommandInteraction) {
   const sub = ctx.options.getSubcommand(true);
 
   switch (sub) {
@@ -223,7 +223,7 @@ async function getCategoryChoices(
   });
 }
 
-async function autocomplete(ctx: AutocompleteInteraction<"cached">) {
+export async function autocomplete(ctx: AutocompleteInteraction<"cached">) {
   const sub = ctx.options.getSubcommand(true);
   const option = ctx.options.getFocused(true);
 
@@ -782,9 +782,3 @@ async function debugAllCategories(
     components: [container],
   });
 }
-
-export default {
-  data: data,
-  run: run,
-  autocomplete: autocomplete,
-};

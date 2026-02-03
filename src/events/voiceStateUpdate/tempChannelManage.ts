@@ -103,7 +103,7 @@ const modifiedChannels = new Set<string>();
 async function getUserCount(
   channelId: string,
   guildId: string,
-  fallbackChannel?: VoiceState["channel"]
+  fallbackChannel?: VoiceState["channel"],
 ): Promise<number> {
   const cacheKey = `${guildId}-${channelId}`;
 
@@ -111,7 +111,7 @@ async function getUserCount(
   if (fallbackChannel?.members) {
     const count = fallbackChannel.members.size;
     console.debug(
-      `[TempChannel] Updating cache with fresh Discord count for ${channelId}: ${count}`
+      `[TempChannel] Updating cache with fresh Discord count for ${channelId}: ${count}`,
     );
     cache.set(cacheKey, count);
     modifiedChannels.add(cacheKey);
@@ -122,14 +122,14 @@ async function getUserCount(
   const cachedCount = cache.get<number>(cacheKey);
   if (cachedCount !== undefined) {
     console.debug(
-      `[TempChannel] Cache hit for user count: ${channelId} = ${cachedCount}`
+      `[TempChannel] Cache hit for user count: ${channelId} = ${cachedCount}`,
     );
     return cachedCount;
   }
 
   // Cache miss - query database
   console.debug(
-    `[TempChannel] Cache miss for user count, querying database for channel ${channelId}`
+    `[TempChannel] Cache miss for user count, querying database for channel ${channelId}`,
   );
 
   const tempChannel = await TempChannel.findOne({
@@ -142,7 +142,7 @@ async function getUserCount(
   // Cache the database result
   cache.set(cacheKey, count);
   console.debug(
-    `[TempChannel] Cached database user count for ${channelId}: ${count}`
+    `[TempChannel] Cached database user count for ${channelId}: ${count}`,
   );
 
   return count;
@@ -154,10 +154,10 @@ async function getUserCount(
  */
 async function getEmptyChannelCount(
   guildId: string,
-  categoryId: string
+  categoryId: string,
 ): Promise<number> {
   console.debug(
-    `[TempChannel] Calculating empty channels for category ${categoryId}`
+    `[TempChannel] Calculating empty channels for category ${categoryId}`,
   );
 
   // Get all temp channels in the category
@@ -166,7 +166,7 @@ async function getEmptyChannelCount(
       guildId,
       category: categoryId,
     },
-    { channelId: 1, userCount: 1 }
+    { channelId: 1, userCount: 1 },
   );
 
   let emptyCount = 0;
@@ -185,7 +185,7 @@ async function getEmptyChannelCount(
   }
 
   console.debug(
-    `[TempChannel] Found ${emptyCount} empty channels in category ${categoryId}`
+    `[TempChannel] Found ${emptyCount} empty channels in category ${categoryId}`,
   );
   return emptyCount;
 }
@@ -197,7 +197,7 @@ async function handleUserLeave(oldState: VoiceState) {
   if (!userId) return;
 
   console.debug(
-    `[TempChannel] Handling user leave from channel ${oldState.channel.id} in guild ${oldState.guild.id}`
+    `[TempChannel] Handling user leave from channel ${oldState.channel.id} in guild ${oldState.guild.id}`,
   );
 
   // Check if user has a recent disconnect entry to prevent infinite loops
@@ -206,7 +206,7 @@ async function handleUserLeave(oldState: VoiceState) {
 
   if (recentDisconnect) {
     console.debug(
-      `[TempChannel] User ${userId} has recent disconnect entry, skipping to prevent loops`
+      `[TempChannel] User ${userId} has recent disconnect entry, skipping to prevent loops`,
     );
     return;
   }
@@ -226,7 +226,7 @@ async function handleUserLeave(oldState: VoiceState) {
 
   if (!tempChannelDoc) {
     console.debug(
-      `[TempChannel] Channel ${oldState.channel.id} is not a temporary channel`
+      `[TempChannel] Channel ${oldState.channel.id} is not a temporary channel`,
     );
     return;
   }
@@ -235,17 +235,17 @@ async function handleUserLeave(oldState: VoiceState) {
   const newUserCount = await getUserCount(
     oldState.channel.id,
     oldState.guild.id,
-    oldState.channel
+    oldState.channel,
   );
 
   console.debug(
-    `[TempChannel] Current user count after leave: ${newUserCount} for channel ${oldState.channel.id}`
+    `[TempChannel] Current user count after leave: ${newUserCount} for channel ${oldState.channel.id}`,
   );
 
   // If the channel is now empty, check for cleanup
   if (newUserCount <= 0) {
     console.debug(
-      `[TempChannel] Channel ${oldState.channel.id} is empty, scheduling cleanup check`
+      `[TempChannel] Channel ${oldState.channel.id} is empty, scheduling cleanup check`,
     );
 
     // Add delay to prevent race conditions
@@ -254,21 +254,21 @@ async function handleUserLeave(oldState: VoiceState) {
         console.debug(
           `[TempChannel] Executing cleanup check for channel ${
             oldState.channel!.id
-          }`
+          }`,
         );
 
         // Double-check the count after delay
         const finalUserCount = await getUserCount(
           oldState.channel!.id,
           oldState.guild!.id,
-          oldState.channel
+          oldState.channel,
         );
 
         if (finalUserCount > 0) {
           console.debug(
             `[TempChannel] Channel ${
               oldState.channel!.id
-            } no longer empty, skipping cleanup`
+            } no longer empty, skipping cleanup`,
           );
           return;
         }
@@ -276,11 +276,11 @@ async function handleUserLeave(oldState: VoiceState) {
         // Get empty channel count using new approach
         const emptyChannelCount = await getEmptyChannelCount(
           oldState.guild!.id,
-          tempChannelDoc.category._id.toHexString()
+          tempChannelDoc.category._id.toHexString(),
         );
 
         console.debug(
-          `[TempChannel] Found ${emptyChannelCount} empty channels in category`
+          `[TempChannel] Found ${emptyChannelCount} empty channels in category`,
         );
 
         // Only delete if there are multiple empty channels
@@ -291,7 +291,7 @@ async function handleUserLeave(oldState: VoiceState) {
               guildId: oldState.guild!.id,
               category: tempChannelDoc.category._id,
             },
-            { channelId: 1, number: 1 }
+            { channelId: 1, number: 1 },
           ).sort({ number: -1 });
 
           // Filter by cached user counts
@@ -309,13 +309,13 @@ async function handleUserLeave(oldState: VoiceState) {
           if (emptyChannels.length > 1) {
             const toDeleteChannelId = emptyChannels[0].channelId;
             console.debug(
-              `[TempChannel] Deleting excess empty channel: ${toDeleteChannelId}`
+              `[TempChannel] Deleting excess empty channel: ${toDeleteChannelId}`,
             );
 
             try {
               await oldState.guild!.channels.delete(
                 toDeleteChannelId,
-                "Temporary channel cleanup - multiple empty channels"
+                "Temporary channel cleanup - multiple empty channels",
               );
               await TempChannel.deleteOne({ channelId: toDeleteChannelId });
 
@@ -325,22 +325,22 @@ async function handleUserLeave(oldState: VoiceState) {
               modifiedChannels.delete(cacheKey);
 
               console.debug(
-                `[TempChannel] Successfully deleted temporary channel: ${toDeleteChannelId}`
+                `[TempChannel] Successfully deleted temporary channel: ${toDeleteChannelId}`,
               );
               Sentry.logger.debug(
-                `Deleted empty temporary channel: ${oldState.channel?.name}`
+                `Deleted empty temporary channel: ${oldState.channel?.name}`,
               );
             } catch (error) {
               console.error(
                 `[TempChannel] Error deleting channel ${toDeleteChannelId}:`,
-                error
+                error,
               );
               Sentry.captureException(error);
             }
           }
         } else {
           console.debug(
-            `[TempChannel] Only ${emptyChannelCount} empty channel(s) in category, keeping channel`
+            `[TempChannel] Only ${emptyChannelCount} empty channel(s) in category, keeping channel`,
           );
         }
       } catch (error) {
@@ -355,7 +355,7 @@ async function handleUserJoin(newState: VoiceState) {
   if (!newState.channel || !newState.guild) return;
 
   console.debug(
-    `[TempChannel] Handling user join to channel ${newState.channel.id} in guild ${newState.guild.id}`
+    `[TempChannel] Handling user join to channel ${newState.channel.id} in guild ${newState.guild.id}`,
   );
 
   // Check if this is a temp channel
@@ -366,13 +366,13 @@ async function handleUserJoin(newState: VoiceState) {
 
   if (!tempChannelDoc) {
     console.debug(
-      `[TempChannel] Channel ${newState.channel.id} is not a temporary channel`
+      `[TempChannel] Channel ${newState.channel.id} is not a temporary channel`,
     );
     return;
   }
 
   const recentDisconnect = disconnectCache.get<DisconnectValue>(
-    `${newState.guild.id}-${newState.member?.user.id}`
+    `${newState.guild.id}-${newState.member?.user.id}`,
   );
   if (recentDisconnect && !recentDisconnect.botInitiated) {
     await newState.setChannel(null, "Disconnect due to recent leave");
@@ -381,16 +381,16 @@ async function handleUserJoin(newState: VoiceState) {
       {
         timestamp: dayjs().unix(),
         botInitiated: true,
-      }
+      },
     );
     console.debug(
-      `[TempChannel] User ${newState.member?.user.id} recently disconnected, resetting channel`
+      `[TempChannel] User ${newState.member?.user.id} recently disconnected, resetting channel`,
     );
     await newState.member
       ?.send(
         `:warning: Please wait a moment before rejoining. Try again <t:${dayjs()
           .add(5, "s")
-          .unix()}:R>`
+          .unix()}:R>`,
       )
       .catch(() => {});
     return;
@@ -407,12 +407,12 @@ async function handleUserJoin(newState: VoiceState) {
     }),
     getEmptyChannelCount(
       newState.guild.id,
-      tempChannelDoc.category._id.toHexString()
+      tempChannelDoc.category._id.toHexString(),
     ),
   ]);
 
   console.debug(
-    `[TempChannel] Category stats: ${totalChannels} total, ${emptyChannelCount} empty`
+    `[TempChannel] Category stats: ${totalChannels} total, ${emptyChannelCount} empty`,
   );
 
   // Check max channel limit
@@ -421,7 +421,7 @@ async function handleUserJoin(newState: VoiceState) {
     totalChannels >= tempChannelDoc.category.maxChannels
   ) {
     console.debug(
-      `[TempChannel] Category at max channels, not creating new channel`
+      `[TempChannel] Category at max channels, not creating new channel`,
     );
     return;
   }
@@ -429,18 +429,18 @@ async function handleUserJoin(newState: VoiceState) {
   // Create new channel if no empty channels available
   if (emptyChannelCount === 0) {
     console.debug(
-      `[TempChannel] No empty channels available, creating new channel`
+      `[TempChannel] No empty channels available, creating new channel`,
     );
     await createAndSaveTempChannel(
       newState.guild,
       tempChannelDoc.category,
       tempChannelDoc.category.parentId,
-      true
+      true,
     );
     console.debug(`[TempChannel] Created new temp channel for category`);
   } else {
     console.debug(
-      `[TempChannel] ${emptyChannelCount} empty channel(s) available, no new channel needed`
+      `[TempChannel] ${emptyChannelCount} empty channel(s) available, no new channel needed`,
     );
   }
 }
@@ -451,22 +451,22 @@ export function cleanupChannelCache(guildId: string, channelId: string) {
   cache.del(cacheKey);
   modifiedChannels.delete(cacheKey);
   console.debug(
-    `[TempChannel] Cleaned up cache for deleted channel: ${channelId}`
+    `[TempChannel] Cleaned up cache for deleted channel: ${channelId}`,
   );
 }
 
 // Main event handler
-export default async function (oldState: VoiceState, newState: VoiceState) {
+async function tempChannelManage(oldState: VoiceState, newState: VoiceState) {
   return;
   try {
     const userId = newState.member?.user.id || oldState.member?.user.id;
     const guildId = newState.guild.id;
 
     console.debug(
-      `[TempChannel] Voice state update for user ${userId} in guild ${guildId}`
+      `[TempChannel] Voice state update for user ${userId} in guild ${guildId}`,
     );
     console.debug(
-      `[TempChannel] Old channel: ${oldState.channel?.id}, New channel: ${newState.channel?.id}`
+      `[TempChannel] Old channel: ${oldState.channel?.id}, New channel: ${newState.channel?.id}`,
     );
 
     // User left a channel
@@ -475,7 +475,7 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
       (!newState.channel || oldState.channel.id !== newState.channel.id)
     ) {
       console.debug(
-        `[TempChannel] User ${userId} left channel ${oldState.channel.id}`
+        `[TempChannel] User ${userId} left channel ${oldState.channel.id}`,
       );
       await handleUserLeave(oldState);
     }
@@ -486,13 +486,13 @@ export default async function (oldState: VoiceState, newState: VoiceState) {
       (!oldState.channel || oldState.channel.id !== newState.channel.id)
     ) {
       console.debug(
-        `[TempChannel] User ${userId} joined channel ${newState.channel.id}`
+        `[TempChannel] User ${userId} joined channel ${newState.channel.id}`,
       );
       await handleUserJoin(newState);
     }
 
     console.debug(
-      `[TempChannel] Voice state update completed for user ${userId}`
+      `[TempChannel] Voice state update completed for user ${userId}`,
     );
   } catch (error) {
     console.error(`[TempChannel] Error handling voice state update:`, error);

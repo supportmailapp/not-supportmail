@@ -7,7 +7,7 @@ import { checkUserAccess } from "../../utils/main.js";
 const UTCOffeset = process.env.UTC_OFFSET || null;
 dayjs.extend(utc);
 
-export default async function autoThreads(message: Message) {
+export async function autoThreads(message: Message) {
   if (
     message.channel.isDMBased() ||
     message.channel.isThread() ||

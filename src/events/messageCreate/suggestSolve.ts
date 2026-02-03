@@ -20,7 +20,7 @@ const SUGGEST_SOLVE_PATTERNS = [
   "*never mind*fixed it*",
 ];
 
-export default async function suggestSolve(msg: Message) {
+export async function suggestSolve(msg: Message) {
   if (
     !msg.inGuild() ||
     msg.author.bot ||
