@@ -4,9 +4,9 @@ const configType = (
   })
 ).default;
 const data = (
-  await import("../config.json" as any, {
+  await import("../config.json" as string, {
     with: { type: "json" },
-  })
+  }).catch(() => ({ default: {} }))
 ).default;
 
 export type ConfigType = typeof configType;
