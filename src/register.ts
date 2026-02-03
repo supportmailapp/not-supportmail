@@ -20,7 +20,7 @@ async function main() {
       if (fileExports && "data" in fileExports) {
         commands.set(fileExports.data.name, fileExports.data);
       } else {
-        throw `The command at ${file} is missing a required "data" or "run" property.`;
+        console.warn(`[WARN] The command at ${file} is missing a required "data" or "run" property.`);
       }
     } catch (error) {
       console.error(error);
@@ -38,7 +38,7 @@ async function main() {
   if (success) {
     console.log("Commands deployed successfully");
   } else {
-    console.error("Failed to deploy commands");
+    console.error("[ERROR] Failed to deploy commands");
   }
 }
 
