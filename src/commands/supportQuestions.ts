@@ -48,7 +48,14 @@ async function replyOrDelete(
   if (isThreadOwner) {
     return ctx.deleteReply();
   }
-  return ctx.editReply(message);
+  return ctx.editReply({
+    flags: EphemeralV2Flags,
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.Green)
+        .addTextDisplayComponents((t) => t.setContent(message)),
+    ],
+  });
 }
 
 export const data = new SlashCommandBuilder()
@@ -124,6 +131,11 @@ export async function run(ctx: ChatInputCommandInteraction) {
         ),
       );
     }
+    if (hasTag(ctx.channel.appliedTags || [], config.supportTags.solved)) {
+      return ctx.reply(
+        buildErrorMessage("This post is already marked as solved."),
+      );
+    }
 
     const message = await buildSuggestSolveMessage(ctx.client, threadOwner);
     return ctx.reply({ ...message, allowedMentions: { users: [threadOwner] } });
@@ -160,7 +172,9 @@ export async function run(ctx: ChatInputCommandInteraction) {
   switch (subcommand) {
     case "solve":
       if (hasTag(currentTags, config.supportTags.solved)) {
-        return ctx.editReply("This post is already marked as solved.");
+        return ctx.editReply(
+          buildErrorMessage("This post is already marked as solved."),
+        );
       }
 
       await ctx.channel.edit({
