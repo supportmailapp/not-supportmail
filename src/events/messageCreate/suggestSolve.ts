@@ -36,13 +36,24 @@ export async function suggestSolve(msg: Message | PartialMessage) {
   }
 
   const content = msg.content.replace(/\s+/g, " ").replace("\n", " ");
+  console.debug("[suggestSolve] Checking message content:", content);
   for (const pattern of SUGGEST_SOLVE_PATTERNS) {
     if (pattern.test(content)) {
+      console.debug("[suggestSolve] Pattern matched:", pattern);
       // check author here because regex is faster than DB call, so we only want to do DB call if necessary
       const setting = await suggestSolveCache.get(msg.author.id);
-      if (!setting) return;
+      if (!setting) {
+        console.debug(
+          "[suggestSolve] User has disabled suggest solve:",
+          msg.author.id,
+        );
+        return;
+      }
       const message = await buildSuggestSolveMessage(msg.client);
       return msg.reply({ ...message, allowedMentions: { repliedUser: false } });
+    }
+    {
+      console.debug("[suggestSolve] Pattern not matched:", pattern);
     }
   }
 }
