@@ -30,13 +30,13 @@ export default async function suggestSolve(msg: Message) {
     return;
   }
 
-  const setting = await suggestSolveCache.get(msg.author.id);
-  if (!setting) return;
-
   const content = msg.content;
   for (const pattern of SUGGEST_SOLVE_PATTERNS) {
     const isMatch = wildcardMatch(pattern, { flags: "i" });
     if (isMatch(content)) {
+      // check author here because wildcard is is faster than DB call, so we only want to do DB call if necessary
+      const setting = await suggestSolveCache.get(msg.author.id);
+      if (!setting) return;
       const message = await buildSuggestSolveMessage(msg.client);
       return msg.channel.send(message);
     }
