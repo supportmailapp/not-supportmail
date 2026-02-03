@@ -30,8 +30,7 @@
     "mongoose": "^8.22.0",
     "node-cache": "^5.1.2",
     "node-schedule": "^2.1.1",
-    "tsx": "^4.21.0",
-    "wildcard-match": "^5.1.4"
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",

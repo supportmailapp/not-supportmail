@@ -1,25 +1,24 @@
 import { ChannelType, Message, type PartialMessage } from "discord.js";
-import wildcardMatch from "wildcard-match";
 import suggestSolveCache from "../../caches/suggestSolveCache";
 import { buildSuggestSolveMessage } from "../../utils/main";
 import config from "../../config";
 
 const SUGGEST_SOLVE_PATTERNS = [
-  "*solved*",
-  "*issue resolved*",
-  "*fixed*",
-  "*problem fixed*",
-  "*thanks*",
-  "*thank you*",
-  "*thanks*worked*",
-  "*thank you*worked*",
-  "*worked*thanks*",
-  "*worked*thank you*",
-  "*resolved*",
-  "*i fixed it*",
-  "*i solved it*",
-  "*all good now*",
-  "*never mind*fixed it*",
+  /solved/i,
+  /issue resolved/i,
+  /fixed/i,
+  /problem fixed/i,
+  /thanks/i,
+  /thank you/i,
+  /thanks.*worked/i,
+  /thank you.*worked/i,
+  /worked.*thanks/i,
+  /worked.*thank you/i,
+  /resolved/i,
+  /i fixed it/i,
+  /i solved it/i,
+  /all good now/i,
+  /never mind.*fixed it/i,
 ];
 
 const allTags = Object.values(config.supportTags);
@@ -33,28 +32,13 @@ export async function suggestSolve(msg: Message | PartialMessage) {
     msg.channel.ownerId !== msg.author?.id || // Only suggest in user's own threads
     msg.channel.appliedTags.some((tag) => allTags.includes(tag))
   ) {
-    console.log("Suggest solve: conditions not met, exiting.", {
-      guildid: msg.guild?.id,
-      author: msg.author?.id,
-      channel: msg.channel.id,
-      bot: msg.author?.bot,
-      parentid: (msg.channel as any).parentId,
-      type: msg.channel.type,
-      ownerid: (msg.channel as any).ownerId,
-      appliedtags: (msg.channel as any).appliedTags,
-    });
     return;
   }
 
-  console.debug("Suggest solve: checking message content.", {
-    ...(msg.toJSON() as object),
-  });
-
   const content = msg.content.replace(/\s+/g, " ").replace("\n", " ");
   for (const pattern of SUGGEST_SOLVE_PATTERNS) {
-    const isMatch = wildcardMatch(pattern, { flags: "i" });
-    if (isMatch(content)) {
-      // check author here because wildcard is is faster than DB call, so we only want to do DB call if necessary
+    if (pattern.test(content)) {
+      // check author here because regex is faster than DB call, so we only want to do DB call if necessary
       const setting = await suggestSolveCache.get(msg.author.id);
       if (!setting) return;
       const message = await buildSuggestSolveMessage(msg.client);
