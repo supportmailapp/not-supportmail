@@ -261,22 +261,24 @@ export function randomColor() {
  * Builds a suggest solve message for support threads.
  *
  * @param commandMention - The formatted mention string for the solve command (e.g., "</question solve:123>")
+ * @param mentionId - Optional Discord Snowflake ID to mention a specific user in the message
  * @returns A MessageCreateOptions object with the suggest solve message
  */
 export async function buildSuggestSolveMessage(
   client: Client<true>,
-): Promise<MessageCreateOptions> {
+  mentionId?: string,
+) {
   const cmdMention = await getCommandMention("question solve", client);
+  let content = `>>> -# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# This helps to reduce clutter.`;
+  if (mentionId) {
+    content = `>>> Hey <@${mentionId}>!\n-# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# This helps to reduce clutter.`;
+  }
   return {
     flags: ComponentsV2Flags,
     components: [
       new ContainerBuilder()
         .setAccentColor(Colors.Blurple)
-        .addTextDisplayComponents((t) =>
-          t.setContent(
-            `>>> -# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# This helps to reduce clutter.`,
-          ),
-        ),
+        .addTextDisplayComponents((t) => t.setContent(content)),
     ],
   };
 }

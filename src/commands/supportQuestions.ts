@@ -10,7 +10,11 @@ import {
 } from "discord.js";
 import config from "../config.js";
 import { ComponentsV2Flags, EphemeralV2Flags } from "../utils/enums.js";
-import { canUpdateSupportPost } from "../utils/main.js";
+import {
+  buildErrorMessage,
+  buildSuggestSolveMessage,
+  canUpdateSupportPost,
+} from "../utils/main.js";
 
 // Helper functions
 function hasTag(tags: string[], tagId: string): boolean {
@@ -88,6 +92,11 @@ export const data = new SlashCommandBuilder()
           .setDescription("If True, adds a note for the user to open a ticket ")
           .setRequired(false),
       ),
+  )
+  .addSubcommand((sub) =>
+    sub
+      .setName("suggest-solve")
+      .setDescription("Suggest the user to mark the post as solved"),
   );
 
 export async function run(ctx: ChatInputCommandInteraction) {
@@ -107,6 +116,19 @@ export async function run(ctx: ChatInputCommandInteraction) {
 
   // Check if the user can update the support post
   const threadOwner = ctx.channel.ownerId;
+  if (subcommand === "suggest-solve") {
+    if (threadOwner === ctx.user.id) {
+      return ctx.reply(
+        buildErrorMessage(
+          "Why are you trying to suggest solving your own post? Get a hobby...",
+        ),
+      );
+    }
+
+    const message = await buildSuggestSolveMessage(ctx.client, threadOwner);
+    return ctx.reply({ ...message, allowedMentions: { users: [threadOwner] } });
+  }
+
   const canUpdate = canUpdateSupportPost(
     ctx.member as GuildMember,
     subcommand === "solve" || subcommand === "unsolve" ? threadOwner : null,
