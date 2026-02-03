@@ -6,8 +6,9 @@ export default async function autoPublish(message: Message) {
   if (
     message.guildId !== process.env.GUILD_ID ||
     message.type != MessageType.Default
-  )
+  ) {
     return;
+  }
 
   const channelConfig = config.autoPublishChannels[message.channelId] || null;
 
@@ -18,7 +19,7 @@ export default async function autoPublish(message: Message) {
       message.author.id,
       message.member?.roles.cache.map((r) => r.id) || [],
       channelConfig.blacklist || [],
-      channelConfig.whitelist || []
+      channelConfig.whitelist || [],
     )
   ) {
     return;

@@ -9,7 +9,7 @@ If you want to use this code, you can do so by forking this repository and modif
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (version 20 or higher)
-- [pnpm](https://pnpm.io/) package manager
+- [bun](https://bun.sh/) package manager
 - [MongoDB](https://www.mongodb.com/) database
 - Discord Bot Token from the [Discord Developer Portal](https://discord.com/developers/applications)
 
@@ -25,7 +25,7 @@ cd sm-helper
 #### 2. Install dependencies
 
 ```bash
-pnpm install
+bun install
 ```
 
 #### 3. Environment Configuration
@@ -50,19 +50,19 @@ Create environment files in the root directory, based on the [`.env.example`](.e
 **Development mode:**
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 **Production mode:**
 
 ```bash
-pnpm start
+bun start
 ```
 
 **Building only:**
 
 ```bash
-pnpm build
+bun build
 ```
 
 ### Bot Permissions

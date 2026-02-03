@@ -1,0 +1,61 @@
+{
+  "autoThreadedChannels": {
+    "<ChannelId>": {
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "notes": "some notes for something"
+    }
+  },
+  "autoPublishChannels": {
+    "<ChannelId>": {
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "pings": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "notes": "some notes for something"
+    }
+  },
+  "flagRemoval": {
+    "allowedChannels": ["channel-id1", "channel-id2"],
+    "allowedUsers": ["global-user-ids", "to-bypass-the-filter"]
+  },
+  "autoReactions": {
+    "<ChannelId>": {
+      "emojis": [
+        {
+          "id": "emoji-id",
+          "name": "emoji-name",
+          "animated": false
+        },
+        {
+          "id": "123",
+          "name": "custom-animated-emoji-example",
+          "animated": true
+        },
+        {
+          "id": "",
+          "name": "😀",
+          "animated": false
+        }
+      ],
+      "blacklist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"],
+      "whitelist": ["u-UserIdToBlacklist", "r-RoleIdToBlacklist"]
+    }
+  },
+  "joinRoles": {
+    "<RoleId>": {
+      "notes": "some notes for something",
+      "bot": true,
+      "delay": 0
+    }
+  },
+  "developers": [
+    {
+      "id": "developer-user-id-1",
+      "gender": "m"
+    },
+    {
+      "id": "developer-user-id-2",
+      "gender": "f"
+    }
+  ]
+}

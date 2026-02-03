@@ -1,15 +1,13 @@
 {
   "name": "not-supportmail",
   "private": true,
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "SupportMail Management Bot",
-  "main": "./dist/index.js",
+  "main": "./src/index.ts",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
-    "build": "tsc && pnpm sentry:sourcemaps",
-    "dev": "tsc && node --env-file=.env.dev ./dist/index.js",
-    "start": "pnpm build && node --env-file=.env.production ./dist/index.js",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org lukez-dev --project not-supportmail --release=2.0.1 ./dist && sentry-cli sourcemaps upload --org lukez-dev --project not-supportmail --release=2.0.1 ./dist"
+    "dev": "bun --preload=./instrument.js --env-file=.env.dev ./src/index.ts",
+    "start": "pm2 start pm2.config.js --update-env --env production",
+    "typecheck": "bunx tsc --noEmit"
   },
   "author": "supportmailapp",
   "license": "ISC",
@@ -22,8 +20,8 @@
     "discord.js": "^14.25.1",
     "djs-command-helper": "^4.2.2",
     "humanize-duration": "^3.33.2",
-    "ky": "^1.14.1",
-    "mongoose": "^8.20.4",
+    "ky": "^1.14.3",
+    "mongoose": "^8.22.0",
     "node-cache": "^5.1.2",
     "node-schedule": "^2.1.1"
   },
@@ -32,9 +30,5 @@
     "@types/node-schedule": "^2.1.8",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.22.0",
-  "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=10.0.0"
-  }
+  "packageManager": "bun@1.3.2"
 }

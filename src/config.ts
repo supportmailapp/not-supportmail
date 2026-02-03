@@ -1,13 +1,18 @@
-const config = (
-  await import("../config.json", {
+const configType = (
+  await import("../config.schema.json", {
+    with: { type: "json" },
+  })
+).default;
+const data = (
+  await import("../config.json" as any, {
     with: { type: "json" },
   })
 ).default;
 
-export type ConfigType = typeof config;
+export type ConfigType = typeof configType;
 
-export default {
-  ...config,
+const config = {
+  ...data,
   supportTags: {
     solved: process.env.TAG_SOLVED,
     dev: process.env.TAG_DEV,
@@ -25,8 +30,8 @@ export default {
     botCommands: process.env.CHANNEL_BOT_COMMANDS,
     ticketSupport: process.env.CHANNEL_TICKET_SUPPORT,
   },
-  developers: config.developers || [],
-} as typeof config & {
+  developers: data.developers || [],
+} as ConfigType & {
   autoThreadedChannels: { [key: string]: ThreadConfig };
   autoPublishChannels: { [key: string]: ChannelConfig };
   supportTags: {
@@ -62,3 +67,5 @@ type ChannelConfig = {
   whitelist?: string[];
   notes?: string;
 };
+
+export default config;
