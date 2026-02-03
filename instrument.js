@@ -10,8 +10,10 @@ Sentry.init({
   enableLogs: true,
   integrations: [
     Sentry.consoleLoggingIntegration({ levels: ["error", "info", "warn"] }),
-    // Sentry.eventFiltersIntegration({
-    //   ignoreErrors: [],
-    // }),
+    Sentry.eventFiltersIntegration({
+      ignoreErrors: [
+        'require() async module "/home/helper/bot/src/index.ts" is unsupported. use "await import()" instead.',
+      ],
+    }),
   ],
 });
