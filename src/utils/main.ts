@@ -274,7 +274,7 @@ export async function buildSuggestSolveMessage(
         .setAccentColor(Colors.Blurple)
         .addTextDisplayComponents((t) =>
           t.setContent(
-            `-# > It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# > This helps to reduce clutter.`,
+            `>>> -# It looks like your issue has been resolved! Please use ${cmdMention} to mark your post as solved.\n-# This helps to reduce clutter.`,
           ),
         ),
     ],
