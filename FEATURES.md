@@ -12,6 +12,8 @@ This document lists the bot's features grouped by area with a short description 
 - **`/stats`**: Displays stored user statistics (bugs reported, etc.).
 - **`/suggestion`**: Manage suggestion forum threads — set statuses (noted/accepted/rejected/implemented/duplicate) and optionally lock threads.
 - **`/question`**: Manage support forum posts — `solve`, `unsolve`, mark for `dev` review, and `wrong-channel` (optionally open ticket / lock thread).
+  - **NEW:** Added `/question suggest-solve` to gently prompt users to mark their post as solved.
+- **`/suggest-solve-setting`**: Toggle whether the bot automatically suggests marking posts as solved.
 - **`/tempchannel`**: Full temporary voice-channel system: `create`, `delete`, `list`, `info`, `edit`, `debug` for temp-channel categories (WIP).
 - **`/vote`**: Show vote links/buttons for the configured bots.
 - **`/vote-notification`**: Toggle whether the user receives DMs when vote roles are lost.
@@ -28,6 +30,7 @@ This document lists the bot's features grouped by area with a short description 
 - **Guild member update: `looseVoteRole`**: Detects lost vote-roles and DMs users with buttons to re-vote; respects user DM preferences stored in DB.
 - **Message create: `autoPublish`**: Crossposts messages in configured announcement channels when allowed by channel config (pings/whitelist/blacklist).
 - **Message create: `autoThreads`**: Auto-create threads in configured channels using a naming schema with variables (username, date, time, etc.).
+- **Message create: `suggestSolve`**: Suggests marking support posts as solved when message is from thread author, in support forum, unsolved, user has setting not disabled and message contains a certain trigger (e.g., "thanks", "solved", "fixed", etc.).
 - **Message reaction add: `autoFlagRemove`**: Automatically removes country-flag (and some other) emoji reactions in configured channels or for configured users.
 - **Thread create: `supportPostCreate`**: Auto-joins new support threads, updates DB username, and pins the starter message.
 - **Voice state update: `tempChannelManage`**: Core temporary-voice-channel lifecycle manager — tracks user counts, creates/deletes temp voice channels, schedules cleanup and syncs minimal state to DB.

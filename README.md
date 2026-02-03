@@ -11,15 +11,25 @@ If you want to use this code, you can do so by forking this repository and modif
 - [Node.js](https://nodejs.org/) (version 20 or higher)
 - [bun](https://bun.sh/) package manager
 - [MongoDB](https://www.mongodb.com/) database
+- [pm2](https://pm2.keymetrics.io/) for process management (for production use) - install globally with bun!
+
+  ```bash
+  bun add -g pm2
+  ```
+
 - Discord Bot Token from the [Discord Developer Portal](https://discord.com/developers/applications)
 
 ### Setup
 
-#### 1. Clone the repository
+#### 1. Fork the repository
+
+Fork this repository to your own GitHub account to create a personal copy of the code.
+
+#### 2. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/sm-helper.git
-cd sm-helper
+git clone https://github.com/<your-username>/<repositoryname>.git
+cd <repositoryname>
 ```
 
 #### 2. Install dependencies
@@ -57,7 +67,7 @@ bun dev
 
 ```bash
 # Start the bot
-bun start
+./start.sh
 
 # Stop the bot
 pm2 stop sm-helper
@@ -75,11 +85,13 @@ pm2 monit
 > [!NOTE]
 > Production mode uses PM2 for process management. The bot will automatically restart on crashes and can be managed with PM2 commands.
 
-### Building only:**
+### Building only:
 
 ```bash
 bun build
 ```
+
+This doesn't have any output though as Bun handles builds internally.
 
 ### Bot Permissions
 
