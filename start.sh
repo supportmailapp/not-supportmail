@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+APP_NAME="sm-helper"
+
+echo "Starting deployment..."
+echo "Pulling latest changes from Git..."
+git fetch && git reset --hard origin/main && git pull origin
+
+echo "Installing dependencies..."
+bun install
+
 echo "Building Bot..."
 bun run build
 
