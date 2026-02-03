@@ -4,14 +4,14 @@ import { EphemeralV2Flags } from "../utils/enums.js";
 import { parseCustomId } from "../utils/main.js";
 import { buildCategoryInfo, ErrorResponse } from "../utils/tempChannels.js";
 
-async function run(ctx: ButtonInteraction) {
+export async function run(ctx: ButtonInteraction) {
   const { component, firstParam: categoryId } = parseCustomId(ctx.customId);
 
   if (component === "info") {
     await showInfo(ctx as ButtonInteraction, categoryId!);
   } else {
     await ctx.reply(
-      ErrorResponse("This action is not supported in this context.")
+      ErrorResponse("This action is not supported in this context."),
     );
   }
 }
@@ -28,8 +28,3 @@ async function showInfo(ctx: ButtonInteraction, categoryId: string) {
     components: [buildCategoryInfo(category, true, Colors.Blue)],
   });
 }
-
-export default {
-  prefix: "tempChannelCategory",
-  run,
-};

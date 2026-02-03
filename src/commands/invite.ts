@@ -13,147 +13,145 @@ import {
 } from "discord.js";
 import humanizeDuration from "humanize-duration";
 
-export default {
-  data: new SlashCommandBuilder()
-    .setName("generate-invite")
-    .setDescription("Generate an invite link for the server")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-    .setContexts(0)
-    .addChannelOption((op) =>
-      op
-        .setName("channel")
-        .setDescription("Channel for the invite | Default: Current channel")
-        .setRequired(false)
-        .addChannelTypes(
-          ChannelType.GuildText,
-          ChannelType.GuildForum,
-          ChannelType.GuildVoice,
-          ChannelType.GuildStageVoice,
-          ChannelType.GuildMedia,
-          ChannelType.GuildAnnouncement
-        )
-    )
-    .addIntegerOption((op) =>
-      op
-        .setName("max-uses")
-        .setDescription(
-          "Maximum uses for the invite (0-100) | Default: 0 (unlimited)"
-        )
-        .setMinValue(0)
-        .setMaxValue(100)
-        .setRequired(false)
-    )
-    .addIntegerOption((op) =>
-      op
-        .setName("max-age")
-        .setDescription(
-          "Seconds until invite expires (0-604800) | Default: 0 (never expires)"
-        )
-        .setMinValue(0)
-        .setMaxValue(604_800)
-        .setRequired(false)
-    )
-    .addBooleanOption((op) =>
-      op
-        .setName("temporary")
-        .setDescription("Grant temporary membership | Default: false")
-        .setRequired(false)
-    )
-    .addBooleanOption((op) =>
-      op
-        .setName("unique")
-        .setDescription("Create a unique invite | Default: true")
-        .setRequired(false)
-    ),
+export const data = new SlashCommandBuilder()
+  .setName("generate-invite")
+  .setDescription("Generate an invite link for the server")
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .setContexts(0)
+  .addChannelOption((op) =>
+    op
+      .setName("channel")
+      .setDescription("Channel for the invite | Default: Current channel")
+      .setRequired(false)
+      .addChannelTypes(
+        ChannelType.GuildText,
+        ChannelType.GuildForum,
+        ChannelType.GuildVoice,
+        ChannelType.GuildStageVoice,
+        ChannelType.GuildMedia,
+        ChannelType.GuildAnnouncement,
+      ),
+  )
+  .addIntegerOption((op) =>
+    op
+      .setName("max-uses")
+      .setDescription(
+        "Maximum uses for the invite (0-100) | Default: 0 (unlimited)",
+      )
+      .setMinValue(0)
+      .setMaxValue(100)
+      .setRequired(false),
+  )
+  .addIntegerOption((op) =>
+    op
+      .setName("max-age")
+      .setDescription(
+        "Seconds until invite expires (0-604800) | Default: 0 (never expires)",
+      )
+      .setMinValue(0)
+      .setMaxValue(604_800)
+      .setRequired(false),
+  )
+  .addBooleanOption((op) =>
+    op
+      .setName("temporary")
+      .setDescription("Grant temporary membership | Default: false")
+      .setRequired(false),
+  )
+  .addBooleanOption((op) =>
+    op
+      .setName("unique")
+      .setDescription("Create a unique invite | Default: true")
+      .setRequired(false),
+  );
 
-  async run(ctx: ChatInputCommandInteraction) {
-    if (!ctx.inGuild() || !ctx.inCachedGuild()) return; // TS type guard things
-    await ctx.deferReply({ flags: 64 });
+export async function run(ctx: ChatInputCommandInteraction) {
+  if (!ctx.inGuild() || !ctx.inCachedGuild()) return; // TS type guard things
+  await ctx.deferReply({ flags: 64 });
 
-    const options = {
-      channelId: ctx.options.getChannel("channel")?.id ?? ctx.channelId,
-      maxUses: ctx.options.getInteger("max-uses") ?? 0,
-      maxAge: ctx.options.getInteger("max-age") ?? 0,
-      temporary: ctx.options.getBoolean("temporary") ?? false,
-      unique: ctx.options.getBoolean("unique") ?? true,
-    };
-    const channel = await ctx.guild.channels.fetch(options.channelId);
-    if (!channel) {
-      await ctx.editReply({
-        flags: MessageFlags.IsComponentsV2 | 64,
-        components: [new TextDisplayBuilder().setContent("Channel not found.")],
-      });
-      return;
-    }
+  const options = {
+    channelId: ctx.options.getChannel("channel")?.id ?? ctx.channelId,
+    maxUses: ctx.options.getInteger("max-uses") ?? 0,
+    maxAge: ctx.options.getInteger("max-age") ?? 0,
+    temporary: ctx.options.getBoolean("temporary") ?? false,
+    unique: ctx.options.getBoolean("unique") ?? true,
+  };
+  const channel = await ctx.guild.channels.fetch(options.channelId);
+  if (!channel) {
+    await ctx.editReply({
+      flags: MessageFlags.IsComponentsV2 | 64,
+      components: [new TextDisplayBuilder().setContent("Channel not found.")],
+    });
+    return;
+  }
 
-    let invite: Invite;
-    try {
-      invite = await ctx.guild.invites.create(options.channelId, {
-        maxAge: options.maxAge,
-        maxUses: options.maxUses,
-        temporary: options.temporary,
-        unique: options.unique,
-        reason: `Invite generated by ${ctx.user.username} (${ctx.user.id})`,
-      });
-    } catch (err) {
-      console.error(err);
-      await ctx.editReply({
-        flags: MessageFlags.IsComponentsV2 | 64,
-        components: [
-          new SectionBuilder()
-            .addTextDisplayComponents((text) =>
-              text.setContent("Error generating invite.")
-            )
-            .addTextDisplayComponents((text) =>
-              text.setContent("```" + String(err) + "```")
-            ),
-        ],
-      });
-      return;
-    }
-
+  let invite: Invite;
+  try {
+    invite = await ctx.guild.invites.create(options.channelId, {
+      maxAge: options.maxAge,
+      maxUses: options.maxUses,
+      temporary: options.temporary,
+      unique: options.unique,
+      reason: `Invite generated by ${ctx.user.username} (${ctx.user.id})`,
+    });
+  } catch (err) {
+    console.error(err);
     await ctx.editReply({
       flags: MessageFlags.IsComponentsV2 | 64,
       components: [
-        new ContainerBuilder()
-          .setAccentColor(Colors.Yellow)
+        new SectionBuilder()
           .addTextDisplayComponents((text) =>
-            text.setContent("## Invite generated!")
+            text.setContent("Error generating invite."),
           )
           .addTextDisplayComponents((text) =>
-            text.setContent(
-              [
-                "### Details:",
-                `- **Code:** \`${invite.code}\``,
-                `- **URL:** <https://discord.gg/${invite.code}>`,
-                `- **Channel:** <#${channel.id}>`,
-                `- **Max Uses:** \`${
-                  options.maxUses > 0 ? options.maxUses : "unlimited"
-                }\``,
-                `- **Max Age:** \`${
-                  options.maxAge > 0
-                    ? humanizeDuration(options.maxAge * 1000, {
-                        maxDecimalPoints: 2,
-                        units: ["d", "h", "m", "s"],
-                      })
-                    : "never expires"
-                }\``,
-                `- **Temporary:** \`${options.temporary}\``,
-                `- **Unique:** \`${options.unique}\``,
-              ].join("\n")
-            )
-          )
-          .addActionRowComponents((row) =>
-            row.addComponents(
-              new ButtonBuilder({
-                style: 5,
-                label: "Use Invite",
-                emoji: { name: "🔗" },
-                url: `https://discord.gg/${invite.code}`,
-              })
-            )
+            text.setContent("```" + String(err) + "```"),
           ),
       ],
     });
-  },
-};
+    return;
+  }
+
+  await ctx.editReply({
+    flags: MessageFlags.IsComponentsV2 | 64,
+    components: [
+      new ContainerBuilder()
+        .setAccentColor(Colors.Yellow)
+        .addTextDisplayComponents((text) =>
+          text.setContent("## Invite generated!"),
+        )
+        .addTextDisplayComponents((text) =>
+          text.setContent(
+            [
+              "### Details:",
+              `- **Code:** \`${invite.code}\``,
+              `- **URL:** <https://discord.gg/${invite.code}>`,
+              `- **Channel:** <#${channel.id}>`,
+              `- **Max Uses:** \`${
+                options.maxUses > 0 ? options.maxUses : "unlimited"
+              }\``,
+              `- **Max Age:** \`${
+                options.maxAge > 0
+                  ? humanizeDuration(options.maxAge * 1000, {
+                      maxDecimalPoints: 2,
+                      units: ["d", "h", "m", "s"],
+                    })
+                  : "never expires"
+              }\``,
+              `- **Temporary:** \`${options.temporary}\``,
+              `- **Unique:** \`${options.unique}\``,
+            ].join("\n"),
+          ),
+        )
+        .addActionRowComponents((row) =>
+          row.addComponents(
+            new ButtonBuilder({
+              style: 5,
+              label: "Use Invite",
+              emoji: { name: "🔗" },
+              url: `https://discord.gg/${invite.code}`,
+            }),
+          ),
+        ),
+    ],
+  });
+}

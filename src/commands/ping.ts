@@ -13,42 +13,40 @@ import { randomColor } from "../utils/main.js";
 
 dayjs.extend(duration);
 
-export default {
-  data: new SlashCommandBuilder().setName("ping").setDescription("Ping Pong"),
+export const data = new SlashCommandBuilder().setName("ping").setDescription("Ping Pong");
 
-  async run(ctx: ChatInputCommandInteraction) {
-    const bot = ctx.client;
+export async function run(ctx: ChatInputCommandInteraction) {
+  const bot = ctx.client;
 
-    const startTime = dayjs();
-    await ctx.reply({
-      flags: EphemeralV2Flags,
+  const startTime = dayjs();
+  await ctx.reply({
+    flags: EphemeralV2Flags,
+    components: [
+      new TextDisplayBuilder().setContent("Pong! Calculating latency..."),
+    ],
+  });
+
+  const endTime = dayjs();
+  const latency = endTime.diff(startTime, "milliseconds");
+  await ctx
+    .editReply({
+      flags: ComponentsV2Flags,
       components: [
-        new TextDisplayBuilder().setContent("Pong! Calculating latency..."),
-      ],
-    });
-
-    const endTime = dayjs();
-    const latency = endTime.diff(startTime, "milliseconds");
-    await ctx
-      .editReply({
-        flags: ComponentsV2Flags,
-        components: [
-          new ContainerBuilder()
-            .setAccentColor(randomColor())
-            .addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(
-                `- **API Ping:** \`${bot.ws.ping.toFixed(1)}ms\`\n` +
-                  `- **Roundtrip Latency:** \`${latency.toFixed(1)}ms\`\n` +
-                  `- **Uptime:** \`${humanizeDuration(bot.uptime, {
-                    largest: 4,
-                    maxDecimalPoints: 1,
-                  })}\``
-              )
+        new ContainerBuilder()
+          .setAccentColor(randomColor())
+          .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+              `- **API Ping:** \`${bot.ws.ping.toFixed(1)}ms\`\n` +
+                `- **Roundtrip Latency:** \`${latency.toFixed(1)}ms\`\n` +
+                `- **Uptime:** \`${humanizeDuration(bot.uptime, {
+                  largest: 4,
+                  maxDecimalPoints: 1,
+                })}\``,
             ),
-        ],
-      })
-      .catch(() => {});
+          ),
+      ],
+    })
+    .catch(() => {});
 
-    pingCache.set(ctx.guildId || ctx.channelId, new Date());
-  },
-};
+  pingCache.set(ctx.guildId || ctx.channelId, new Date());
+}
