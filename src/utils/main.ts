@@ -374,7 +374,7 @@ export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
       .addTextDisplayComponents(
         ...buggers.map((u, i) =>
           SimpleText(
-            `${inlineCode(i.toString().padStart(2, "0") + ordinalSuffix(i + 1))} — ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
+            `${inlineCode(i.toString().padStart(1, "0") + ordinalSuffix(i + 1))} — ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
           ),
         ),
       );
