@@ -5,11 +5,10 @@ import { parseCustomId } from "../utils/main.js";
 import { buildCategoryInfo, ErrorResponse } from "../utils/tempChannels.js";
 
 async function run(ctx: ButtonInteraction) {
-  const { component, params } = parseCustomId(ctx.customId);
-  const categoryId = params![0];
+  const { component, firstParam: categoryId } = parseCustomId(ctx.customId);
 
   if (component === "info") {
-    await showInfo(ctx as ButtonInteraction, categoryId);
+    await showInfo(ctx as ButtonInteraction, categoryId!);
   } else {
     await ctx.reply(
       ErrorResponse("This action is not supported in this context.")

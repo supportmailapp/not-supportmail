@@ -1,8 +1,8 @@
 import {
-  ApplicationCommandOptionChoiceData,
-  AutocompleteInteraction,
+  type ApplicationCommandOptionChoiceData,
+  type AutocompleteInteraction,
   ChannelType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Colors,
   ContainerBuilder,
   SectionBuilder,
@@ -14,7 +14,7 @@ import {
 } from "discord.js";
 import type { HydratedDocument } from "mongoose";
 import {
-  ITempChannelCategory,
+  type ITempChannelCategory,
   TempChannel,
   TempChannelCategory,
 } from "../models/tempChannel.js";
@@ -43,7 +43,7 @@ const parentCategoryOption = () =>
   new SlashCommandChannelOption()
     .setName("parent")
     .setDescription(
-      "The parent category for the temporary channel | Default: None (Root of the guild)"
+      "The parent category for the temporary channel | Default: None (Root of the guild)",
     )
     .addChannelTypes(ChannelType.GuildCategory)
     .setRequired(false);
@@ -52,7 +52,7 @@ const maxChannelsOption = (required = false) =>
   new SlashCommandIntegerOption()
     .setName("max-channels")
     .setDescription(
-      "The maximum number of channels that can be created for this category | Default: 10"
+      "The maximum number of channels that can be created for this category | Default: 10",
     )
     .setMinValue(1)
     .setMaxValue(100)
@@ -62,7 +62,7 @@ const maxMembersOption = (required = false) =>
   new SlashCommandIntegerOption()
     .setName("max-members")
     .setDescription(
-      "The maximum number of members allowed in each channel | Default: unlimited"
+      "The maximum number of members allowed in each channel | Default: unlimited",
     )
     .setMinValue(1)
     .setMaxValue(99)
@@ -72,7 +72,7 @@ const namingOption = (required = false) =>
   new SlashCommandStringOption()
     .setName("naming")
     .setDescription(
-      "The naming schema for the channels | Available Vars: {number}"
+      "The naming schema for the channels | Available Vars: {number}",
     )
     .setMinLength(3)
     .setMaxLength(100)
@@ -92,12 +92,12 @@ const data = new SlashCommandBuilder()
           .setDescription("The name of the temporary voice category")
           .setMinLength(3)
           .setMaxLength(100)
-          .setRequired(true)
+          .setRequired(true),
       )
       .addStringOption(namingOption(true))
       .addIntegerOption(maxChannelsOption(false))
       .addIntegerOption(maxMembersOption(false))
-      .addChannelOption(parentCategoryOption())
+      .addChannelOption(parentCategoryOption()),
   )
   .addSubcommand((sub) =>
     sub
@@ -105,9 +105,9 @@ const data = new SlashCommandBuilder()
       .setDescription("Delete a temp voice category")
       .addStringOption(
         categoryNameOption(
-          "The category to delete | This will delete all current channels for the category as well"
-        )
-      )
+          "The category to delete | This will delete all current channels for the category as well",
+        ),
+      ),
   )
   .addSubcommand((sub) =>
     sub
@@ -116,19 +116,19 @@ const data = new SlashCommandBuilder()
       .addStringOption(
         categoryNameOption(
           "If provided, lists all channels for this category instead",
-          false
-        )
-      )
+          false,
+        ),
+      ),
   )
   .addSubcommand((sub) =>
     sub
       .setName("info")
       .setDescription(
-        "Get information about the channels of a temp voice category"
+        "Get information about the channels of a temp voice category",
       )
       .addStringOption(
-        categoryNameOption("The category to get information about")
-      )
+        categoryNameOption("The category to get information about"),
+      ),
   )
   .addSubcommand((sub) =>
     sub
@@ -141,20 +141,20 @@ const data = new SlashCommandBuilder()
           .setDescription("The name of the temporary voice category")
           .setMinLength(3)
           .setMaxLength(100)
-          .setRequired(false)
+          .setRequired(false),
       )
       .addStringOption(namingOption(false))
       .addIntegerOption(maxChannelsOption(false))
       .addIntegerOption(maxMembersOption(false))
-      .addChannelOption(parentCategoryOption())
+      .addChannelOption(parentCategoryOption()),
   )
   .addSubcommand((sub) =>
     sub
       .setName("debug")
       .setDescription("Debug the temporary voice channel system")
       .addStringOption(
-        categoryNameOption("The category to debug | Default: None", false)
-      )
+        categoryNameOption("The category to debug | Default: None", false),
+      ),
   );
 
 async function run(ctx: CachedCommandInteraction) {
@@ -183,7 +183,7 @@ async function run(ctx: CachedCommandInteraction) {
       await ctx.reply({
         components: [
           new TextDisplayBuilder().setContent(
-            "How did you even get here? This command does not exist!"
+            "How did you even get here? This command does not exist!",
           ),
         ],
         flags: EphemeralV2Flags,
@@ -195,7 +195,7 @@ async function run(ctx: CachedCommandInteraction) {
 async function getCategoryChoices(
   guildId: string,
   value: string = "",
-  limit: number = 25
+  limit: number = 25,
 ): Promise<ApplicationCommandOptionChoiceData[]> {
   const categories = await TempChannelCategory.find(
     {
@@ -203,7 +203,7 @@ async function getCategoryChoices(
       name: { $regex: value, $options: "i" },
     },
     null,
-    { limit: limit, sort: { name: 1 } }
+    { limit: limit, sort: { name: 1 } },
   );
 
   if (!categories || categories.length === 0) {
@@ -255,7 +255,7 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
 
   if (options.name === "%none%") {
     await ctx.reply(
-      ErrorResponse("The name `%none%` is reserved and cannot be used.")
+      ErrorResponse("The name `%none%` is reserved and cannot be used."),
     );
     return;
   }
@@ -267,8 +267,8 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
   if (existingCategory) {
     await ctx.reply(
       ErrorResponse(
-        `A category with the name \`${options.name}\` already exists.`
-      )
+        `A category with the name \`${options.name}\` already exists.`,
+      ),
     );
     return;
   }
@@ -288,7 +288,7 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
     ctx.guild,
     newCategory,
     options.parent?.id,
-    false
+    false,
   );
 
   if (!createRes.success) {
@@ -304,9 +304,9 @@ async function createCategory(ctx: CachedCommandInteraction): Promise<void> {
       SuccessContainer().addTextDisplayComponents(
         (t) =>
           t.setContent(
-            `Temporary voice channel category \`${newCategory.name}\` created successfully!`
+            `Temporary voice channel category \`${newCategory.name}\` created successfully!`,
           ),
-        (t) => t.setContent(`> First temp channel: ${createRes.channel.url}`)
+        (t) => t.setContent(`> First temp channel: ${createRes.channel.url}`),
       ),
       container,
     ],
@@ -328,7 +328,7 @@ async function deleteCategory(ctx: CachedCommandInteraction): Promise<void> {
 
   if (categoryId === "%none%") {
     await ctx.reply(
-      ErrorResponse("You must specify a valid category to delete.")
+      ErrorResponse("You must specify a valid category to delete."),
     );
     return;
   }
@@ -356,12 +356,12 @@ async function deleteCategory(ctx: CachedCommandInteraction): Promise<void> {
       SuccessContainer().addTextDisplayComponents(
         (t) =>
           t.setContent(
-            `Temporary voice channel category \`${category.name}\` deleted successfully!`
+            `Temporary voice channel category \`${category.name}\` deleted successfully!`,
           ),
         (t) =>
           t.setContent(
-            `> Deleted ${deletedCount} channel${deletedCount === 1 ? "" : "s"}.`
-          )
+            `> Deleted ${deletedCount} channel${deletedCount === 1 ? "" : "s"}.`,
+          ),
       ),
     ],
   });
@@ -393,7 +393,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
 
   if (options.id === "%none%") {
     await ctx.reply(
-      ErrorResponse("You must specify a valid category to edit.")
+      ErrorResponse("You must specify a valid category to edit."),
     );
     return;
   }
@@ -407,7 +407,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
 
   if (!category) {
     await ctx.editReply(
-      ErrorResponse("The specified category does not exist.")
+      ErrorResponse("The specified category does not exist."),
     );
     return;
   }
@@ -435,7 +435,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
     category = await TempChannelCategory.findByIdAndUpdate(
       category._id,
       { $set: setParams },
-      { new: true }
+      { new: true },
     );
 
     if (category && (setParams.parentId || setParams.namingScheme)) {
@@ -444,7 +444,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
         ctx.guild,
         category,
         options.parentId || null,
-        false
+        false,
       );
       if (!result.success) {
         await ctx.editReply(ErrorResponse(result.error));
@@ -466,9 +466,9 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
           `> Updated category settings:\n\`\`\`${JSON.stringify(
             setParams,
             null,
-            1
-          )}\`\`\``
-        )
+            1,
+          )}\`\`\``,
+        ),
       ),
       buildCategoryInfo(category, true, Colors.Green),
     ],
@@ -476,7 +476,7 @@ async function editCategory(ctx: CachedCommandInteraction): Promise<void> {
 }
 
 async function listCategoriesOrChannels(
-  ctx: CachedCommandInteraction
+  ctx: CachedCommandInteraction,
 ): Promise<void> {
   const categoryValue = ctx.options.getString("category", false);
   if (categoryValue) {
@@ -493,7 +493,7 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
       guildId: ctx.guildId,
     },
     null,
-    { sort: { name: 1 }, limit: 100 } // We don't assume that we're hitting the 6000 character limit currently, so we don't have to implement pagination
+    { sort: { name: 1 }, limit: 100 }, // We don't assume that we're hitting the 6000 character limit currently, so we don't have to implement pagination
   );
 
   if (categories.length === 0) {
@@ -516,7 +516,7 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
       },
     ]);
 
-  console.log(`Channel counts: ${typeof channelCounts[0]._id}`);
+  console.log(`Channel counts: ${typeof channelCounts[0]?._id.toHexString()}`);
 
   const channelCountMap = new Map<string, number>();
   channelCounts.forEach((item) => {
@@ -537,7 +537,7 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
     components: [
       SuccessContainer()
         .addTextDisplayComponents((t) =>
-          t.setContent("### Temporary Voice Categories:")
+          t.setContent("### Temporary Voice Categories:"),
         )
         .addSectionComponents(
           ...categoryList.map((item) =>
@@ -547,22 +547,22 @@ async function listCategories(ctx: CachedCommandInteraction): Promise<void> {
                 b
                   .setCustomId(`tempChannelCategory/info?${item.id}`)
                   .setEmoji({ name: "ℹ️" })
-                  .setStyle(2)
-              )
-          )
+                  .setStyle(2),
+              ),
+          ),
         ),
     ],
   });
 }
 
 async function listCategoryChannels(
-  ctx: CachedCommandInteraction
+  ctx: CachedCommandInteraction,
 ): Promise<void> {
   const categoryValue = ctx.options.getString("category", true);
   const category = await TempChannelCategory.findById(categoryValue);
   if (!category || categoryValue === "%none%") {
     await ctx.reply(
-      ErrorResponse("The specified category does not exist or is invalid.")
+      ErrorResponse("The specified category does not exist or is invalid."),
     );
     return;
   }
@@ -573,14 +573,14 @@ async function listCategoryChannels(
       category: category._id,
     },
     null,
-    { sort: { createdAt: 1 } } // Sort by creation date, oldest first
+    { sort: { createdAt: 1 } }, // Sort by creation date, oldest first
   );
 
   if (channels.length === 0) {
     await ctx.reply(
       ErrorResponse(
-        `No temporary channels found for category \`${category.name}\`.`
-      )
+        `No temporary channels found for category \`${category.name}\`.`,
+      ),
     );
     return;
   }
@@ -592,7 +592,7 @@ async function listCategoryChannels(
     components: [
       SuccessContainer().addTextDisplayComponents(
         (t) => t.setContent(`### \`${category.name}\``),
-        (t) => t.setContent(channelList)
+        (t) => t.setContent(channelList),
       ),
     ],
   });
@@ -614,12 +614,12 @@ async function debugCategories(ctx: CachedCommandInteraction): Promise<void> {
 
 async function debugSingleCategory(
   ctx: CachedCommandInteraction,
-  categoryId: string
+  categoryId: string,
 ): Promise<void> {
   const category = await TempChannelCategory.findById(categoryId);
   if (!category) {
     await ctx.editReply(
-      ErrorResponse("The specified category does not exist or is invalid.")
+      ErrorResponse("The specified category does not exist or is invalid."),
     );
     return;
   }
@@ -674,21 +674,21 @@ async function debugSingleCategory(
       ...(results.length > 0
         ? [
             new TextDisplayBuilder().setContent(
-              `**Valid channels:**\n${results.join("\n")}`
+              `**Valid channels:**\n${results.join("\n")}`,
             ),
           ]
         : []),
       ...(errors.length > 0
         ? [
             new TextDisplayBuilder().setContent(
-              `**Issues found:**\n${errors.join("\n")}`
+              `**Issues found:**\n${errors.join("\n")}`,
             ),
           ]
-        : [])
+        : []),
     )
     .addSeparatorComponents((s) => s)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent("✅ Debugging complete")
+      new TextDisplayBuilder().setContent("✅ Debugging complete"),
     );
 
   await ctx.editReply({
@@ -698,13 +698,13 @@ async function debugSingleCategory(
 }
 
 async function debugAllCategories(
-  ctx: CachedCommandInteraction
+  ctx: CachedCommandInteraction,
 ): Promise<void> {
   const categories = await TempChannelCategory.find({ guildId: ctx.guildId });
 
   if (categories.length === 0) {
     await ctx.editReply(
-      ErrorResponse("No temporary voice categories found for debugging.")
+      ErrorResponse("No temporary voice categories found for debugging."),
     );
     return;
   }
@@ -733,7 +733,7 @@ async function debugAllCategories(
           ) {
             invalidChannels++;
             allErrors.push(
-              `❌ | \`${category.name}\`: <#${channel.channelId}>`
+              `❌ | \`${category.name}\`: <#${channel.channelId}>`,
             );
           } else {
             validChannels++;
@@ -741,18 +741,18 @@ async function debugAllCategories(
         } catch {
           invalidChannels++;
           allErrors.push(
-            `❌ | \`${category.name}\`: <#${channel.channelId}> (fetch error)`
+            `❌ | \`${category.name}\`: <#${channel.channelId}> (fetch error)`,
           );
         } finally {
           await delay(600); // Delay to avoid hitting rate limits
         }
-      })
+      }),
     );
 
     categoryResults.push(
       `**${category.name}**: ${validChannels} ✅${
         invalidChannels > 0 ? ` | ${invalidChannels} ❌` : ""
-      }`
+      }`,
     );
   }
 
@@ -767,14 +767,14 @@ async function debugAllCategories(
                 allErrors.length > 20
                   ? `\n... and ${allErrors.length - 20} more`
                   : ""
-              }`
+              }`,
             ),
           ]
-        : [])
+        : []),
     )
     .addSeparatorComponents((s) => s)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent("✅ Debugging complete")
+      new TextDisplayBuilder().setContent("✅ Debugging complete"),
     );
 
   await ctx.editReply({

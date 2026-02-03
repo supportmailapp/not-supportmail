@@ -1,4 +1,4 @@
-import { AnyThreadChannel, ChannelType } from "discord.js";
+import { type AnyThreadChannel, ChannelType } from "discord.js";
 import { updateDBUsername } from "../../utils/main.js";
 
 export default async function (thread: AnyThreadChannel) {

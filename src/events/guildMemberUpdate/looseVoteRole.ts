@@ -3,10 +3,10 @@ import {
   ActionRowBuilder,
   ApplicationCommand,
   ButtonBuilder,
-  ClientEvents,
+  type ClientEvents,
   Colors,
   ContainerBuilder,
-  GuildResolvable,
+  type GuildResolvable,
   userMention,
 } from "discord.js";
 import { DBUser } from "../../models/user.js";
@@ -45,7 +45,7 @@ const voteRoles = [
 
 export default async function loseVoteRole(
   oldMember: ClientEvents["guildMemberUpdate"][0],
-  member: ClientEvents["guildMemberUpdate"][1]
+  member: ClientEvents["guildMemberUpdate"][1],
 ) {
   const votesLost = new Array<(typeof voteRoles)[number]>();
 
@@ -72,7 +72,7 @@ export default async function loseVoteRole(
     });
   }
   const foundCommand = member.client.application.commands.cache.find(
-    (c) => c.name === "vote-notification"
+    (c) => c.name === "vote-notification",
   );
 
   if (!foundCommand) {
@@ -88,15 +88,15 @@ export default async function loseVoteRole(
         t.setContent(
           pm(
             member.id,
-            votesLost.map((v) => v.botId)
-          )
+            votesLost.map((v) => v.botId),
+          ),
         ),
       (t) =>
         t.setContent(
           `-# <t:${dayjs().unix()}:s> | If you don't want to receive these DMs anymore, use </${
             command.name
-          }:${command.id}>.`
-        )
+          }:${command.id}>.`,
+        ),
     );
 
   const ar = new ActionRowBuilder<ButtonBuilder>();
@@ -114,10 +114,10 @@ export default async function loseVoteRole(
       await DBUser.updateOne(
         { id: member.id },
         { voteLooseDM: false },
-        { upsert: true }
+        { upsert: true },
       );
       Sentry.logger.debug(
-        `Could not DM user ${member.id} about lost vote role.`
+        `Could not DM user ${member.id} about lost vote role.`,
       );
     });
 }

@@ -1,17 +1,20 @@
 import * as Sentry from "@sentry/node";
 import {
-  APIMessageTopLevelComponent,
+  type APIMessageTopLevelComponent,
   ChannelType,
   Colors,
   ContainerBuilder,
   Guild,
-  JSONEncodable,
-  OverwriteData,
+  type JSONEncodable,
+  type OverwriteData,
   TextDisplayBuilder,
   VoiceChannel,
 } from "discord.js";
-import { HydratedDocument } from "mongoose";
-import { ITempChannelCategory, TempChannel } from "../models/tempChannel.js";
+import type { HydratedDocument } from "mongoose";
+import {
+  type ITempChannelCategory,
+  TempChannel,
+} from "../models/tempChannel.js";
 import { EphemeralV2Flags } from "./enums.js";
 
 type LastChannelDataSuccess = {
@@ -26,7 +29,7 @@ type LastChannelDataError = {
 
 export async function fetchLastChannelData(
   guild: Guild,
-  categoryId: string
+  categoryId: string,
 ): Promise<LastChannelDataSuccess | LastChannelDataError> {
   const lastTempChannel = await TempChannel.findOne(
     {
@@ -34,7 +37,7 @@ export async function fetchLastChannelData(
       category: categoryId,
     },
     "channelId",
-    { sort: { createdAt: -1 } }
+    { sort: { createdAt: -1 } },
   );
   if (!lastTempChannel) {
     return { success: false, error: "Last channel not found in database" };
@@ -70,7 +73,7 @@ export async function fetchLastChannelData(
 
 async function getNextChannelNumber(
   guildId: string,
-  categoryId: string
+  categoryId: string,
 ): Promise<number> {
   // Get all existing channel numbers in this category
   const existingChannels = await TempChannel.find(
@@ -79,7 +82,7 @@ async function getNextChannelNumber(
       category: categoryId,
     },
     "number",
-    { sort: { number: 1 } } // Sort by number ascending
+    { sort: { number: 1 } }, // Sort by number ascending
   );
 
   // Extract used numbers from the database
@@ -113,7 +116,7 @@ export async function createAndSaveTempChannel(
   guild: Guild,
   tCategory: HydratedDocument<ITempChannelCategory>,
   parentId: string | null = null,
-  withOverwrites: boolean = false
+  withOverwrites: boolean = false,
 ): Promise<CreateAndSaveTempChannelSuccess | CreateAndSaveTempChannelError> {
   let lastChannelData: LastChannelDataSuccess | LastChannelDataError | null =
     null;
@@ -121,7 +124,7 @@ export async function createAndSaveTempChannel(
     lastChannelData = await fetchLastChannelData(guild, tCategory.id);
     Sentry.logger.trace(
       "Fetched old channel data for new temp channel creation",
-      { ...lastChannelData }
+      { ...lastChannelData },
     );
     if (!lastChannelData.success) {
       Sentry.captureMessage(lastChannelData.error);
@@ -135,7 +138,7 @@ export async function createAndSaveTempChannel(
   const nextChannelNumber = await getNextChannelNumber(guild.id, tCategory.id);
   const channelName = tCategory.namingScheme.replace(
     "{number}",
-    String(nextChannelNumber)
+    String(nextChannelNumber),
   );
 
   let channel: VoiceChannel | null = null;
@@ -173,7 +176,7 @@ export async function createAndSaveTempChannel(
   }
 
   Sentry.logger.trace(
-    `Created new temp channel (${channel.id}) with position ${channel.position}.`
+    `Created new temp channel (${channel.id}) with position ${channel.position}.`,
   );
 
   if (
@@ -181,7 +184,7 @@ export async function createAndSaveTempChannel(
     channel.position !== lastChannelData?.channel.position
   ) {
     Sentry.logger.warn(
-      `Channel position mismatch: Expected ${lastChannelData.channel.position}, got ${channel.position}. Adjusting...`
+      `Channel position mismatch: Expected ${lastChannelData.channel.position}, got ${channel.position}. Adjusting...`,
     );
     await channel
       .setPosition(lastChannelData.channel.position + 1, {
@@ -242,7 +245,7 @@ export type EditAction =
 export function buildCustomId(
   component: "edit" | "info",
   categoryId: string,
-  action: EditAction | null = null
+  action: EditAction | null = null,
 ) {
   const prefix = `tempChannelCategory/${component}` as const;
   if (action) return `${prefix}/${action}?${categoryId}` as const;
@@ -270,12 +273,12 @@ export function SuccessContainer(): ContainerBuilder {
 export function buildCategoryInfo(
   cat: HydratedDocument<ITempChannelCategory>,
   withContainer?: false,
-  color?: number
+  color?: number,
 ): TextDisplayBuilder[];
 export function buildCategoryInfo(
   cat: HydratedDocument<ITempChannelCategory>,
   withContainer: true,
-  color?: number
+  color?: number,
 ): ContainerBuilder;
 /**
  * Builds the category information display.
@@ -287,7 +290,7 @@ export function buildCategoryInfo(
 export function buildCategoryInfo(
   cat: HydratedDocument<ITempChannelCategory>,
   withContainer: boolean = false,
-  color: number = Colors.Blue
+  color: number = Colors.Blue,
 ) {
   const infoContent: Record<EditAction, string> = {
     name: `- **Category Name:** ${cat.name}\n-# - **Category ID:** ${cat.id}`,
@@ -325,7 +328,7 @@ export function buildCategoryInfo(
  */
 export async function deleteTempChannels(
   guild: Guild,
-  categoryId: string
+  categoryId: string,
 ): Promise<number> {
   const tempChannels = await TempChannel.find({
     guildId: guild.id,

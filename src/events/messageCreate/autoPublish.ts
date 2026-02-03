@@ -29,7 +29,7 @@ export default async function autoPublish(message: Message) {
   if (Array.isArray(channelConfig.pings)) {
     isValidPing = false;
     isValidPing = channelConfig.pings.some((ping) => {
-      const [type, id] = ping.split("-");
+      const [type, id] = ping.split("-") as ["u" | "r", string];
       if (type === "u") {
         return message.mentions.users.has(id);
       } else {

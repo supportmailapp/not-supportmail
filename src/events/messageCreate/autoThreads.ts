@@ -1,9 +1,11 @@
 import { Message } from "discord.js";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
 import config from "../../config.js";
 import { checkUserAccess } from "../../utils/main.js";
 
 const UTCOffeset = process.env.UTC_OFFSET || null;
+dayjs.extend(utc);
 
 export default async function autoThreads(message: Message) {
   if (
@@ -25,7 +27,7 @@ export default async function autoThreads(message: Message) {
       message.author.id,
       message.member?.roles.cache.map((r) => r.id) || [],
       threadConfig.blacklist || [],
-      threadConfig.whitelist || []
+      threadConfig.whitelist || [],
     )
   ) {
     return;
@@ -38,28 +40,8 @@ export default async function autoThreads(message: Message) {
     } else {
       currentTime = currentTime.subtract(Math.abs(parseInt(UTCOffeset)), "h");
     }
-  } else if (process.env.ABSTRACT_API_KEY) {
-    const abstractRes = await fetch(
-      "https://timezone.abstractapi.com/v1/current_time/?" +
-        new URLSearchParams({
-          api_key: process.env.ABSTRACT_API_KEY,
-          location: process.env.LOCATION || "Europe/London",
-        }).toString(),
-      {
-        method: "GET",
-      }
-    );
-
-    if (abstractRes.ok) {
-      const data = await abstractRes.json();
-      currentTime = dayjs(data.datetime, "YYYY-MM-DD HH:mm:ss");
-    } else {
-      console.error(
-        "Error fetching time from AbstractAPI:",
-        abstractRes.status,
-        abstractRes.statusText
-      );
-    }
+  } else {
+    currentTime = currentTime.utc();
   }
 
   const allVariables: { [key: string]: string } = {
