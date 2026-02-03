@@ -333,7 +333,7 @@ export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
       null,
       {
         sort: { "stats.bugsReported": -1 },
-        skip: (page - 1) * 10,
+        skip: Math.max(0, (page - 1) * 10),
         limit: 10,
       },
     ),
