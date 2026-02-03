@@ -21,6 +21,7 @@ const SUGGEST_SOLVE_PATTERNS = [
 ];
 
 export async function suggestSolve(msg: Message) {
+  console.log("suggestSolve event triggered");
   if (
     !msg.inGuild() ||
     msg.author.bot ||
