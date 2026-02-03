@@ -1,4 +1,4 @@
-import { Message } from "discord.js";
+import { Message, type PartialMessage } from "discord.js";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import config from "../../config.js";
@@ -7,8 +7,9 @@ import { checkUserAccess } from "../../utils/main.js";
 const UTCOffeset = Bun.env.UTC_OFFSET || null;
 dayjs.extend(utc);
 
-export async function autoThreads(message: Message) {
+export async function autoThreads(message: Message | PartialMessage) {
   if (
+    !message.inGuild() ||
     message.channel.isDMBased() ||
     message.channel.isThread() ||
     message.channel.isVoiceBased() ||

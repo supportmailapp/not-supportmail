@@ -1,8 +1,8 @@
-import { Message, MessageType } from "discord.js";
+import { Message, MessageType, type PartialMessage } from "discord.js";
 import config from "../../config.js";
 import { checkUserAccess } from "../../utils/main.js";
 
-export async function autoPublish(message: Message) {
+export async function autoPublish(message: Message | PartialMessage) {
   if (
     message.guildId !== Bun.env.GUILD_ID ||
     message.type != MessageType.Default

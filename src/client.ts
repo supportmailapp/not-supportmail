@@ -22,13 +22,13 @@ var client = new Client({
   ],
 
   makeCache: Options.cacheWithLimits({
-    MessageManager: 1024,
+    MessageManager: 2048,
     GuildMessageManager: 1024,
   }),
 
   failIfNotExists: false,
 
-  partials: [Partials.Channel],
+  partials: [Partials.Channel, Partials.Message],
 
   allowedMentions: { parse: ["users", "roles"], repliedUser: false },
 

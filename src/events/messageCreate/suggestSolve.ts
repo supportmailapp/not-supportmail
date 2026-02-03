@@ -1,4 +1,4 @@
-import { ChannelType, Message } from "discord.js";
+import { ChannelType, Message, type PartialMessage } from "discord.js";
 import wildcardMatch from "wildcard-match";
 import suggestSolveCache from "../../caches/suggestSolveCache";
 import { buildSuggestSolveMessage } from "../../utils/main";
@@ -24,20 +24,20 @@ const SUGGEST_SOLVE_PATTERNS = [
 
 const allTags = Object.values(config.supportTags);
 
-export async function suggestSolve(msg: Message) {
+export async function suggestSolve(msg: Message | PartialMessage) {
   if (
     !msg.inGuild() ||
-    msg.author.bot ||
+    msg.author?.bot ||
     msg.channel.parentId !== config.channels.supportForum ||
     msg.channel.type !== ChannelType.PublicThread ||
-    msg.channel.ownerId !== msg.author.id || // Only suggest in user's own threads
+    msg.channel.ownerId !== msg.author?.id || // Only suggest in user's own threads
     msg.channel.appliedTags.some((tag) => allTags.includes(tag))
   ) {
     console.log("Suggest solve: conditions not met, exiting.", {
       guildid: msg.guild?.id,
-      author: msg.author.id,
+      author: msg.author?.id,
       channel: msg.channel.id,
-      bot: msg.author.bot,
+      bot: msg.author?.bot,
       parentid: (msg.channel as any).parentId,
       type: msg.channel.type,
       ownerid: (msg.channel as any).ownerId,
