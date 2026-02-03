@@ -339,6 +339,13 @@ export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
     ),
   ]);
 
+  // prevent page from going below 1 or above max pages - if that is the case, start from the other end
+  if (page < 1) {
+    page = Math.ceil(totalBuggers / 10);
+  } else if (page > Math.ceil(totalBuggers / 10)) {
+    page = 1;
+  }
+
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(`bugs/back?${page}`)
