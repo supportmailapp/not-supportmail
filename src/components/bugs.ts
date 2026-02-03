@@ -17,11 +17,6 @@ export const prefix = "bugs";
 export async function run(
   ctx: ButtonInteraction | ModalMessageModalSubmitInteraction,
 ) {
-  await ctx.update({
-    flags: ComponentsV2Flags,
-    components: [SimpleText("⏳")],
-  });
-
   let pageNum: number;
   if (ctx.isButton()) {
     const { component, firstParam } = parseCustomId(ctx.customId) as
@@ -48,7 +43,7 @@ export async function run(
       );
     }
 
-    pageNum = parseInt(firstParam, 10);
+    pageNum = safeParseInt(firstParam, 1, 1);
     if (component === "next") {
       pageNum += 1;
     } else {
@@ -56,8 +51,13 @@ export async function run(
     }
   } else {
     const pageStr = ctx.fields.getTextInputValue("page");
-    pageNum = safeParseInt(pageStr, 10);
+    pageNum = safeParseInt(pageStr, 1, 1, 999);
   }
+
+  await ctx.update({
+    flags: ComponentsV2Flags,
+    components: [SimpleText("⏳")],
+  });
 
   const page = await buildBugsLeaderboardPage(pageNum, false);
   await ctx.editReply(page);

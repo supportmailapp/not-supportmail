@@ -7,6 +7,7 @@ import {
   type GuildMember,
   heading,
   inlineCode,
+  type InteractionEditReplyOptions,
   type MessageCreateOptions,
   TextDisplayBuilder,
 } from "discord.js";
@@ -321,7 +322,12 @@ export const SimpleText = (text: string | string[]) =>
     typeof text === "string" ? text : text.join("\n"),
   );
 
-export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
+export async function buildBugsLeaderboardPage(
+  page: number,
+  hidden: boolean,
+): Promise<
+  InteractionEditReplyOptions
+> {
   const [totalBuggers, buggers] = await Promise.all([
     DBUser.countDocuments({
       "stats.bugsReported": { $gt: 0 },
@@ -381,7 +387,7 @@ export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
       .addTextDisplayComponents(
         ...buggers.map((u, i) =>
           SimpleText(
-            `${inlineCode(i.toString().padStart(1, "0") + ordinalSuffix(i + 1))} — ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
+            `${inlineCode((i + 1).toString().padStart(2, "0") + ordinalSuffix(i + 1))} — ${inlineCode(u.stats.bugsReported.toString())} - <@${u.id}>`,
           ),
         ),
       );
@@ -390,6 +396,6 @@ export async function buildBugsLeaderboardPage(page: number, hidden: boolean) {
   return {
     flags: hidden ? EphemeralV2Flags : ComponentsV2Flags,
     components: [container, row],
-    allowedMentions: { parse: [] },
+    allowedMentions: hidden ? { parse: ["users"] } : { parse: [] },
   };
 }
