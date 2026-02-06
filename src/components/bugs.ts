@@ -1,12 +1,14 @@
 import {
+  ComponentType,
   LabelBuilder,
   ModalBuilder,
   type ButtonInteraction,
   type ModalMessageModalSubmitInteraction,
 } from "discord.js";
-import { ComponentsV2Flags } from "../utils/enums";
+import { ComponentsV2Flags, EphemeralFlags } from "../utils/enums";
 import {
   buildBugsLeaderboardPage,
+  buildErrorMessage,
   parseCustomId,
   safeParseInt,
   SimpleText,
@@ -22,16 +24,22 @@ export async function run(
     component: "next" | "back" | "set";
     params: string[];
   };
-  const [pageStr, totalBuggersStr] = params as [string, string];
+  const [userId, pageStr, totalBuggersStr] = params as [string, string, string];
   const totalBuggers = safeParseInt(totalBuggersStr, 0, 0);
   const maxPages = Math.max(1, Math.ceil(totalBuggers / 10));
 
   if (ctx.isButton()) {
+    if (ctx.user.id !== userId) {
+      return ctx.reply(
+        buildErrorMessage("You didn't initiate this interaction!"),
+      );
+    }
+
     if (component === "set") {
       return ctx.showModal(
         new ModalBuilder()
           .setTitle("Set Bugs Leaderboard Page")
-          .setCustomId("bugs/set")
+          .setCustomId(`bugs/set?${userId}/${pageStr}/${totalBuggersStr}`)
           .addLabelComponents(
             new LabelBuilder()
               .setLabel("Page")
@@ -64,6 +72,24 @@ export async function run(
     components: [SimpleText("⏳")],
   });
 
-  const page = await buildBugsLeaderboardPage(pageNum, false);
-  await ctx.editReply(page);
+  const page = await buildBugsLeaderboardPage(ctx.user.id, pageNum, false);
+  const reply = await ctx.editReply(page);
+
+  if (!reply.flags.has(EphemeralFlags)) {
+    try {
+      await reply.awaitMessageComponent({
+        filter: (i) => i.user.id === ctx.user.id,
+        time: 600_000, // 10 minutes
+      });
+    } catch {
+      await ctx.editReply({
+        flags: ComponentsV2Flags,
+        components: page.components!.filter(
+          (c) =>
+            ("type" in c && c.type !== ComponentType.ActionRow) ||
+            ("toJSON" in c && c.toJSON().type !== ComponentType.ActionRow),
+        ),
+      });
+    }
+  }
 }
