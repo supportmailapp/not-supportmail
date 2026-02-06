@@ -1,6 +1,10 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  ComponentType,
+  SlashCommandBuilder,
+} from "discord.js";
 import config from "../config";
-import { EphemeralFlags } from "../utils/enums";
+import { ComponentsV2Flags, EphemeralFlags } from "../utils/enums";
 import { buildBugsLeaderboardPage } from "../utils/main";
 import dayjs from "dayjs";
 
@@ -27,8 +31,24 @@ export async function run(ctx: ChatInputCommandInteraction) {
 
   const pageNum = ctx.options.getInteger("page") ?? 1;
   const page = await buildBugsLeaderboardPage(ctx.user.id, pageNum, hidden);
-  await ctx.editReply(page);
+  const reply = await ctx.editReply(page);
   if (!hidden) {
     lastUsed = dayjs();
+
+    try {
+      await reply.awaitMessageComponent({
+        filter: (i) => i.user.id === ctx.user.id,
+        time: 600_000, // 10 minutes
+      });
+    } catch {
+      await ctx.editReply({
+        flags: ComponentsV2Flags,
+        components: page.components!.filter(
+          (c) =>
+            ("type" in c && c.type !== ComponentType.ActionRow) ||
+            ("toJSON" in c && c.toJSON().type !== ComponentType.ActionRow),
+        ),
+      });
+    }
   }
 }
