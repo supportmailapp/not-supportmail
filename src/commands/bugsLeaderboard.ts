@@ -26,7 +26,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
   await ctx.deferReply({ flags: baseFlags });
 
   const pageNum = ctx.options.getInteger("page") ?? 1;
-  const page = await buildBugsLeaderboardPage(pageNum, hidden);
+  const page = await buildBugsLeaderboardPage(ctx.user.id, pageNum, hidden);
   await ctx.editReply(page);
   if (!hidden) {
     lastUsed = dayjs();

@@ -323,6 +323,7 @@ export const SimpleText = (text: string | string[]) =>
   );
 
 export async function buildBugsLeaderboardPage(
+  userId: string,
   page: number,
   hidden: boolean,
 ): Promise<InteractionEditReplyOptions> {
@@ -351,15 +352,15 @@ export async function buildBugsLeaderboardPage(
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId(`bugs/back?${page}/${totalBuggers}`)
+      .setCustomId(`bugs/back?${userId}/${page}/${totalBuggers}`)
       .setEmoji({ name: "◀️" })
       .setStyle(2),
     new ButtonBuilder()
-      .setCustomId(`bugs/set?${page}/${totalBuggers}`) // triggers modal
+      .setCustomId(`bugs/set?${userId}/${page}/${totalBuggers}`) // triggers modal
       .setEmoji({ name: "🔢" })
       .setStyle(2),
     new ButtonBuilder()
-      .setCustomId(`bugs/next?${page}/${totalBuggers}`)
+      .setCustomId(`bugs/next?${userId}/${page}/${totalBuggers}`)
       .setEmoji({ name: "▶️" })
       .setStyle(2),
   );
