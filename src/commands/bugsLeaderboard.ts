@@ -38,7 +38,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
     try {
       await reply.awaitMessageComponent({
         filter: (i) => i.user.id === ctx.user.id,
-        time: 600_000, // 10 minutes
+        time: 300_000, // 5 minutes
       });
     } catch {
       await ctx.editReply({
