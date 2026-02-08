@@ -14,6 +14,7 @@ import {
   SeparatorBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
+  StringSelectMenuOptionBuilder,
   type APIMessageTopLevelComponent,
   type JSONEncodable,
 } from "discord.js";
@@ -69,10 +70,19 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
                     id !== config.supportTags.solved &&
                     id !== config.supportTags.wrongChannel,
                 )
-                .map((t) => ({
-                  label: t.name,
-                  value: t.id,
-                })),
+                .map((t) => {
+                  const data = new StringSelectMenuOptionBuilder()
+                    .setLabel(t.name)
+                    .setValue(t.id);
+                  if (t.emoji) {
+                    data.setEmoji({
+                      ...t.emoji,
+                      id: t.emoji.id ?? undefined,
+                      name: t.emoji.name ?? undefined,
+                    });
+                  }
+                  return data;
+                }),
             ),
         ),
       ),
