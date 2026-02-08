@@ -17,6 +17,11 @@ const config = {
     solved: Bun.env.TAG_SOLVED,
     dev: Bun.env.TAG_DEV,
     wrongChannel: Bun.env.TAG_WRONG_CHANNEL,
+    bots: {
+      supportmail: Bun.env.TAG_SUPPORTMAIL,
+      ticketOn: Bun.env.TAG_TICKETON,
+      upvoteEngine: Bun.env.TAG_UPVOTE_ENGINE,
+    },
   },
   suggestionTags: {
     noted: Bun.env.TAG_NOTED,

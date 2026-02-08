@@ -12,6 +12,8 @@ import {
   MediaGalleryItemBuilder,
   SectionBuilder,
   SeparatorBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
   type APIMessageTopLevelComponent,
   type JSONEncodable,
 } from "discord.js";
@@ -50,6 +52,50 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   const forum = await ctx.guild.channels.fetch(config.channels.supportForum);
   if (forum?.type !== ChannelType.GuildForum) return; // type guard
 
+  const reply = await ctx.editReply({
+    flags: EphemeralV2Flags,
+    components: [
+      new ContainerBuilder()
+        .addTextDisplayComponents(
+          SimpleText("Select all tags to apply to this support post"),
+        )
+        .addActionRowComponents(
+          new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
+            new StringSelectMenuBuilder()
+              .setCustomId("~/selectTags")
+              .setMinValues(1)
+              .setMaxValues(forum.availableTags.length - 2) // exclude "solved" and "wrong channel" tags
+              .setOptions(
+                ...forum.availableTags
+                  .filter(
+                    ({ id }) =>
+                      id !== config.supportTags.solved &&
+                      id !== config.supportTags.wrongChannel,
+                  )
+                  .map((t) => ({
+                    label: t.name,
+                    value: t.id,
+                  })),
+              ),
+          ),
+        ),
+    ],
+  });
+
+  let sCtx: StringSelectMenuInteraction;
+  try {
+    sCtx = await reply.awaitMessageComponent({
+      time: 300_000,
+      componentType: ComponentType.StringSelect,
+    });
+    await sCtx.update({
+      flags: EphemeralV2Flags,
+      components: [SimpleText("⌛ _Tags selected, creating support post..._")],
+    });
+  } catch {
+    return ctx.deleteReply().catch(() => {}); // ignore if response already deleted
+  }
+
   const message = ctx.targetMessage;
   const author = message.author;
 
@@ -87,6 +133,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
 
   const thread = await forum.threads.create({
     name: `Support - @${author.username}`,
+    appliedTags: [...sCtx.values],
     message: {
       flags: ComponentsV2Flags,
       components: comps,
@@ -96,6 +143,11 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
     },
   });
 
+  await sCtx.editReply({
+    flags: EphemeralV2Flags,
+    components: [SimpleText("⌛ _Support post created, applying tags..._")],
+  });
+
   await message.reply({
     content: `**A Support post has been created for you, please continue [here](${thread.url})!**`,
     allowedMentions: {
@@ -103,7 +155,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
     },
   });
 
-  const response = await ctx.editReply({
+  const response = await sCtx.editReply({
     flags: EphemeralV2Flags,
     components: [
       new SectionBuilder()
@@ -126,7 +178,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   });
 
   try {
-    const btnCtx = await response.awaitMessageComponent({
+    const bCtx = await response.awaitMessageComponent({
       time: 300_000,
       componentType: ComponentType.Button,
     });
@@ -134,16 +186,16 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
     await message
       .delete()
       .then(() =>
-        btnCtx.update(
+        bCtx.update(
           buildSuccessMessage("Original message deleted successfully!"),
         ),
       )
       .catch(() =>
-        btnCtx.update(
+        bCtx.update(
           buildErrorMessage("**Failed to delete original message.**", false),
         ),
       );
   } catch (e) {
-    await ctx.deleteReply().catch(() => {}); // ignore if message or reply already deleted
+    await sCtx.deleteReply().catch(() => {}); // ignore if message or reply already deleted
   }
 }
