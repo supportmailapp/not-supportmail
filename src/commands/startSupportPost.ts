@@ -55,30 +55,27 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   const reply = await ctx.editReply({
     flags: EphemeralV2Flags,
     components: [
-      new ContainerBuilder()
-        .addTextDisplayComponents(
-          SimpleText("Select all tags to apply to this support post"),
-        )
-        .addActionRowComponents(
-          new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
-            new StringSelectMenuBuilder()
-              .setCustomId("~/selectTags")
-              .setMinValues(1)
-              .setMaxValues(forum.availableTags.length - 2) // exclude "solved" and "wrong channel" tags
-              .setOptions(
-                ...forum.availableTags
-                  .filter(
-                    ({ id }) =>
-                      id !== config.supportTags.solved &&
-                      id !== config.supportTags.wrongChannel,
-                  )
-                  .map((t) => ({
-                    label: t.name,
-                    value: t.id,
-                  })),
-              ),
-          ),
+      new ContainerBuilder().addActionRowComponents(
+        new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
+          new StringSelectMenuBuilder()
+            .setPlaceholder("Select all tags to apply to the support post")
+            .setCustomId("~/selectTags")
+            .setMinValues(1)
+            .setMaxValues(forum.availableTags.length - 2) // exclude "solved" and "wrong channel" tags
+            .setOptions(
+              ...forum.availableTags
+                .filter(
+                  ({ id }) =>
+                    id !== config.supportTags.solved &&
+                    id !== config.supportTags.wrongChannel,
+                )
+                .map((t) => ({
+                  label: t.name,
+                  value: t.id,
+                })),
+            ),
         ),
+      ),
     ],
   });
 
