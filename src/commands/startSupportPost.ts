@@ -86,6 +86,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   try {
     sCtx = await reply.awaitMessageComponent({
       time: 300_000,
+      filter: (i) => i.customId === "~/selectTags",
       componentType: ComponentType.StringSelect,
     });
     await sCtx.update({
@@ -180,6 +181,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   try {
     const bCtx = await response.awaitMessageComponent({
       time: 300_000,
+      filter: (i) => i.customId === "~/deleteOriginal",
       componentType: ComponentType.Button,
     });
 
