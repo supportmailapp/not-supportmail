@@ -296,8 +296,8 @@ export const buildErrorMessage = (error: string | string[], withX = true) => ({
   components: [
     new ContainerBuilder()
       .setAccentColor(Colors.DarkRed)
-      .addTextDisplayComponents((t) =>
-        t.setContent(
+      .addTextDisplayComponents(
+        SimpleText(
           heading(
             withX
               ? `:x: ${typeof error === "string" ? error : error.join("\n")}`
@@ -308,6 +308,21 @@ export const buildErrorMessage = (error: string | string[], withX = true) => ({
           ),
         ),
       ),
+  ],
+});
+
+/**
+ * Builds a success message object with ephemeral flags and a green container displaying the success text.
+ * @param text - The success message string or array of strings to display.
+ * @param bold - Whether to bold the success message text (default: true).
+ * @returns An object containing flags and components for the success message.
+ */
+export const buildSuccessMessage = (text: string | string[], bold = true) => ({
+  flags: EphemeralV2Flags,
+  components: [
+    new ContainerBuilder()
+      .setAccentColor(Colors.Green)
+      .addTextDisplayComponents(SimpleText(bold ? `**${text}**` : text)),
   ],
 });
 
