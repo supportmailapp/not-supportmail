@@ -2,6 +2,7 @@ import { ChannelType, Message, type PartialMessage } from "discord.js";
 import suggestSolveCache from "../../caches/suggestSolveCache";
 import { buildSuggestSolveMessage } from "../../utils/main";
 import config from "../../config";
+import { SupportPost } from "../../models/supportPosts";
 
 const SUGGEST_SOLVE_PATTERNS = [
   /solved/i,
@@ -29,9 +30,21 @@ export async function suggestSolve(msg: Message | PartialMessage) {
     msg.author?.bot ||
     msg.channel.parentId !== config.channels.supportForum ||
     msg.channel.type !== ChannelType.PublicThread ||
-    msg.channel.ownerId !== msg.author?.id || // Only suggest in user's own threads
     msg.channel.appliedTags.some((tag) => allTags.includes(tag))
   ) {
+    return;
+  }
+
+  // ownership check
+  if (msg.channel.ownerId === msg.client.user.id) {
+    const post = await SupportPost.exists({
+      postId: msg.channelId,
+      userId: msg.author.id,
+    });
+    if (!post) {
+      return;
+    }
+  } else if (msg.channel.ownerId !== msg.author.id) {
     return;
   }
 
@@ -42,7 +55,7 @@ export async function suggestSolve(msg: Message | PartialMessage) {
       console.debug("[suggestSolve] Pattern matched:", pattern);
       // check author here because regex is faster than DB call, so we only want to do DB call if necessary
       const setting = await suggestSolveCache.get(msg.author.id);
-      if (!setting) {
+      if (!setting.setting) {
         console.debug(
           "[suggestSolve] User has disabled suggest solve:",
           msg.author.id,
