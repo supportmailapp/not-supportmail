@@ -15,6 +15,7 @@ import {
   buildSuggestSolveMessage,
   canUpdateSupportPost,
 } from "../utils/main.js";
+import { SupportPost } from "../models/supportPosts.js";
 
 // Helper functions
 function hasTag(tags: string[], tagId: string): boolean {
@@ -122,9 +123,22 @@ export async function run(ctx: ChatInputCommandInteraction) {
   const subcommand = ctx.options.getSubcommand();
 
   // Check if the user can update the support post
-  const threadOwner = ctx.channel.ownerId;
+  let isThreadOwner: boolean;
+  let threadOwner: string;
+  if (ctx.channel.ownerId === ctx.client.user.id) {
+    const post = await SupportPost.exists({
+      postId: ctx.channelId,
+      userId: ctx.user.id,
+    });
+    isThreadOwner = !!post;
+    threadOwner = ctx.user.id;
+  } else {
+    isThreadOwner = ctx.channel.ownerId === ctx.user.id;
+    threadOwner = ctx.channel.ownerId;
+  }
+
   if (subcommand === "suggest-solve") {
-    if (threadOwner === ctx.user.id) {
+    if (isThreadOwner) {
       return ctx.reply(
         buildErrorMessage(
           "Why are you trying to suggest solving your own post? Get a hobby...",
@@ -168,7 +182,6 @@ export async function run(ctx: ChatInputCommandInteraction) {
   await ctx.deferReply({ flags: 64 });
 
   const currentTags = ctx.channel.appliedTags || [];
-  const isThreadOwner = threadOwner === ctx.user.id;
 
   switch (subcommand) {
     case "solve":
