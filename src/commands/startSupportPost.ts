@@ -38,11 +38,7 @@ export const data = new ContextMenuCommandBuilder()
 export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   if (!ctx.isMessageContextMenuCommand()) return; // type guard
 
-  if (
-    !ctx.member.roles.cache.has(Bun.env.ROLE_THREAD_MANAGER!) &&
-    !ctx.member.roles.cache.has(Bun.env.ROLE_DEVELOPER!) &&
-    !ctx.member.permissions.has("ManageGuild")
-  ) {
+  if (!ctx.member.permissions.has("ManageThreads")) {
     return ctx.reply(
       buildErrorMessage("You don't have permission to use this command."),
     );
