@@ -13,6 +13,7 @@ import {
 } from "discord.js";
 import { DBUser } from "../models/user.js";
 import { ComponentsV2Flags, EphemeralV2Flags } from "./enums.js";
+import { SupportPost } from "../models/supportPosts.js";
 
 // Overloads
 export function parseCustomId(customId: string, onlyPrefix: true): string;
@@ -65,19 +66,22 @@ export function delay(ms: number) {
  * - Are the original author of the post (when authorId is provided)
  * - Have the "ManageGuild" permission
  */
-export function canUpdateSupportPost(
+export async function canUpdateSupportPost(
   member: GuildMember,
+  postId: string,
   authorId: string | null = null,
 ) {
-  const canRolewise =
+  const can =
+    !!(authorId && member.id == authorId) ||
     member.roles.cache.hasAny(
       Bun.env.ROLE_THREAD_MANAGER!,
       Bun.env.ROLE_DEVELOPER!,
     ) ||
-    (authorId && member.id == authorId);
-  const canPermissionwise = member.permissions.has("ManageGuild");
+    member.permissions.has("ManageGuild");
+  if (can) return can;
 
-  return canRolewise || canPermissionwise;
+  const post = await SupportPost.exists({ postId, userId: member.id });
+  return !!post;
 }
 
 /**
