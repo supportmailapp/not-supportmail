@@ -29,6 +29,7 @@ import {
   EphemeralFlags,
   EphemeralV2Flags,
 } from "../utils/enums";
+import { SupportPost } from "../models/supportPosts";
 
 export const data = new ContextMenuCommandBuilder()
   .setType(ApplicationCommandType.Message)
@@ -38,7 +39,10 @@ export const data = new ContextMenuCommandBuilder()
 export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   if (!ctx.isMessageContextMenuCommand()) return; // type guard
 
-  if (!ctx.member.permissions.has("ManageThreads")) {
+  if (
+    !ctx.member.permissions.has("ManageThreads") &&
+    !ctx.member.roles.cache.has(Bun.env.ROLE_THREAD_MANAGER!)
+  ) {
     return ctx.reply(
       buildErrorMessage("You don't have permission to use this command."),
     );
@@ -105,7 +109,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
 
   const comps: JSONEncodable<APIMessageTopLevelComponent>[] = [
     SimpleText(
-      `### Support Post for @${author.username}\n**Original Message:** ${message.url}`,
+      `### Support Post for @${author.username}\n-# Original Message: ${message.url}`,
     ),
   ];
   const content =
@@ -145,6 +149,12 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
         users: [author.id],
       },
     },
+  });
+
+  await SupportPost.create({
+    userId: author.id,
+    postId: thread.id,
+    tags: sCtx.values,
   });
 
   await sCtx.editReply({
