@@ -141,8 +141,9 @@ export async function run(ctx: ChatInputCommandInteraction) {
     return ctx.reply({ ...message, allowedMentions: { users: [threadOwner] } });
   }
 
-  const canUpdate = canUpdateSupportPost(
+  const canUpdate = await canUpdateSupportPost(
     ctx.member as GuildMember,
+    ctx.channelId,
     subcommand === "solve" || subcommand === "unsolve" ? threadOwner : null,
   );
 
