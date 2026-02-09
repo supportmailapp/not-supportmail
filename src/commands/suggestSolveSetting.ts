@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import { DBUser } from "../models/user";
 import { EphemeralV2Flags } from "../utils/enums";
+import suggestSolveCache from "../caches/suggestSolveCache";
 
 export const data = new SlashCommandBuilder()
   .setName("suggest-solve-setting")
@@ -34,6 +35,8 @@ export async function run(ctx: ChatInputCommandInteraction) {
     { suggestSolve: setting },
     { upsert: true },
   );
+
+  suggestSolveCache.set(ctx.user.id, setting);
 
   await ctx.reply({
     flags: EphemeralV2Flags,

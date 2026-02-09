@@ -3,6 +3,7 @@ import suggestSolveCache from "../../caches/suggestSolveCache";
 import { buildSuggestSolveMessage } from "../../utils/main";
 import config from "../../config";
 import { SupportPost } from "../../models/supportPosts";
+import postOwnershipCache from "../../caches/postOwnershipCache";
 
 const SUGGEST_SOLVE_PATTERNS = [
   /solved/i,
@@ -37,6 +38,10 @@ export async function suggestSolve(msg: Message | PartialMessage) {
 
   // ownership check
   if (msg.channel.ownerId === msg.client.user.id) {
+    const cachedOwnerId = postOwnershipCache.get(msg.channelId);
+    if (cachedOwnerId && cachedOwnerId !== msg.author.id) {
+      return;
+    }
     const post = await SupportPost.exists({
       postId: msg.channelId,
       userId: msg.author.id,
@@ -55,7 +60,7 @@ export async function suggestSolve(msg: Message | PartialMessage) {
       console.debug("[suggestSolve] Pattern matched:", pattern);
       // check author here because regex is faster than DB call, so we only want to do DB call if necessary
       const setting = await suggestSolveCache.get(msg.author.id);
-      if (!setting.setting) {
+      if (!setting) {
         console.debug(
           "[suggestSolve] User has disabled suggest solve:",
           msg.author.id,

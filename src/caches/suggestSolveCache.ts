@@ -2,8 +2,7 @@ import { DBUser } from "../models/user";
 import cacheFactory from "./cacheFactory";
 
 type SuggestSolveCacheEntry = {
-  ownerId: string;
-  setting: boolean;
+  value: boolean;
 };
 
 const cache = cacheFactory<SuggestSolveCacheEntry>({
@@ -12,28 +11,20 @@ const cache = cacheFactory<SuggestSolveCacheEntry>({
 });
 
 export default {
-  set: (userId: string, data: SuggestSolveCacheEntry) =>
-    cache.set(userId, data),
-  /**
-   * Gets the suggest solve setting for a user. If not in cache, fetches from DB and caches it.
-   * @param userId The ID of the user to get the setting for
-   * @returns An object containing the user ID and their suggest solve setting. Defaults to true if not set in DB.
-   *
-   * It is assumed that the userId is the owner id.
-   */
+  set: (userId: string, value: boolean) => cache.set(userId, { value }),
   get: async (userId: string) => {
     const entry = cache.get(userId);
-    if (entry) return entry;
+    if (entry) return entry.value;
     const dbUser = await DBUser.findOne(
       { id: userId },
       { suggestSolve: 1 },
       { lean: true },
     );
-    const setting =
+    const value =
       typeof dbUser?.suggestSolve === "boolean" ? dbUser.suggestSolve : true;
-    cache.set(userId, { ownerId: userId, setting });
-    return { ownerId: userId, setting };
+    cache.set(userId, { value });
+    return value;
   },
   del: (userId: string) => cache.del(userId),
-  take: (userId: string) => cache.take(userId) || null,
+  take: (userId: string) => cache.take(userId)?.value || null,
 };
