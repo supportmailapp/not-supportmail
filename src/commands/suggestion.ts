@@ -7,6 +7,7 @@ import {
 } from "discord.js";
 import config from "../config.js";
 import { ComponentsV2Flags, EphemeralV2Flags } from "../utils/enums.js";
+import { SimpleText } from "../utils/main.js";
 
 // Helper functions
 function hasTag(tags: string[], tagId: string): boolean {
@@ -28,14 +29,23 @@ function removeOldStatusTags(tags: string[]): string[] {
   );
 }
 
-function createStatusMessage(color: number, content: string) {
+function createStatusMessage(
+  color: number,
+  content: string,
+  reason: string | null = null,
+) {
+  const container = new ContainerBuilder()
+    .setAccentColor(color)
+    .addTextDisplayComponents(SimpleText(content));
+  if (reason) {
+    container
+      .addSeparatorComponents((s) => s.setDivider(false))
+      .addTextDisplayComponents(SimpleText(`**Reason:**\n${reason}`));
+  }
   return {
     flags: ComponentsV2Flags,
-    components: [
-      new ContainerBuilder()
-        .setAccentColor(color)
-        .addTextDisplayComponents((t) => t.setContent(content)),
-    ],
+    components: [container],
+    allowedMentions: { parse: [] },
   };
 }
 
@@ -54,6 +64,13 @@ export const data = new SlashCommandBuilder()
         { name: "Rejected", value: "rejected" },
         { name: "Implemented", value: "implemented" },
         { name: "Duplicate (Also locks the post)", value: "duplicate" },
+      ),
+  )
+  .addStringOption((op) =>
+    op
+      .setName("reason")
+      .setDescription(
+        'Optional reason for the status change | Only usable for "Noted", "Rejected" and "Duplicate" statuses',
       ),
   );
 
@@ -112,6 +129,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
     await ctx.channel.members.add(ctx.user.id);
   }
 
+  const reason = ctx.options.getString("reason");
+
   switch (newStatus) {
     case "noted": {
       if (hasTag(currentTags, config.suggestionTags.noted)) {
@@ -124,7 +143,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Blue,
-          "### 📝 This suggestion has been noted.\nThank you for your feedback!",
+          `### 📝 This suggestion has been noted by ${ctx.user}.\nThank you for your feedback!`,
+          reason,
         ),
       );
 
@@ -142,7 +162,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Green,
-          `### ✅ This suggestion has been accepted!\nGreat idea <@${threadOwner}>! We'll work on implementing this.`,
+          `### ✅ This suggestion has been accepted by ${ctx.user}!\nGreat idea <@${threadOwner}>! We'll work on implementing this.`,
+          reason,
         ),
       );
 
@@ -160,7 +181,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Red,
-          `### ❌ This suggestion has been rejected.\nThank you for your input <@${threadOwner}>, but we've decided not to implement this at this time.`,
+          `### ❌ This suggestion has been rejected by ${ctx.user}.\nThank you for your input <@${threadOwner}>, but we've decided not to implement this at this time.`,
+          reason,
         ),
       );
 
@@ -180,7 +202,8 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Gold,
-          `### 🎉 This suggestion has been implemented!\nThanks <@${threadOwner}> for the great idea!`,
+          `### 🎉 This suggestion has been implemented!\nThanks <@${threadOwner}> for the great idea!`, // no author mention here
+          reason,
         ),
       );
 
@@ -195,7 +218,7 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Orange,
-          `### 🔁 This suggestion is a duplicate.\n<@${threadOwner}>, this has already been suggested. Please check existing suggestions before posting.`,
+          `### 🔁 This suggestion was marked as a duplicate by ${ctx.user}.\n<@${threadOwner}>, this has already been suggested. Please check existing suggestions before posting.`,
         ),
       );
 
