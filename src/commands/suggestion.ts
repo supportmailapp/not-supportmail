@@ -163,7 +163,6 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
         createStatusMessage(
           Colors.Green,
           `### ✅ This suggestion has been accepted by ${ctx.user}!\nGreat idea <@${threadOwner}>! We'll work on implementing this.`,
-          reason,
         ),
       );
 
@@ -203,7 +202,6 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
         createStatusMessage(
           Colors.Gold,
           `### 🎉 This suggestion has been implemented!\nThanks <@${threadOwner}> for the great idea!`, // no author mention here
-          reason,
         ),
       );
 
@@ -219,6 +217,7 @@ export async function run(ctx: ChatInputCommandInteraction<"cached">) {
         createStatusMessage(
           Colors.Orange,
           `### 🔁 This suggestion was marked as a duplicate by ${ctx.user}.\n<@${threadOwner}>, this has already been suggested. Please check existing suggestions before posting.`,
+          reason,
         ),
       );
 
