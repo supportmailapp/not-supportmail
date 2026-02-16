@@ -10,6 +10,7 @@ import { ComponentsV2Flags, EphemeralV2Flags } from "./utils/enums.js";
 
 import "./cron/daily.js";
 import { client } from "./client.js";
+import { initializeAgenda } from "./scheduler/agenda.js";
 
 let commands = new Collection<string, any>();
 let components = new Collection<string, any>();
@@ -271,6 +272,14 @@ await mongoose.connect(Bun.env.MONGO_URI!);
 console.info("Connected to DB");
 await loadAllModules();
 console.info("Modules loaded");
+
+if (mongoose.connection.db) {
+  await initializeAgenda(mongoose.connection.db);
+} else {
+  Sentry.captureMessage(
+    "Failed to initialize Agenda: No database connection available.",
+  );
+}
 
 await client.login(Bun.env.BOT_TOKEN);
 console.info("Bot started");

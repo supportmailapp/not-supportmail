@@ -1,0 +1,20 @@
+import { client } from "../../client.js";
+import * as Sentry from "@sentry/bun";
+import { voteMessage } from "../../utils/main.js";
+
+// Daily, at UTC+1 09:00
+
+export async function voteReminder() {
+  const channel = await client.channels.fetch("1109806977296642118"); // bot commands channel
+  if (!channel?.isSendable()) {
+    Sentry.captureMessage("Daily Cron: Channel not found or not sendable");
+    return;
+  }
+
+  await channel.send(voteMessage).catch((err) =>
+    Sentry.captureException(err, {
+      level: "error",
+      extra: { context: "Daily Cron: Sending vote message failed" },
+    }),
+  );
+}

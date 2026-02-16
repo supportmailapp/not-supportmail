@@ -1,5 +1,6 @@
 import { type AnyThreadChannel, ChannelType } from "discord.js";
 import { updateDBUsername } from "../../utils/main.js";
+import { SupportPost } from "../../models/supportPosts.js";
 
 export async function supportPostCreate(thread: AnyThreadChannel) {
   if (
@@ -22,10 +23,22 @@ export async function supportPostCreate(thread: AnyThreadChannel) {
         username: owner.user.username,
         displayName: owner.displayName || owner.user.displayName,
       },
-      true
+      true,
     );
   }
 
   // Pin the starter message (has the same ID as the thread)
   await thread.messages.pin(thread.id);
+
+  await SupportPost.updateOne(
+    {
+      postId: thread.id,
+      userId: thread.ownerId,
+    },
+    {
+      postId: thread.id,
+      userId: thread.ownerId,
+    },
+    { upsert: true },
+  );
 }
