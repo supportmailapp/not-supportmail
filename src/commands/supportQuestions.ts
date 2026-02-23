@@ -16,6 +16,10 @@ import {
   canUpdateSupportPost,
 } from "../utils/main.js";
 import { SupportPost } from "../models/supportPosts.js";
+import {
+  addPostReminderJob,
+  removePostReminderJob,
+} from "../utils/agendaHelper.js";
 
 // Helper functions
 function hasTag(tags: string[], tagId: string): boolean {
@@ -202,6 +206,8 @@ export async function run(ctx: ChatInputCommandInteraction) {
         ),
       );
 
+      await removePostReminderJob(ctx.channelId, threadOwner);
+
       return replyOrDelete(ctx, "Post marked as solved.", isThreadOwner);
 
     case "unsolve":
@@ -222,6 +228,8 @@ export async function run(ctx: ChatInputCommandInteraction) {
               : ""),
         ),
       );
+
+      await addPostReminderJob(threadOwner, ctx.channelId);
 
       return replyOrDelete(ctx, "Post marked as unsolved.", isThreadOwner);
 
@@ -277,6 +285,8 @@ export async function run(ctx: ChatInputCommandInteraction) {
       });
 
       await ctx.editReply("Post marked as being in the wrong channel.");
+
+      await removePostReminderJob(ctx.channelId, threadOwner);
 
       return ctx.channel.edit({
         locked: true,

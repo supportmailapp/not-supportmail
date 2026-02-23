@@ -42,7 +42,7 @@ export async function reminderHandler(
   }
 
   try {
-    await client.rest.post(Routes.channelMessages(job.attrs.data.userId), {
+    await client.rest.post(Routes.channelMessages(job.attrs.data.postId), {
       body: {
         flags: ComponentsV2Flags,
         components: [

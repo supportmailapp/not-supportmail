@@ -1,5 +1,5 @@
 import { type AnyThreadChannel, ChannelType } from "discord.js";
-import { updateDBUsername } from "../../utils/main.js";
+import { delay, updateDBUsername } from "../../utils/main.js";
 import { SupportPost } from "../../models/supportPosts.js";
 
 export async function supportPostCreate(thread: AnyThreadChannel) {
@@ -29,6 +29,8 @@ export async function supportPostCreate(thread: AnyThreadChannel) {
 
   // Pin the starter message (has the same ID as the thread)
   await thread.messages.pin(thread.id);
+
+  await delay(1000); // Wait a bit, so the rescheduler doesn't immediately run before the post is created in the DB
 
   await SupportPost.updateOne(
     {

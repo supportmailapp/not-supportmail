@@ -30,6 +30,7 @@ import {
   EphemeralV2Flags,
 } from "../utils/enums";
 import { SupportPost } from "../models/supportPosts";
+import { addPostReminderJob } from "../utils/agendaHelper";
 
 export const data = new ContextMenuCommandBuilder()
   .setType(ApplicationCommandType.Message)
@@ -156,6 +157,8 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
     postId: thread.id,
     tags: sCtx.values,
   });
+
+  await addPostReminderJob(author.id, thread.id);
 
   await sCtx.editReply({
     flags: EphemeralV2Flags,

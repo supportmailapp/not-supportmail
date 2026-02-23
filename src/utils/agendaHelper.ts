@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import { getAgenda } from "../scheduler/agenda";
+// @ts-ignore - We dont use AgendaNotInitializedError here but we need to import it
+import { type AgendaNotInitializedError, getAgenda } from "../scheduler/agenda";
 import type { JobsResult } from "agenda";
 
 /**
@@ -23,6 +24,15 @@ export async function addPostReminderJob(userId: string, postId: string) {
 export async function removePostReminderJob(postId: string, userId: string) {
   const agenda = getAgenda();
   await agenda.cancel({ name: "postReminder", data: { postId, userId } });
+}
+
+export async function reschedulePostReminderJob(
+  postId: string,
+  userId: string,
+) {
+  const agenda = getAgenda();
+  await agenda.cancel({ name: "postReminder", data: { postId, userId } });
+  await addPostReminderJob(userId, postId);
 }
 
 /**
