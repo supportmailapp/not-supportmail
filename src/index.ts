@@ -253,7 +253,7 @@ client.once("clientReady", async (client) => {
   );
 
   await client.application.commands.fetch();
-  console.info("Commands deployed & fetched");
+  console.info("Commands fetched");
 });
 
 process
