@@ -10,9 +10,6 @@ git fetch && git reset --hard origin/main && git pull origin
 echo "Installing dependencies..."
 bun install
 
-# Clean old build files
-rm -rf dist
-
 echo "Building Bot..."
 bun run build
 

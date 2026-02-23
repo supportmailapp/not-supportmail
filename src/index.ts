@@ -8,7 +8,6 @@ import { parseCustomId } from "./utils/main.js";
 
 import { ComponentsV2Flags, EphemeralV2Flags } from "./utils/enums.js";
 
-import "./cron/daily.js";
 import { client } from "./client.js";
 import { initializeAgenda } from "./scheduler/agenda.js";
 
