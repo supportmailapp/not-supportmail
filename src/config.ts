@@ -17,6 +17,7 @@ const config = {
     solved: Bun.env.TAG_SOLVED,
     dev: Bun.env.TAG_DEV,
     wrongChannel: Bun.env.TAG_WRONG_CHANNEL,
+    replyNeeded: Bun.env.TAG_REPL_NEEDED,
     bots: {
       supportmail: Bun.env.TAG_SUPPORTMAIL,
       ticketOn: Bun.env.TAG_TICKETON,
@@ -43,6 +44,7 @@ const config = {
     solved: string;
     dev: string;
     wrongChannel: string;
+    replyNeeded: string;
   };
   suggestionTags: {
     noted: string;

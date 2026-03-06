@@ -80,6 +80,18 @@ export const data = new SlashCommandBuilder()
   )
   .addSubcommand((sub) =>
     sub
+      .setName("unreview")
+      .setDescription("Unmark the post for review by a developer"),
+  )
+  .addSubcommand((sub) =>
+    sub
+      .setName("repl-needed")
+      .setDescription(
+        'Mark the post as "bug needs reproduction" (Used before marking for dev review)',
+      ),
+  )
+  .addSubcommand((sub) =>
+    sub
       .setName("wrong-channel")
       .setDescription(
         "Mark the post as being in the wrong channel | Locks the post!",
@@ -202,7 +214,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Green,
-          "### ✅ The post has been marked as solved.\nThank y'all for helping!",
+          `### ✅ The post has been marked as solved.\nThank y'all for helping!\n-# By <@${ctx.user.id}>`,
         ),
       );
 
@@ -222,7 +234,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.DarkBlue,
-          "### 🔓 The post has been unsolved." +
+          `### 🔓 The post has been unsolved.\n-# By <@${ctx.user.id}>` +
             (isThreadOwner
               ? `\n<@${threadOwner}>, please respond why you have unsolved your post.`
               : ""),
@@ -232,6 +244,48 @@ export async function run(ctx: ChatInputCommandInteraction) {
       await addPostReminderJob(threadOwner, ctx.channelId);
 
       return replyOrDelete(ctx, "Post marked as unsolved.", isThreadOwner);
+
+    case "repl-needed":
+      if (hasTag(currentTags, config.supportTags.replyNeeded)) {
+        return ctx.editReply(
+          "This post is already marked as needing a reply for reproduction.",
+        );
+      }
+
+      await ctx.channel.setAppliedTags(
+        addTag(currentTags, config.supportTags.replyNeeded),
+      );
+
+      await ctx.channel.send(
+        createStatusMessage(
+          Colors.Orange,
+          `### 🛠️ This issue needs reproduction before a developer can review it.\n-# By <@${ctx.user.id}>`,
+        ),
+      );
+
+      return ctx.deleteReply();
+
+    case "unreview":
+      if (hasTag(currentTags, config.supportTags.solved)) {
+        return ctx.editReply(
+          "A solved post cannot be unmarked. Unsolve it first.",
+        );
+      }
+
+      if (hasTag(currentTags, config.supportTags.dev)) {
+        await ctx.channel.setAppliedTags(
+          removeTag(currentTags, config.supportTags.dev),
+        );
+      }
+
+      await ctx.channel.send(
+        createStatusMessage(
+          Colors.Green,
+          `### 🛠️ The post is no longer marked as dev-review.\n-# By <@${ctx.user.id}>`,
+        ),
+      );
+
+      return ctx.deleteReply();
 
     case "dev":
       if (hasTag(currentTags, config.supportTags.dev)) {
@@ -251,7 +305,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
       await ctx.channel.send(
         createStatusMessage(
           Colors.Orange,
-          "### 🛠️ The post has been marked for developer review.\nA developer will look into this as soon as possible. Please be patient OP.",
+          `### 🛠️ The post has been marked for developer review.\n-# By <@${ctx.user.id}>\nA developer will look into this as soon as possible. Please be patient OP.`,
         ),
       );
 
