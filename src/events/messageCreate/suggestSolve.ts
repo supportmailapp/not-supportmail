@@ -70,8 +70,5 @@ export async function suggestSolve(msg: Message | PartialMessage) {
       const message = await buildSuggestSolveMessage(msg.client);
       return msg.reply({ ...message, allowedMentions: { repliedUser: false } });
     }
-    {
-      console.debug("[suggestSolve] Pattern not matched:", pattern);
-    }
   }
 }
