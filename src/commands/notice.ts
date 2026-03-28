@@ -1,4 +1,5 @@
 import {
+  bold,
   ChatInputCommandInteraction,
   ModalBuilder,
   PermissionFlagsBits,
@@ -144,7 +145,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
           const template = RESOLUTION_TEMPLATES[randIndex]!;
 
           const components: JSONEncodable<APIMessageTopLevelComponent>[] = [
-            SimpleText(template),
+            SimpleText(bold(template)),
           ];
           if (comment) {
             components.push(
@@ -157,7 +158,7 @@ export async function run(ctx: ChatInputCommandInteraction) {
           components.push(
             SimpleText(
               subtext(
-                `<@${thread.ownerId}> you can mark this post as solved if your issue has been resolved by this - use </question solve:1352592496642883615>.`,
+                `<@${thread.ownerId}> you can use </question solve:1352592496642883615> to mark this post as solved if your issue has been resolved by this.`,
               ),
             ),
           );
@@ -166,10 +167,11 @@ export async function run(ctx: ChatInputCommandInteraction) {
             components.push(
               new SeparatorBuilder().setDivider(true),
               SimpleText(
-                userIds
-                  .map((id) => `<@${id}>`)
-                  .join(" ")
-                  .slice(0, 2000),
+                "-# " +
+                  userIds
+                    .map((id) => `<@${id}>`)
+                    .join("")
+                    .slice(0, 2000),
               ),
             );
           }
