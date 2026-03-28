@@ -23,7 +23,7 @@ export async function run(ctx: ButtonInteraction | ModalSubmitInteraction) {
     const activeNotice = await Notice.findOne({ isActive: true });
 
     if (!activeNotice) {
-      return ctx.reply(buildErrorMessage("This notice is no longer active."));
+      return ctx.editReply(buildErrorMessage("This notice is no longer active."));
     }
 
     if (activeNotice.notifyThreads[ctx.channel.id]?.includes(ctx.user.id)) {
@@ -33,7 +33,7 @@ export async function run(ctx: ButtonInteraction | ModalSubmitInteraction) {
       activeNotice.notifyThreads[ctx.channel.id] = newNotices;
       await activeNotice.save();
 
-      return ctx.reply(
+      return ctx.editReply(
         buildSuccessMessage(
           "You will no longer receive a notification for this notice in this post.",
         ),
@@ -46,20 +46,20 @@ export async function run(ctx: ButtonInteraction | ModalSubmitInteraction) {
     ];
     await activeNotice.save();
 
-    return ctx.reply(
+    return ctx.editReply(
       buildSuccessMessage(
         "You will now receive a notification for this notice in this post.",
       ),
     );
   }
   if (ctx.isButton()) {
-    return ctx.reply(buildErrorMessage("How did we get here??"));
+    return ctx.editReply(buildErrorMessage("How did we get here??"));
   }
 
   if (component === "create") {
     const existingActive = await Notice.findOne({ isActive: true });
     if (existingActive) {
-      return ctx.reply(
+      return ctx.editReply(
         buildErrorMessage(
           "There is already an active notice. Please resolve it before creating a new one.",
         ),
@@ -71,7 +71,7 @@ export async function run(ctx: ButtonInteraction | ModalSubmitInteraction) {
       message: message,
     });
 
-    return ctx.reply(
+    return ctx.editReply(
       buildSuccessMessage(
         "Notice created successfully! It will be active until you resolve it.",
       ),
@@ -81,13 +81,13 @@ export async function run(ctx: ButtonInteraction | ModalSubmitInteraction) {
   if (component === "edit") {
     const activeNotice = await Notice.findOne({ isActive: true });
     if (!activeNotice) {
-      return ctx.reply(buildErrorMessage("There is no active notice to edit."));
+      return ctx.editReply(buildErrorMessage("There is no active notice to edit."));
     }
 
     const message = ctx.fields.getTextInputValue("message");
     activeNotice.message = message;
     await activeNotice.save();
 
-    return ctx.reply(buildSuccessMessage("Notice updated successfully!"));
+    return ctx.editReply(buildSuccessMessage("Notice updated successfully!"));
   }
 }
