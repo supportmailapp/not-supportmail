@@ -110,7 +110,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
 
   const comps: JSONEncodable<APIMessageTopLevelComponent>[] = [
     SimpleText(
-      `### Support Post for @${author.username}\n-# Original Message: ${message.url}`,
+      `### Support Post for <@${author.id}>\n-# Original Message: ${message.url}`,
     ),
   ];
   const content =
