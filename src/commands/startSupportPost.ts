@@ -116,7 +116,7 @@ export async function run(ctx: ContextMenuCommandInteraction<"cached">) {
   const content =
     message.content.length > 2000
       ? [message.content.slice(0, 2000), message.content.slice(2000, 4000)]
-      : [message.content];
+      : [message.content || "*No message content*"];
 
   comps.push(
     new ContainerBuilder()
