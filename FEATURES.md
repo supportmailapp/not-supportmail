@@ -10,6 +10,7 @@ This document lists the bot's features grouped by area with a short description 
 - **`/generate-invite`**: Create server invites with options for channel, max uses, max age, temporary membership, and uniqueness.
 - **`/ping`**: Shows API ping, roundtrip latency and uptime; updates ping cache.
 - **`/stats`**: Displays stored user statistics (bugs reported, etc.).
+- **`/notice`**: (Manage Guild only) Manage a server-wide active notice — `create` (modal input), `edit` (modal pre-filled with current message), and `resolve` (marks inactive and notifies all tracked threads with a randomised resolution message and optional comment).
 - **`/suggestion`**: Manage suggestion forum threads — set statuses (noted/accepted/rejected/implemented/duplicate) and optionally lock threads.
 - **`/question`**: Manage support forum posts — `solve`, `unsolve`, mark for `dev` review, and `wrong-channel` (optionally open ticket / lock thread).
   - **NEW:** Added `/question suggest-solve` to gently prompt users to mark their post as solved.
@@ -20,6 +21,7 @@ This document lists the bot's features grouped by area with a short description 
 
 **Components**
 
+- **`notice`**: Handles the `notice/notify` button (toggle per-user notification in a thread) and `notice/create` / `notice/edit` modal submissions (persist notice to DB).
 - **`tempChannelCategory`**: Component handlers for temporary-channel UI (show category info, edit flows via component custom IDs).
 
 **Event-driven automation**
@@ -32,7 +34,7 @@ This document lists the bot's features grouped by area with a short description 
 - **Message create: `autoThreads`**: Auto-create threads in configured channels using a naming schema with variables (username, date, time, etc.).
 - **Message create: `suggestSolve`**: Suggests marking support posts as solved when message is from thread author, in support forum, unsolved, user has setting not disabled and message contains a certain trigger (e.g., "thanks", "solved", "fixed", etc.).
 - **Message reaction add: `autoFlagRemove`**: Automatically removes country-flag (and some other) emoji reactions in configured channels or for configured users.
-- **Thread create: `supportPostCreate`**: Auto-joins new support threads, updates DB username, and pins the starter message.
+- **Thread create: `supportPostCreate`**: Auto-joins new support threads, updates DB username, pins the starter message, and if a notice is active sends an orange-accented notice card with a "Notify me!" button so thread members can opt in to a resolution ping.
 - **Voice state update: `tempChannelManage`**: Core temporary-voice-channel lifecycle manager — tracks user counts, creates/deletes temp voice channels, schedules cleanup and syncs minimal state to DB.
 
 **Cron**
@@ -41,6 +43,7 @@ This document lists the bot's features grouped by area with a short description 
 
 **Database models**
 
+- **`Notice` (`models/notice.ts`)**: Stores active notices — message text, active flag, optional resolution comment, and a `notifyThreads` map of thread ID → user IDs subscribed for resolution pings.
 - **`User` (`models/user.ts`)**: Stores per-user stats (e.g., `bugsReported`), display name and DM preferences (`voteLooseDM`).
 - **`TempChannelCategory` & `TempChannel` (`models/tempChannel.ts`)**: Persist temporary-channel categories, per-channel records, numbering and user counts.
 - **`StickyMessage` (`models/stickyMessage.ts`)**: Tracks pinned/sticky message IDs per channel for sticky message management.
@@ -67,6 +70,7 @@ Short, feature-only overview of what the bot does.
 - Support forum automation: auto-tagging, mark solved/unsolved, developer review flags, wrong-channel handling, and starter-message pinning.
 - Auto threads & publishing: create threads from messages using templates and crosspost allowed messages to announcement channels.
 - Temporary voice channels: create, scale and clean up temporary voice channels with admin controls.
+- Active notices: staff post a server-wide notice that is shown in every new support thread; users can subscribe for a resolution ping; resolving the notice bulk-notifies all subscribed threads.
 - Suggestions & moderation: set suggestion statuses, lock duplicates, remove certain emoji reactions automatically, and reply to automod pings with friendly guidance.
 - User tracking & recognition: track bug reports and simple user stats; award/remove bug-hunter role at thresholds.
 - Voting flow: publish vote buttons, notify users when vote roles expire, and allow opting in/out of DM notifications.

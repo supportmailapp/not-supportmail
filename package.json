@@ -13,7 +13,7 @@
     "typecheck": "bunx tsc --noEmit"
   },
   "author": "supportmailapp",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@agendajs/mongo-backend": "^3.2.0",
